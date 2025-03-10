@@ -1,30 +1,23 @@
-import { Geist, Geist_Mono } from "next/font/google"
-
-import "@workspace/ui/globals.css"
-import { Providers } from "@/components/providers"
-
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
+import type { Metadata } from 'next';
+import '@workspace/ui/globals.css';
+import { ThemeProvider } from './providers/theme-provider';
+export const metadata: Metadata = {
+	title: 'Chaya App',
+	description: 'Agricultural Management Application',
+};
 
 export default function RootLayout({
-  children,
+	children,
 }: Readonly<{
-  children: React.ReactNode
+	children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${fontSans.variable} ${fontMono.variable} font-sans antialiased `}
-      >
-        <Providers>{children}</Providers>
-      </body>
-    </html>
-  )
+	return (
+		<html lang="en" suppressHydrationWarning>
+			<body>
+				<ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+					{children}
+				</ThemeProvider>
+			</body>
+		</html>
+	);
 }
