@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = "postgresql://chayadb_owner:npg_tL9O7cgEKGaJ@ep-delicate-dream-a5pwfo3o-pooler.us-east-2.aws.neon.tech/chayadb?sslmode=require"
+  url = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Relationship {
+  SELF
+  SPOUSE
+  CHILD
+  OTHER
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+
+model Ping {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  name          String
+  role          Role      @default(STAFF)
+  isActive      Boolean   @default(true)    // For tracking active status
+  isEnabled     Boolean   @default(true)    // For admin to disable staff accounts
+  lastLoginAt   DateTime?               // Optional tracking for last login time
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  farmersCreated Farmer[] @relation("CreatedByUser")
+  farmersUpdated Farmer[] @relation("UpdatedByUser")
+  @@map("users")
+}
+
+model Farmer {
+  id            Int              @id @default(autoincrement())
+  surveyNumber  String           @unique
+  name          String
+  relationship  Relationship
+  gender        Gender
+  community     String
+  aadharNumber  String           @unique
+  state         String
+  district      String
+  mandal        String
+  village       String
+  panchayath    String
+  dateOfBirth   DateTime
+  age           Int
+  contactNumber String
+  isActive      Boolean          @default(true)
+  createdById   Int
+  updatedById   Int
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  bankDetails   BankDetails?
+  documents     FarmerDocuments?
+  createdBy     User             @relation("CreatedByUser", fields: [createdById], references: [id])
+  updatedBy     User             @relation("UpdatedByUser", fields: [updatedById], references: [id])
+  fields        Field[]
+  @@map("farmers")
+}
+
+model FarmerDocuments {
+  id            Int      @id @default(autoincrement())
+  profilePicUrl String
+  aadharDocUrl  String
+  bankDocUrl    String
+  farmerId      Int      @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  farmer        Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  @@map("farmer_documents")
+}
+
+model BankDetails {
+  id            Int      @id @default(autoincrement())
+  ifscCode      String
+  bankName      String
+  branchName    String
+  accountNumber String
+  address       String
+  bankCode      String
+  farmerId      Int      @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  farmer        Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  @@map("bank_details")
+}
+
+model Field {
+  id              Int      @id @default(autoincrement())
+  areaHa          Float
+  yieldEstimate   Float
+  location        Json
+  landDocumentUrl String
+  farmerId        Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  farmer          Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  @@map("fields")
+}
