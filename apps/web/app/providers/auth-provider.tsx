@@ -1,6 +1,8 @@
 'use client';
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { clearSidebarCache } from '../(dashboard)/farmers/lib/sidebar-cache';
 
 interface User {
 	id: number;
@@ -38,14 +40,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 						'Content-Type': 'application/json',
 					},
 				});
-				
+
 				if (response.ok) {
 					const data = await response.json();
 					console.log('Data from server of user: ', data);
 					setUser(data.user);
 				} else {
 					console.error('Failed to fetch user: ', response.statusText);
-					// If unauthorized, redirect to login
 					if (response.status === 401) {
 						router.push('/login');
 					}
@@ -66,7 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				method: 'POST',
 				credentials: 'include',
 			});
+
 			setUser(null);
+
+			clearSidebarCache();
+
 			router.push('/login');
 		} catch (error) {
 			console.error('Failed to sign out:', error);

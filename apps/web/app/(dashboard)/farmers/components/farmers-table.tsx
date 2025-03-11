@@ -4,7 +4,6 @@ import { flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { columns, defaultVisibleColumns } from '../lib/columns';
 import { ColumnFilter } from './column-filter';
-import { Farmer } from '@chaya/shared';
 import { useState, useEffect } from 'react';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { useAuth } from '@/app/providers/auth-provider';
@@ -25,24 +24,35 @@ import {
 	AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
 import { toast } from 'sonner';
+import { useFarmersCache } from '../context/farmer-cache-context';
 import { FarmerWithRelations } from '../lib/types';
 
 interface FarmersTableProps {
-	farmers: FarmerWithRelations[];
+	query: string;
+	currentPage: number;
 }
-export default function FarmersTable({ farmers }: FarmersTableProps) {
+
+export default function FarmersTable({ query, currentPage }: FarmersTableProps) {
 	const { user } = useAuth();
 	const isAdmin = user?.role === 'ADMIN';
+	const { fetchFarmers, prefetchPages } = useFarmersCache();
 
-	const [viewingFarmer, setViewingFarmer] = useState<Farmer | null>(null);
-	const [editingFarmer, setEditingFarmer] = useState<Farmer | null>(null);
+	// State for farmers data
+	const [farmers, setFarmers] = useState<FarmerWithRelations[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	// State for dialogs
+	const [viewingFarmer, setViewingFarmer] = useState<FarmerWithRelations | null>(null);
+	const [editingFarmer, setEditingFarmer] = useState<FarmerWithRelations | null>(null);
 	const [showViewDialog, setShowViewDialog] = useState(false);
 	const [showEditDialog, setShowEditDialog] = useState(false);
 	const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 
+	// State for row selection (admin only)
 	const [rowSelection, setRowSelection] = useState({});
 
+	// State for column visibility
 	const [columnVisibility, setColumnVisibility] = useState(() => {
 		const initialVisibility: Record<string, boolean> = {};
 
@@ -53,6 +63,34 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 		return initialVisibility;
 	});
 
+	// Fetch data with caching
+	useEffect(() => {
+		async function loadData() {
+			setLoading(true);
+			try {
+				// Fetch current page
+				const data = await fetchFarmers(currentPage, query);
+				setFarmers(data);
+
+				// Prefetch adjacent pages
+				const pagesToPrefetch = [];
+				if (currentPage > 1) pagesToPrefetch.push(currentPage - 1);
+				if (currentPage < 100) pagesToPrefetch.push(currentPage + 1); // Arbitrary upper limit
+				if (pagesToPrefetch.length > 0) {
+					prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
+				}
+			} catch (error) {
+				console.error('Error fetching farmers:', error);
+				toast.error("Failed to fetch farmers' data.");
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		loadData();
+	}, [fetchFarmers, prefetchPages, currentPage, query]);
+
+	// Create table instance
 	const table = useReactTable({
 		data: farmers,
 		columns,
@@ -70,18 +108,21 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 		getPaginationRowModel: getPaginationRowModel(),
 	});
 
-	const handleViewDetails = (farmer: Farmer) => {
+	// Handle view details
+	const handleViewDetails = (farmer: FarmerWithRelations) => {
 		setViewingFarmer(farmer);
 		setShowViewDialog(true);
 	};
 
-	const handleEditFarmer = (farmer: Farmer) => {
+	// Handle edit farmer (admin only)
+	const handleEditFarmer = (farmer: FarmerWithRelations) => {
 		if (isAdmin) {
 			setEditingFarmer(farmer);
 			setShowEditDialog(true);
 		}
 	};
 
+	// Handle bulk delete
 	const handleBulkDelete = async () => {
 		setIsDeleting(true);
 		try {
@@ -93,7 +134,7 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 				.filter((id): id is number => id !== null);
 
 			if (selectedFarmerIds.length === 0) {
-				toast('No valid farmers selected for deletion.');
+				toast.error('No farmers selected for deletion.');
 				setShowBulkDeleteDialog(false);
 				return;
 			}
@@ -104,20 +145,20 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 				toast('Farmers deleted successfully.');
 				setRowSelection({});
 			} else {
-				toast(result.error || "Couldn't delete farmers try again.");
+				toast.error('Failed to delete farmers.');
 			}
 
 			setShowBulkDeleteDialog(false);
 		} catch (error) {
 			console.error('Error bulk deleting farmers:', error);
-			toast("Couldn't delete farmers try again.");
+			toast.error('Failed to delete farmers.');
 		} finally {
 			setIsDeleting(false);
 		}
 	};
 
 	useEffect(() => {
-		const handleViewFarmerEvent = (e: CustomEvent<{ farmer: Farmer }>) => {
+		const handleViewFarmerEvent = (e: CustomEvent<{ farmer: FarmerWithRelations }>) => {
 			handleViewDetails(e.detail.farmer);
 		};
 
@@ -129,6 +170,31 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 	}, []);
 
 	const selectedCount = Object.keys(rowSelection).length;
+
+	if (loading && farmers.length === 0) {
+		return (
+			<div className="mt-6 space-y-4">
+				<div className="flex justify-between items-center">
+					<div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+					<div className="w-28 h-8 bg-gray-200 rounded animate-pulse"></div>
+				</div>
+				<div className="rounded-md border">
+					<div className="h-12 border-b bg-secondary px-4 flex items-center">
+						{Array.from({ length: 6 }).map((_, i) => (
+							<div key={i} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
+						))}
+					</div>
+					{Array.from({ length: 10 }).map((_, i) => (
+						<div key={i} className="border-b px-4 py-4 flex items-center">
+							{Array.from({ length: 6 }).map((_, j) => (
+								<div key={j} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
+							))}
+						</div>
+					))}
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="mt-6 space-y-4">
@@ -172,7 +238,7 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 							) : (
 								<TableRow>
 									<TableCell colSpan={columns.length} className="h-24 text-center">
-										No farmers found.
+										{loading ? 'Loading...' : 'No farmers found.'}
 									</TableCell>
 								</TableRow>
 							)}
@@ -181,10 +247,13 @@ export default function FarmersTable({ farmers }: FarmersTableProps) {
 				</ScrollArea>
 			</div>
 
+			{/* Farmer Details Dialog */}
 			{viewingFarmer && <FarmerDetailsDialog farmer={viewingFarmer} open={showViewDialog} onOpenChange={setShowViewDialog} />}
 
+			{/* Farmer Edit Dialog - Admin Only */}
 			{isAdmin && editingFarmer && <FarmerFormDialog mode="edit" farmer={editingFarmer} open={showEditDialog} onOpenChange={setShowEditDialog} />}
 
+			{/* Bulk Delete Confirmation Dialog */}
 			<AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
 				<AlertDialogContent>
 					<AlertDialogHeader>

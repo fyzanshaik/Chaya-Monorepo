@@ -3,8 +3,8 @@ import FarmersHeader from './components/farmers-header';
 import Search from './components/search';
 import FarmersTable from './components/farmers-table';
 import Pagination from './components/pagination';
-import { getFarmers, getFarmerPages } from './lib/data';
 import Loading from './loading';
+import { FarmersCacheProvider } from './context/farmer-cache-context';
 
 interface PageProps {
 	searchParams?: {
@@ -13,31 +13,37 @@ interface PageProps {
 	};
 }
 
-export default async function FarmersPage({ searchParams }: PageProps) {
-	const { query = '', page = '1' } = (await searchParams) || {};
-	const currentPage = Number(page);
-
-	// Fetch data and total pages count
-	const farmers = await getFarmers({ query, page: currentPage });
-	const totalPages = await getFarmerPages(query);
+export default function FarmersPage({ searchParams }: PageProps) {
+	const query = searchParams?.query || '';
+	const currentPage = Number(searchParams?.page) || 1;
 
 	return (
-		<div className="w-full space-y-6">
-			{/* Header with title and action buttons */}
-			<FarmersHeader />
+		<FarmersCacheProvider>
+			<div className="w-full space-y-6">
+				<FarmersHeader />
 
-			{/* Search and filter section */}
-			<div className="flex items-center justify-between gap-2">
-				<Search placeholder="Search by name, aadhar, survey number..." />
+				<div className="flex items-center justify-between gap-2">
+					<Search placeholder="Search by name, aadhar, survey number..." />
+				</div>
+
+				<Suspense key={query + currentPage.toString()} fallback={<Loading />}>
+					<FarmersTableWithCache query={query} currentPage={currentPage} />
+				</Suspense>
 			</div>
-
-			{/* Table with suspense fallback */}
-			<Suspense key={query + currentPage.toString()} fallback={<Loading />}>
-				<FarmersTable farmers={farmers} />
-			</Suspense>
-
-			{/* Pagination */}
-			{totalPages > 0 && <Pagination totalPages={totalPages} />}
-		</div>
+		</FarmersCacheProvider>
 	);
+}
+
+async function FarmersTableWithCache({ query, currentPage }: { query: string; currentPage: number }) {
+	return (
+		<>
+			<FarmersTable query={query} currentPage={currentPage} />
+			<PaginationWithCache query={query} />
+		</>
+	);
+}
+
+// This component handles the pagination with our cache
+async function PaginationWithCache({ query }: { query: string }) {
+	return <Pagination query={query} />;
 }

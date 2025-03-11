@@ -6,15 +6,38 @@ import { Button } from '@workspace/ui/components/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { generatePagination } from '../lib/utils';
 import clsx from 'clsx';
+import { useEffect, useState } from 'react';
+import { useFarmersCache } from '../context/farmer-cache-context';
 
 interface PaginationProps {
-	totalPages: number;
+	query: string;
 }
 
-export default function Pagination({ totalPages }: PaginationProps) {
+export default function Pagination({ query }: PaginationProps) {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const currentPage = Number(searchParams.get('page') || 1);
+	const { fetchTotalPages } = useFarmersCache();
+
+	const [totalPages, setTotalPages] = useState(1);
+	const [loading, setLoading] = useState(true);
+
+	// Fetch total pages with caching
+	useEffect(() => {
+		async function loadTotalPages() {
+			setLoading(true);
+			try {
+				const pages = await fetchTotalPages(query);
+				setTotalPages(pages);
+			} catch (error) {
+				console.error('Error fetching total pages:', error);
+			} finally {
+				setLoading(false);
+			}
+		}
+
+		loadTotalPages();
+	}, [fetchTotalPages, query]);
 
 	// Generate the array of page numbers to display
 	const allPages = generatePagination(currentPage, totalPages);
@@ -25,6 +48,20 @@ export default function Pagination({ totalPages }: PaginationProps) {
 		params.set('page', pageNumber.toString());
 		return `${pathname}?${params.toString()}`;
 	};
+
+	if (loading) {
+		return (
+			<div className="flex justify-center mt-8 space-x-2">
+				<div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+				<div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+				<div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+			</div>
+		);
+	}
+
+	if (totalPages <= 1) {
+		return null;
+	}
 
 	return (
 		<div className="flex items-center justify-center gap-1 mt-8">
