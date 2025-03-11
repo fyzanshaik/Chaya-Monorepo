@@ -11,6 +11,7 @@ export function usePermissions() {
 		canExportData: user?.role === 'ADMIN',
 		canManageStaff: user?.role === 'ADMIN',
 		canViewDashboard: user?.role === 'ADMIN',
+		canViewFarmers: !!user, // Both admin and staff
 		canViewProcurement: !!user, // Both admin and staff
 		canViewProcessing: !!user, // Both admin and staff
 	};

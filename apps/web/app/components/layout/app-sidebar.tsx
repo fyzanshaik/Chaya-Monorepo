@@ -37,7 +37,7 @@ const navGroups = [
 				title: 'Farmers',
 				href: '/farmers',
 				icon: Leaf,
-				show: (permissions: { canViewDashboard: boolean }) => permissions.canViewDashboard,
+				show: (permissions: { canViewFarmers: boolean }) => permissions.canViewFarmers,
 			},
 			{
 				title: 'Procurement',

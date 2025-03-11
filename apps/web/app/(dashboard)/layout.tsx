@@ -6,6 +6,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@workspace/ui/com
 import { AppSidebar } from '../components/layout/app-sidebar';
 import { Separator } from '@workspace/ui/components/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage } from '@workspace/ui/components/breadcrumb';
+import { Toaster } from '@workspace/ui/components/sonner';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 	return (
@@ -27,6 +28,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 								</Breadcrumb>
 							</header>
 							<div className="flex flex-1 flex-col p-4 overflow-auto">{children}</div>
+							<Toaster />
 						</SidebarInset>
 					</SidebarProvider>
 				</div>
