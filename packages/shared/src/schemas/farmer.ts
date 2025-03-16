@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const farmerSchema = z.object({
 	id: z.number().optional(),
-	surveyNumber: z.string().min(1, 'Survey number is required'),
+	surveyNumber: z.string().optional(),
 	name: z.string().min(2, 'Name must be at least 2 characters'),
 	relationship: z.enum(['SELF', 'SPOUSE', 'CHILD', 'OTHER']),
 	gender: z.enum(['MALE', 'FEMALE', 'OTHER']),
@@ -38,8 +38,12 @@ export const fieldSchema = z.object({
 	areaHa: z.number().positive('Area must be a positive number'),
 	yieldEstimate: z.number().positive('Yield estimate must be a positive number'),
 	location: z.object({
-		latitude: z.number(),
-		longitude: z.number(),
+		lat: z.number(),
+		lng: z.number(),
+		accuracy: z.number(),
+		altitude: z.number().nullable(),
+		altitudeAccuracy: z.number().nullable(),
+		timestamp: z.number(),
 	}),
 	landDocumentUrl: z.string().url('Valid land document URL required'),
 });

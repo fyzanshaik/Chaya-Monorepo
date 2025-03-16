@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { prisma } from '@chaya/shared';
-import { verifyAdmin } from '../middlewares/auth';
+import { verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
 import { updateUserSchema } from '@chaya/shared';
 import { hashPassword } from '../lib/password';
 
@@ -111,8 +111,10 @@ async function userRoutes(fastify: FastifyInstance) {
 
 	// Toggle user enabled status (admin only)
 	fastify.patch('/:id/toggle-status', { preHandler: verifyAdmin }, async (request, reply) => {
+		const authRequest = request as AuthenticatedRequest;
+
 		try {
-			const { id } = request.params as { id: string };
+			const { id } = authRequest.params as { id: string };
 
 			// Find user
 			const user = await prisma.user.findUnique({

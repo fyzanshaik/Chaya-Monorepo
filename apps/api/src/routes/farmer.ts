@@ -3,6 +3,7 @@ import { prisma } from '@chaya/shared';
 import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
 import { createFarmerSchema, updateFarmerSchema, farmerQuerySchema } from '@chaya/shared';
 import { Prisma } from '@chaya/shared';
+import { generateSurveyNumber } from '../helper';
 
 async function farmerRoutes(fastify: FastifyInstance) {
 	fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
@@ -118,10 +119,11 @@ async function farmerRoutes(fastify: FastifyInstance) {
 					error: 'A farmer with this survey number or Aadhar number already exists',
 				});
 			}
-
+			const surveyNumber = await generateSurveyNumber();
 			const newFarmer = await prisma.farmer.create({
 				data: {
 					...farmer,
+					surveyNumber,
 					createdById: authRequest.user.id,
 					updatedById: authRequest.user.id,
 					bankDetails: {

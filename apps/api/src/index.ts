@@ -16,9 +16,9 @@ const fastify = Fastify({
 		transport: {
 			target: 'pino-pretty',
 			options: {
-				colorize: true, // Adds color to the logs
-				translateTime: 'SYS:standard', // Formats the timestamp
-				ignore: 'pid,hostname', // Removes unnecessary fields
+				colorize: true,
+				translateTime: 'SYS:standard',
+				ignore: 'pid,hostname',
 			},
 		},
 	},
@@ -28,6 +28,7 @@ async function registerPlugins() {
 	await fastify.register(cors, {
 		origin: process.env.FRONTEND_URL || 'http://localhost:3000',
 		credentials: true,
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 	});
 
 	await fastify.register(jwt, {

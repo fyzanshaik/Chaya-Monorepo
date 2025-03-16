@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 		'/farmers': 'Farmer Dashboard',
 		'/procurement': 'Procurement',
 		'/processing': 'Processing',
-		'/staff-management': 'Staff Management',
+		'/staff': 'Staff Management',
 	};
 
 	const breadCrumbLabel = breadcrumbMap[pathname] || 'Overview';

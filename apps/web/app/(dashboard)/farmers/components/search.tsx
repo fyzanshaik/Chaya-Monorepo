@@ -6,36 +6,28 @@ import { Input } from '@workspace/ui/components/input';
 import { Search as SearchIcon } from 'lucide-react';
 
 export default function Search({ placeholder = 'Search farmers...' }: { placeholder?: string }) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const { replace } = useRouter();
+	const searchParams = useSearchParams();
+	const pathname = usePathname();
+	const { replace } = useRouter();
 
-  // Handle search with debounce to avoid too many requests
-  const handleSearch = useDebouncedCallback((term: string) => {
-    const params = new URLSearchParams(searchParams);
-    
-    // Reset to first page when search term changes
-    params.set('page', '1');
-    
-    if (term) {
-      params.set('query', term);
-    } else {
-      params.delete('query');
-    }
-    
-    replace(`${pathname}?${params.toString()}`);
-  }, 300);
+	const handleSearch = useDebouncedCallback((term: string) => {
+		const params = new URLSearchParams(searchParams);
 
-  return (
-    <div className="relative w-full max-w-md">
-      <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        type="text"
-        placeholder={placeholder}
-        onChange={(e) => handleSearch(e.target.value)}
-        defaultValue={searchParams.get('query')?.toString()}
-        className="pl-9"
-      />
-    </div>
-  );
+		params.set('page', '1');
+
+		if (term) {
+			params.set('query', term);
+		} else {
+			params.delete('query');
+		}
+
+		replace(`${pathname}?${params.toString()}`);
+	}, 300);
+
+	return (
+		<div className="relative w-full max-w-md">
+			<SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+			<Input type="text" placeholder={placeholder} onChange={(e) => handleSearch(e.target.value)} defaultValue={searchParams.get('query')?.toString()} className="pl-9" />
+		</div>
+	);
 }

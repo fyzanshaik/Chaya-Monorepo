@@ -43,7 +43,6 @@ async function FarmersTableWithCache({ query, currentPage }: { query: string; cu
 	);
 }
 
-// This component handles the pagination with our cache
 async function PaginationWithCache({ query }: { query: string }) {
 	return <Pagination query={query} />;
 }
