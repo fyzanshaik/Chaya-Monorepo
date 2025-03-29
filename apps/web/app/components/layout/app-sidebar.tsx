@@ -1,182 +1,76 @@
-import * as React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, Users, Package, BarChart, LogOut, Leaf } from 'lucide-react';
-import { useAuth } from '@/app/providers/auth-provider';
-import { usePermissions } from '@/hooks/use-permission';
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-	Sidebar,
-	SidebarHeader,
-	SidebarContent,
-	SidebarGroup,
-	SidebarGroupLabel,
-	SidebarGroupContent,
-	SidebarMenu,
-	SidebarMenuItem,
-	SidebarMenuButton,
-	SidebarRail,
-	useSidebar,
-} from '@workspace/ui/components/sidebar';
-import { Button } from '@workspace/ui/components/button';
-import { ModeToggle } from '../theme-toggle';
-import { cn } from '@workspace/ui/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@workspace/ui/components/tooltip';
-import { Avatar, AvatarImage, AvatarFallback } from '@workspace/ui/components/avatar';
+  Home,
+  Users,
+  Package,
+  BarChart,
+  LogOut,
+  Leaf,
+  FileDown,
+} from "lucide-react";
+import { useAuth } from "@/app/providers/auth-provider";
+import { cn } from "@workspace/ui/lib/utils";
 
-const navGroups = [
-	{
-		title: 'Main Navigation',
-		items: [
-			{
-				title: 'Dashboard',
-				href: '/dashboard',
-				icon: Home,
-				show: (permissions: { canViewDashboard: boolean }) => permissions.canViewDashboard,
-			},
-			{
-				title: 'Farmers',
-				href: '/farmers',
-				icon: Leaf,
-				show: (permissions: { canViewFarmers: boolean }) => permissions.canViewFarmers,
-			},
-			{
-				title: 'Procurement',
-				href: '/procurement',
-				icon: Package,
-				show: (permissions: { canViewProcurement: boolean }) => permissions.canViewProcurement,
-			},
-			{
-				title: 'Processing',
-				href: '/processing',
-				icon: BarChart,
-				show: (permissions: { canViewProcessing: boolean }) => permissions.canViewProcessing,
-			},
-			{
-				title: 'Staff Management',
-				href: '/staff',
-				icon: Users,
-				show: (permissions: { canManageStaff: boolean }) => permissions.canManageStaff,
-			},
-		],
-	},
+const navItems = [
+  { title: "Dashboard", href: "/dashboard", icon: Home },
+  { title: "Farmer Details", href: "/farmers", icon: Leaf },
+  { title: "Procurement", href: "/procurement", icon: Package },
+  { title: "Processing", href: "/processing", icon: BarChart },
+  { title: "Staff Management", href: "/staff", icon: Users },
 ];
 
 export function AppSidebar({ ...props }) {
-	const pathname = usePathname();
-	const { signOut, user } = useAuth();
-	const permissions = usePermissions();
-	const { state } = useSidebar();
-	const isCollapsed = state === 'collapsed';
+  const pathname = usePathname();
+  const { signOut } = useAuth();
 
-	const isRouteActive = (href: string) => {
-		return pathname === href || pathname.startsWith(`${href}/`);
-	};
+  const isRouteActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
-	const getInitials = (email: string) => {
-		return email?.substring(0, 2).toUpperCase() || 'U';
-	};
+  return (
+    <div
+      className="flex flex-col h-full w-64 bg-white border-r shadow"
+      {...props}
+    >
+      <div className="flex items-center justify-center h-16 border-b">
+        <div className="text-xl font-bold text-green-600">Chaya</div>
+      </div>
 
-	return (
-		<Sidebar collapsible="icon" {...props} className="overflow-hidden">
-			<SidebarHeader className="p-2">
-				<div className={cn('flex items-center justify-between w-full transition-all', isCollapsed ? 'justify-center' : 'justify-between')}>
-					{!isCollapsed && <div className="text-xl font-bold truncate">Chaya App</div>}
-					<ModeToggle />
-				</div>
-			</SidebarHeader>
-			<SidebarContent className="overflow-y-auto">
-				<TooltipProvider delayDuration={0}>
-					{navGroups.map((group) => (
-						<SidebarGroup key={group.title} className="px-2">
-							{!isCollapsed && <SidebarGroupLabel className="px-2 truncate">{group.title}</SidebarGroupLabel>}
-							<SidebarGroupContent>
-								<SidebarMenu>
-									{group.items.map((item) =>
-										item.show(permissions) ? (
-											<SidebarMenuItem key={item.href} className="px-2">
-												{isCollapsed ? (
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<SidebarMenuButton asChild isActive={isRouteActive(item.href)}>
-																<Link
-																	href={item.href}
-																	className={cn(
-																		'flex items-center justify-center w-full p-2 rounded-md',
-																		isRouteActive(item.href) ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-sidebar-accent/50'
-																	)}
-																>
-																	<item.icon className="h-5 w-5" />
-																</Link>
-															</SidebarMenuButton>
-														</TooltipTrigger>
-														<TooltipContent side="right">{item.title}</TooltipContent>
-													</Tooltip>
-												) : (
-													<SidebarMenuButton asChild isActive={isRouteActive(item.href)}>
-														<Link
-															href={item.href}
-															className={cn(
-																'flex items-center w-full px-3 py-2 rounded-md',
-																isRouteActive(item.href) ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-sidebar-accent/50'
-															)}
-														>
-															<item.icon className="h-5 w-5 flex-shrink-0" />
-															<span className="ml-3 truncate">{item.title}</span>
-														</Link>
-													</SidebarMenuButton>
-												)}
-											</SidebarMenuItem>
-										) : null
-									)}
-								</SidebarMenu>
-							</SidebarGroupContent>
-						</SidebarGroup>
-					))}
-				</TooltipProvider>
-			</SidebarContent>
-			<SidebarRail />
-			<div className={cn('border-t p-2 transition-all', isCollapsed ? 'flex flex-col items-center' : 'p-4 space-y-4')}>
-				{isCollapsed ? (
-					<div className="flex flex-col items-center gap-4">
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Avatar className="h-8 w-8">
-									<AvatarFallback>{getInitials(user?.email ?? '')}</AvatarFallback>
-								</Avatar>
-							</TooltipTrigger>
-							<TooltipContent side="right">
-								<p>{user?.email}</p>
-								<p className="text-xs text-muted-foreground capitalize">{user?.role?.replace('_', ' ')}</p>
-							</TooltipContent>
-						</Tooltip>
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button variant="default" size="icon" onClick={signOut} className="h-8 w-8">
-									<LogOut className="h-4 w-4" />
-									<span className="sr-only">Sign Out</span>
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent side="right">Sign Out</TooltipContent>
-						</Tooltip>
-					</div>
-				) : (
-					<>
-						<div className="flex items-center space-x-3">
-							<Avatar className="h-8 w-8">
-								<AvatarFallback>{getInitials(user?.email ?? '')}</AvatarFallback>
-							</Avatar>
-							<div className="truncate">
-								<div className="text-sm font-medium truncate">{user?.email}</div>
-								<div className="text-xs text-muted-foreground capitalize truncate">{user?.role?.replace('_', ' ')}</div>
-							</div>
-						</div>
-						<Button variant="default" onClick={signOut} className="w-full">
-							<LogOut className="mr-2 h-4 w-4" />
-							<span className="truncate">Sign Out</span>
-						</Button>
-					</>
-				)}
-			</div>
-		</Sidebar>
-	);
+      <div className="flex flex-1 flex-col justify-between">
+        <nav className="p-4 space-y-2">
+          {navItems.map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded hover:bg-green-100",
+                isRouteActive(item.href)
+                  ? "bg-green-200 text-green-800"
+                  : "text-gray-700"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.title}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="p-4 border-t space-y-2">
+          <button className="flex items-center gap-2 px-4 py-2 text-purple-600 rounded hover:bg-purple-100 w-full">
+            <FileDown className="w-5 h-5" />
+            <span>Export Product Data</span>
+          </button>
+
+          <button
+            onClick={signOut}
+            className="flex items-center gap-2 px-4 py-2 text-red-600 rounded hover:bg-red-100 w-full"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Log Out</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
