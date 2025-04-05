@@ -34,12 +34,6 @@ export default function DashboardLayout({
             <SidebarProvider>
               <AppSidebar className="h-screen" />
               <div className="flex flex-col flex-1 overflow-hidden">
-                <header className="flex h-16 items-center justify-between px-4 border-b bg-white shadow">
-                  <div className="text-xl font-bold">Dashboard Analytics</div>
-                  <button className="px-4 py-2 text-white bg-purple-500 rounded hover:bg-purple-600">
-                    Export Data
-                  </button>
-                </header>
                 <div className="flex flex-1 flex-col p-4 overflow-auto bg-gray-100">
                   {children}
                 </div>

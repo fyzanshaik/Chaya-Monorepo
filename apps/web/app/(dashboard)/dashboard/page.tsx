@@ -36,7 +36,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold">Dashboard Analytics</h1>
+        <h1 className="text-2xl font-semibold">Farmer Details</h1>
         <p className="text-gray-600">
           Manage and track crop procurement information
         </p>
