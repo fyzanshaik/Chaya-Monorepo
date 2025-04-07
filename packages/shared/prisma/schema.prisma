@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   // url      = "postgresql://chayadb_owner:npg_tL9O7cgEKGaJ@ep-delicate-dream-a5pwfo3o-pooler.us-east-2.aws.neon.tech/chayadb?sslmode=require"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -26,7 +26,6 @@ enum Role {
   STAFF
 }
 
-
 model Ping {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -34,18 +33,18 @@ model Ping {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
-  password      String
-  name          String
-  role          Role      @default(STAFF)
-  isActive      Boolean   @default(true)    // For tracking active status
-  isEnabled     Boolean   @default(true)    // For admin to disable staff accounts
-  lastLoginAt   DateTime?               // Optional tracking for last login time
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  farmersCreated Farmer[] @relation("CreatedByUser")
-  farmersUpdated Farmer[] @relation("UpdatedByUser")
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  password       String
+  name           String
+  role           Role      @default(STAFF)
+  isActive       Boolean   @default(true) // For tracking active status
+  isEnabled      Boolean   @default(true) // For admin to disable staff accounts
+  lastLoginAt    DateTime? // Optional tracking for last login time
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  farmersCreated Farmer[]  @relation("CreatedByUser")
+  farmersUpdated Farmer[]  @relation("UpdatedByUser")
   @@map("users")
 }
 
@@ -75,6 +74,7 @@ model Farmer {
   createdBy     User             @relation("CreatedByUser", fields: [createdById], references: [id])
   updatedBy     User             @relation("UpdatedByUser", fields: [updatedById], references: [id])
   fields        Field[]
+  Procurement   Procurement[]
   @@map("farmers")
 }
 
@@ -116,4 +116,23 @@ model Field {
   updatedAt       DateTime @updatedAt
   farmer          Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
   @@map("fields")
+}
+
+model Procurement {
+  id           Int      @id @default(autoincrement())
+  farmerId     Int
+  crop         String
+  procuredForm String
+  speciality   String
+  quantity     Float
+  batchCode    String   @unique
+  date         DateTime
+  time         DateTime
+  lotNo        Int
+  procuredBy   String
+  vehicleNo    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  farmer Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  @@map("procurements")
 }
