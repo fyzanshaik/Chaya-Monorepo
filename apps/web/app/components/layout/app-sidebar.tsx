@@ -16,7 +16,7 @@ import { cn } from "@workspace/ui/lib/utils";
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Farmer Details", href: "/farmers", icon: Leaf },
-  { title: "Procurement", href: "/procurement", icon: Package },
+  { title: "Procurement", href: "/procurements", icon: Package },
   { title: "Processing", href: "/processing", icon: BarChart },
   { title: "Staff Management", href: "/staff", icon: Users },
 ];
