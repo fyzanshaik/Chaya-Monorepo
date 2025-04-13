@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import FarmersHeader from "./components/farmers-header";
+import ProcurementsHeader from "./components/procurements-header";
 import Search from "./components/search";
-import FarmersTable from "./components/farmers-table";
+import ProcurementsTable from "./components/procurements-table";
 import Pagination from "./components/pagination";
 import Loading from "./loading";
-import { FarmersCacheProvider } from "./context/farmer-cache-context";
+import { ProcurementsCacheProvider } from "./context/procurement-cache-context";
 
 interface PageProps {
   searchParams?: {
@@ -13,28 +13,28 @@ interface PageProps {
   };
 }
 
-export default async function FarmersPage({ searchParams }: PageProps) {
+export default async function ProcurementsPage({ searchParams }: PageProps) {
   const query = searchParams?.query || "";
   const currentPage = Number(searchParams?.page) || 1;
 
   return (
-    <FarmersCacheProvider>
+    <ProcurementsCacheProvider>
       <div className="space-y-6 p-4">
-        <FarmersHeader />
+        <ProcurementsHeader />
 
         <div className="flex items-center justify-between gap-2">
-          <Search placeholder="Enter farmer name, batch code, village" />
+          <Search placeholder="Enter batch code, crop, farmer name" />
         </div>
 
         <Suspense key={query + currentPage.toString()} fallback={<Loading />}>
-          <FarmersTableWithCache query={query} currentPage={currentPage} />
+          <ProcurementsTableWithCache query={query} currentPage={currentPage} />
         </Suspense>
       </div>
-    </FarmersCacheProvider>
+    </ProcurementsCacheProvider>
   );
 }
 
-async function FarmersTableWithCache({
+async function ProcurementsTableWithCache({
   query,
   currentPage,
 }: {
@@ -43,7 +43,7 @@ async function FarmersTableWithCache({
 }) {
   return (
     <>
-      <FarmersTable query={query} currentPage={currentPage} />
+      <ProcurementsTable query={query} currentPage={currentPage} />
       <PaginationWithCache query={query} />
     </>
   );

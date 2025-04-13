@@ -22,10 +22,10 @@ import { ColumnFilter } from "./column-filter";
 import { useState, useEffect } from "react";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { useAuth } from "@/app/providers/auth-provider";
-import { FarmerContextMenu } from "./farmer-context-menu";
-import { FarmerDetailsDialog } from "./farmer-details-dialog";
-import { FarmerFormDialog } from "./farmer-form-dialog";
-import { bulkDeleteFarmers } from "../lib/actions";
+import { ProcurementContextMenu } from "./procurement-context-menu";
+import { ProcurementDetailsDialog } from "./procurement-details-dialog";
+import { ProcurementFormDialog } from "./procurement-form-dialog";
+import { bulkDeleteProcurements } from "../lib/actions";
 import { Button } from "@workspace/ui/components/button";
 import { TrashIcon } from "lucide-react";
 import {
@@ -39,31 +39,33 @@ import {
   AlertDialogTitle,
 } from "@workspace/ui/components/alert-dialog";
 import { toast } from "sonner";
-import { useFarmersCache } from "../context/farmer-cache-context";
-import { FarmerWithRelations } from "../lib/types";
+import { useProcurementsCache } from "../context/procurement-cache-context";
+import type { ProcurementWithRelations } from "../lib/types";
 
-interface FarmersTableProps {
+interface ProcurementsTableProps {
   query: string;
   currentPage: number;
 }
 
-export default function FarmersTable({
+export default function ProcurementsTable({
   query,
   currentPage,
-}: FarmersTableProps) {
+}: ProcurementsTableProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  const { fetchFarmers, prefetchPages } = useFarmersCache();
+  const { fetchProcurements, prefetchPages } = useProcurementsCache();
 
-  // State for farmers data
-  const [farmers, setFarmers] = useState<FarmerWithRelations[]>([]);
+  // State for procurements data
+  const [procurements, setProcurements] = useState<ProcurementWithRelations[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
 
   // State for dialogs
-  const [viewingFarmer, setViewingFarmer] =
-    useState<FarmerWithRelations | null>(null);
-  const [editingFarmer, setEditingFarmer] =
-    useState<FarmerWithRelations | null>(null);
+  const [viewingProcurement, setViewingProcurement] =
+    useState<ProcurementWithRelations | null>(null);
+  const [editingProcurement, setEditingProcurement] =
+    useState<ProcurementWithRelations | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -89,8 +91,8 @@ export default function FarmersTable({
       setLoading(true);
       try {
         // Fetch current page
-        const data = await fetchFarmers(currentPage, query);
-        setFarmers(data);
+        const data = await fetchProcurements(currentPage, query);
+        setProcurements(data);
 
         // Prefetch adjacent pages
         const pagesToPrefetch = [];
@@ -104,19 +106,19 @@ export default function FarmersTable({
           );
         }
       } catch (error) {
-        console.error("Error fetching farmers:", error);
-        toast.error("Failed to fetch farmers' data.");
+        console.error("Error fetching procurements:", error);
+        toast.error("Failed to fetch procurement data.");
       } finally {
         setLoading(false);
       }
     }
 
     loadData();
-  }, [fetchFarmers, prefetchPages, currentPage, query]);
+  }, [fetchProcurements, prefetchPages, currentPage, query]);
 
   // Create table instance
   const table = useReactTable({
-    data: farmers,
+    data: procurements,
     columns,
     state: {
       columnVisibility,
@@ -133,15 +135,15 @@ export default function FarmersTable({
   });
 
   // Handle view details
-  const handleViewDetails = (farmer: FarmerWithRelations) => {
-    setViewingFarmer(farmer);
+  const handleViewDetails = (procurement: ProcurementWithRelations) => {
+    setViewingProcurement(procurement);
     setShowViewDialog(true);
   };
 
-  // Handle edit farmer (admin only)
-  const handleEditFarmer = (farmer: FarmerWithRelations) => {
+  // Handle edit procurement (admin only)
+  const handleEditProcurement = (procurement: ProcurementWithRelations) => {
     if (isAdmin) {
-      setEditingFarmer(farmer);
+      setEditingProcurement(procurement);
       setShowEditDialog(true);
     }
   };
@@ -150,62 +152,62 @@ export default function FarmersTable({
   const handleBulkDelete = async () => {
     setIsDeleting(true);
     try {
-      const selectedFarmerIds = Object.keys(rowSelection)
+      const selectedProcurementIds = Object.keys(rowSelection)
         .map(index => {
-          const idx = parseInt(index);
-          return idx >= 0 && idx < farmers.length && farmers[idx]
-            ? farmers[idx].id
+          const idx = Number.parseInt(index);
+          return idx >= 0 && idx < procurements.length && procurements[idx]
+            ? procurements[idx].id
             : null;
         })
         .filter((id): id is number => id !== null);
 
-      if (selectedFarmerIds.length === 0) {
-        toast.error("No farmers selected for deletion.");
+      if (selectedProcurementIds.length === 0) {
+        toast.error("No procurements selected for deletion.");
         setShowBulkDeleteDialog(false);
         return;
       }
 
-      const result = await bulkDeleteFarmers(selectedFarmerIds);
+      const result = await bulkDeleteProcurements(selectedProcurementIds);
 
       if (result.success) {
-        toast("Farmers deleted successfully.");
+        toast("Procurements deleted successfully.");
         setRowSelection({});
       } else {
-        toast.error("Failed to delete farmers.");
+        toast.error("Failed to delete procurements.");
       }
 
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error("Error bulk deleting farmers:", error);
-      toast.error("Failed to delete farmers.");
+      console.error("Error bulk deleting procurements:", error);
+      toast.error("Failed to delete procurements.");
     } finally {
       setIsDeleting(false);
     }
   };
 
   useEffect(() => {
-    const handleViewFarmerEvent = (
-      e: CustomEvent<{ farmer: FarmerWithRelations }>
+    const handleViewProcurementEvent = (
+      e: CustomEvent<{ procurement: ProcurementWithRelations }>
     ) => {
-      handleViewDetails(e.detail.farmer);
+      handleViewDetails(e.detail.procurement);
     };
 
     document.addEventListener(
-      "viewFarmer",
-      handleViewFarmerEvent as EventListener
+      "viewProcurement",
+      handleViewProcurementEvent as EventListener
     );
 
     return () => {
       document.removeEventListener(
-        "viewFarmer",
-        handleViewFarmerEvent as EventListener
+        "viewProcurement",
+        handleViewProcurementEvent as EventListener
       );
     };
   }, []);
 
   const selectedCount = Object.keys(rowSelection).length;
 
-  if (loading && farmers.length === 0) {
+  if (loading && procurements.length === 0) {
     return (
       <div className="mt-6 space-y-4">
         <div className="flex justify-between items-center">
@@ -281,10 +283,10 @@ export default function FarmersTable({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map(row => (
-                  <FarmerContextMenu
+                  <ProcurementContextMenu
                     key={row.id}
-                    farmer={row.original}
-                    onEdit={() => handleEditFarmer(row.original)}
+                    procurement={row.original}
+                    onEdit={() => handleEditProcurement(row.original)}
                     isAdmin={isAdmin}
                   >
                     <TableRow
@@ -300,7 +302,7 @@ export default function FarmersTable({
                         </TableCell>
                       ))}
                     </TableRow>
-                  </FarmerContextMenu>
+                  </ProcurementContextMenu>
                 ))
               ) : (
                 <TableRow>
@@ -308,7 +310,7 @@ export default function FarmersTable({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {loading ? "Loading..." : "No farmers found."}
+                    {loading ? "Loading..." : "No procurements found."}
                   </TableCell>
                 </TableRow>
               )}
@@ -317,20 +319,20 @@ export default function FarmersTable({
         </ScrollArea>
       </div>
 
-      {/* Farmer Details Dialog */}
-      {viewingFarmer && (
-        <FarmerDetailsDialog
-          farmer={viewingFarmer}
+      {/* Procurement Details Dialog */}
+      {viewingProcurement && (
+        <ProcurementDetailsDialog
+          procurement={viewingProcurement}
           open={showViewDialog}
           onOpenChange={setShowViewDialog}
         />
       )}
 
-      {/* Farmer Edit Dialog - Admin Only */}
-      {isAdmin && editingFarmer && (
-        <FarmerFormDialog
+      {/* Procurement Edit Dialog - Admin Only */}
+      {isAdmin && editingProcurement && (
+        <ProcurementFormDialog
           mode="edit"
-          farmer={editingFarmer}
+          procurement={editingProcurement}
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
         />
@@ -344,11 +346,11 @@ export default function FarmersTable({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Are you sure you want to delete these farmers?
+              Are you sure you want to delete these procurements?
             </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete{" "}
-              {selectedCount} farmer records and all their associated data.
+              {selectedCount} procurement records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -3,10 +3,10 @@
 import { Button } from "@workspace/ui/components/button";
 import { FileDown, PlusCircle } from "lucide-react";
 import { useState } from "react";
-import { FarmerFormDialog } from "./farmer-form-dialog";
+import { ProcurementFormDialog } from "./procurement-form-dialog";
 import { useAuth } from "@/app/providers/auth-provider";
 
-export default function FarmersHeader() {
+export default function ProcurementsHeader() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
 
@@ -19,8 +19,10 @@ export default function FarmersHeader() {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Farmer Dashboard</h1>
-        <p className="text-gray-600">Manage and track farmer information</p>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Procurement Dashboard
+        </h1>
+        <p className="text-gray-600">Manage and track crop procurements</p>
       </div>
 
       <div className="flex items-center gap-2">
@@ -42,10 +44,10 @@ export default function FarmersHeader() {
           className="h-9 bg-green-500 text-white hover:bg-green-600"
         >
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Farmer
+          Add Procurement
         </Button>
 
-        <FarmerFormDialog
+        <ProcurementFormDialog
           mode="add"
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
