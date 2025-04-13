@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useProcurementFormStore } from "@/app/stores/procurement-form";
@@ -71,21 +71,20 @@ export function DetailsSection() {
     formState: { errors },
   } = methods;
 
-  // Merge with the existing form
+  const watchedValues = useWatch({
+    control,
+  });
+
   useEffect(() => {
     if (form) {
-      const currentValues = form.getValues();
-      const detailsValues = methods.getValues();
-
-      // Update the main form with the details values
-      Object.keys(detailsValues).forEach(key => {
+      Object.keys(watchedValues).forEach(key => {
         form.setValue(
           key as any,
-          detailsValues[key as keyof DetailsFormValues]
+          watchedValues[key as keyof DetailsFormValues]
         );
       });
     }
-  }, [form, methods]);
+  }, [form, watchedValues]);
 
   return (
     <Card>
