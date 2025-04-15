@@ -2,7 +2,6 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import cookie from "@fastify/cookie";
-import { createRouteHandler } from "uploadthing/fastify";
 
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/users";

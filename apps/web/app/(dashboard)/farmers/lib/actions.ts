@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import { Gender, Relationship, prisma } from '@chaya/shared';
 import { ITEMS_PER_PAGE } from './constants';
 

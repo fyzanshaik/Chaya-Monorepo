@@ -1,12 +1,17 @@
-// app/api/uploadthing/core.ts
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 
-// Use the FileRouter feature
-const f = createUploadthing();
+const f = createUploadthing({
+	errorFormatter: (err) => {
+		console.log("Error uploading file", err.message)
+		console.log("- Above error caused this: ", err.cause)
+		return {
+			message : err.message
+		}
+	},
+});
 
-// Define the routes based on the documentation
 export const ourFileRouter: FileRouter = {
-	// Profile picture route - image only, 500KB max
+	
 	profilePicture: f({ image: { maxFileSize: '1024KB', maxFileCount: 1 } })
 		.middleware(async () => {
 			console.log('Middleware running for profilePicture');
@@ -14,10 +19,9 @@ export const ourFileRouter: FileRouter = {
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
 			console.log('Profile picture upload complete', file.url);
-			return { url: file.url };
+			return { url: file.ufsUrl };
 		}),
 
-	// Aadhar document route - PDF or image, 500KB max
 	aadharDocument: f({
 		image: { maxFileSize: '1024KB', maxFileCount: 1 },
 		pdf: { maxFileSize: '1024KB', maxFileCount: 1 },
@@ -27,11 +31,10 @@ export const ourFileRouter: FileRouter = {
 			return { timestamp: Date.now() };
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('Aadhar document upload complete', file.url);
-			return { url: file.url };
+			console.log('Aadhar document upload complete', file.ufsUrl);
+			return { url: file.ufsUrl };
 		}),
 
-	// Bank document route - PDF or image, 500KB max
 	bankDocument: f({
 		image: { maxFileSize: '1024KB', maxFileCount: 1 },
 		pdf: { maxFileSize: '1024KB', maxFileCount: 1 },
@@ -41,11 +44,10 @@ export const ourFileRouter: FileRouter = {
 			return { timestamp: Date.now() };
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('Bank document upload complete', file.url);
-			return { url: file.url };
+			console.log('Bank document upload complete', file.ufsUrl);
+			return { url: file.ufsUrl };
 		}),
 
-	// Land document route - PDF or image, 500KB max
 	landDocument: f({
 		image: { maxFileSize: '1024KB', maxFileCount: 1 },
 		pdf: { maxFileSize: '1024KB', maxFileCount: 1 },
@@ -55,8 +57,8 @@ export const ourFileRouter: FileRouter = {
 			return { timestamp: Date.now() };
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('Land document upload complete', file.url);
-			return { url: file.url };
+			console.log('Land document upload complete', file.ufsUrl);
+			return { url: file.ufsUrl };
 		}),
 } satisfies FileRouter;
 

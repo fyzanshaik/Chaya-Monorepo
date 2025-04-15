@@ -111,8 +111,9 @@ async function userRoutes(fastify: FastifyInstance) {
 
 	// Toggle user enabled status (admin only)
 	fastify.patch('/:id/toggle-status', { preHandler: verifyAdmin }, async (request, reply) => {
+		// console.log('Toggle user status request:', request.body);
 		const authRequest = request as AuthenticatedRequest;
-
+		// console.log(authRequest)
 		try {
 			const { id } = authRequest.params as { id: string };
 

@@ -138,7 +138,7 @@ async function authRoutes(fastify: FastifyInstance) {
 	fastify.get('/me', { preHandler: authenticate }, async (request, reply) => {
 		try {
 			const authRequest = request as AuthenticatedRequest;
-			console.log('Auth request: ', authRequest.user);
+			// console.log('Auth request: ', authRequest.user);
 			const user = await prisma.user.findUnique({
 				where: { id: authRequest.user.id },
 			});
