@@ -7,6 +7,7 @@
 		"dev": "next dev --turbopack",
 		"build": "next build",
 		"start": "next start",
+		"run-b": "next build && next start",
 		"lint": "next lint",
 		"lint:fix": "next lint --fix",
 		"typecheck": "tsc --noEmit"
