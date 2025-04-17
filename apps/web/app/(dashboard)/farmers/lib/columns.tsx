@@ -3,7 +3,7 @@ import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Button } from '@workspace/ui/components/button';
 import { formatDate } from './utils';
 import { Farmer } from '@chaya/shared';
-import { Eye } from 'lucide-react';
+import { Eye, FileUser } from 'lucide-react';
 
 export const columns: ColumnDef<Farmer>[] = [
 	{
@@ -75,7 +75,7 @@ export const columns: ColumnDef<Farmer>[] = [
 	},
 	{
 		id: 'actions',
-		header: 'Actions',
+		header: 'Documents',
 		cell: ({ row }) => {
 			const farmer = row.original;
 			return (
@@ -93,7 +93,7 @@ export const columns: ColumnDef<Farmer>[] = [
 						}}
 					>
 						<span className="sr-only">View details</span>
-						<Eye className="h-4 w-4" />
+						<FileUser className="h-4 w-4" />
 					</Button>
 				</div>
 			);
