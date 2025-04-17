@@ -1,3 +1,5 @@
+import { Gender, Relationship } from '@prisma/client';
+
 /**
  * Format a date object or string to a localized date string
  */
@@ -40,13 +42,11 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
 	// another ellipsis, and the last page
 	return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
 };
-
-// Define types for form data
 export interface FarmerFormData {
 	surveyNumber: string;
 	name: string;
-	relationship: any; // Use specific type from your shared package
-	gender: any; // Use specific type from your shared package
+	relationship: Relationship;
+	gender: Gender;
 	community: string;
 	aadharNumber: string;
 	state: string;
@@ -73,7 +73,7 @@ export interface FarmerFormData {
 	fields?: {
 		areaHa: number;
 		yieldEstimate: number;
-		location: Record<string, any>;
+		location: Record<string, object>;
 		landDocumentUrl: string;
 	}[];
 }

@@ -1,13 +1,13 @@
 'use client';
 
-import { Farmer } from '@chaya/shared';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@workspace/ui/components/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { formatDate } from '../lib/utils';
 import { ExternalLink } from 'lucide-react';
+import { FarmerWithRelations } from '../lib/types';
 
 interface FarmerDetailsDialogProps {
-	farmer: Farmer;
+	farmer: FarmerWithRelations;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }

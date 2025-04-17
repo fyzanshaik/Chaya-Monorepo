@@ -1,4 +1,3 @@
-// app/staff/components/edit-staff-dialog.tsx
 'use client';
 
 import { useState } from 'react';
@@ -20,7 +19,6 @@ interface User {
 	isEnabled: boolean;
 }
 
-// Form schema for validation
 const formSchema = z.object({
 	name: z.string().min(2, 'Name must be at least 2 characters'),
 	email: z.string().email('Invalid email address'),
@@ -49,7 +47,6 @@ export function EditStaffDialog({ user, open, onOpenChange, onUserUpdated }: Edi
 	});
 
 	const onSubmit = async (data: FormValues) => {
-		// Only include password if it's provided
 		const updateData = {
 			name: data.name,
 			email: data.email,
@@ -63,7 +60,7 @@ export function EditStaffDialog({ user, open, onOpenChange, onUserUpdated }: Edi
 			onUserUpdated();
 			onOpenChange(false);
 		} catch (error: any) {
-			toast.error("Failed to update staff member's details");
+			toast.error("Failed to update staff member's details", error);
 		} finally {
 			setIsSubmitting(false);
 		}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { getFarmers, getFarmerPages } from '../lib/actions';
 import { FarmerWithRelations } from '../lib/types';
 
@@ -21,7 +21,7 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 	const [totalPages, setTotalPages] = useState<Record<string, number>>({});
 
 	// Create a key from page and query
-	const createKey = (page: number, query: string) => `${query}:${page}`;
+	const createKey = useCallback((page: number, query: string) => `${query}:${page}`, []);
 
 	// Fetch farmers with caching
 	const fetchFarmers = useCallback(

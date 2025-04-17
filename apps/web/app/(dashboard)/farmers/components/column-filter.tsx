@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@workspace/ui/components/button';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@workspace/ui/components/dropdown-menu';
 import { SlidersHorizontal } from 'lucide-react';
-import { columns } from '../lib/columns';
 import { Table } from '@tanstack/react-table';
 
 interface ColumnFilterProps<TData> {
