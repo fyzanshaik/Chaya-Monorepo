@@ -15,7 +15,7 @@ export function DocumentsSection() {
 					name="documents.profilePicUrl"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Profile Picture</FormLabel>
+							{/* <FormLabel>Profile Picture</FormLabel> */}
 							<FormControl>
 								<DocumentUploader endpoint="profilePicture" label="Profile Picture" value={field.value} onChange={field.onChange} accept="image/*" />
 							</FormControl>
@@ -29,7 +29,7 @@ export function DocumentsSection() {
 					name="documents.aadharDocUrl"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Aadhar Document</FormLabel>
+							{/* <FormLabel>Aadhar Document</FormLabel> */}
 							<FormControl>
 								<DocumentUploader endpoint="aadharDocument" label="Aadhar Document" value={field.value} onChange={field.onChange} accept="image/*,.pdf" />
 							</FormControl>
@@ -43,7 +43,7 @@ export function DocumentsSection() {
 					name="documents.bankDocUrl"
 					render={({ field }) => (
 						<FormItem>
-							<FormLabel>Bank Document</FormLabel>
+							{/* <FormLabel>Bank Document</FormLabel> */}
 							<FormControl>
 								<DocumentUploader endpoint="bankDocument" label="Bank Document" value={field.value} onChange={field.onChange} accept="image/*,.pdf" />
 							</FormControl>

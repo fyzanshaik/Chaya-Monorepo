@@ -11,34 +11,29 @@ interface FarmersCacheContextType {
 	fetchTotalPages: (query: string) => Promise<number>;
 	clearCache: () => void;
 	prefetchPages: (startPage: number, endPage: number, query: string) => Promise<void>;
+	refreshCurrentPage: (page: number, query: string) => Promise<FarmerWithRelations[]>;
 }
 
 const FarmersCacheContext = createContext<FarmersCacheContextType | undefined>(undefined);
 
 export function FarmersCacheProvider({ children }: { children: React.ReactNode }) {
-	// Cache state
 	const [farmers, setFarmers] = useState<Record<string, FarmerWithRelations[]>>({});
 	const [totalPages, setTotalPages] = useState<Record<string, number>>({});
 
-	// Create a key from page and query
 	const createKey = useCallback((page: number, query: string) => `${query}:${page}`, []);
 
-	// Fetch farmers with caching
 	const fetchFarmers = useCallback(
 		async (page: number, query: string): Promise<FarmerWithRelations[]> => {
 			const key = createKey(page, query);
 
-			// Return cached data if available
 			if (farmers[key]) {
 				console.log(`Using cached data for page ${page}, query "${query}"`);
 				return farmers[key];
 			}
 
-			// Fetch new data
 			console.log(`Fetching page ${page}, query "${query}" from server`);
 			const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
 
-			// Update cache
 			setFarmers((prev) => ({
 				...prev,
 				[key]: data,
@@ -46,21 +41,39 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 
 			return data;
 		},
-		[farmers]
+		[farmers, createKey]
 	);
 
-	// Fetch total pages with caching
+	const refreshCurrentPage = useCallback(
+		async (page: number, query: string): Promise<FarmerWithRelations[]> => {
+			const key = createKey(page, query);
+
+			console.log(`Force refreshing page ${page}, query "${query}" from server`);
+			try {
+				const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
+
+				setFarmers((prev) => ({
+					...prev,
+					[key]: data,
+				}));
+				fetchTotalPages(query);
+
+				return data;
+			} catch (error) {
+				console.error(`Error refreshing page ${page}:`, error);
+				throw error;
+			}
+		},
+		[createKey]
+	);
 	const fetchTotalPages = useCallback(
 		async (query: string): Promise<number> => {
-			// Return cached data if available
 			if (totalPages[query] !== undefined) {
 				return totalPages[query];
 			}
 
-			// Fetch new data
 			const pages = await getFarmerPages(query);
 
-			// Update cache
 			setTotalPages((prev) => ({
 				...prev,
 				[query]: pages,
@@ -71,7 +84,6 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 		[totalPages]
 	);
 
-	// Prefetch multiple pages
 	const prefetchPages = useCallback(
 		async (startPage: number, endPage: number, query: string) => {
 			console.log(`Prefetching pages ${startPage}-${endPage} for query "${query}"`);
@@ -79,7 +91,6 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 			for (let page = startPage; page <= endPage; page++) {
 				const key = createKey(page, query);
 
-				// Skip if already cached
 				if (farmers[key]) continue;
 
 				try {
@@ -96,13 +107,11 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 		[farmers, createKey]
 	);
 
-	// Clear the cache
 	const clearCache = useCallback(() => {
 		setFarmers({});
 		setTotalPages({});
 	}, []);
 
-	// Context value
 	const value = {
 		farmers,
 		totalPages,
@@ -110,6 +119,7 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 		fetchTotalPages,
 		clearCache,
 		prefetchPages,
+		refreshCurrentPage,
 	};
 
 	return <FarmersCacheContext.Provider value={value}>{children}</FarmersCacheContext.Provider>;

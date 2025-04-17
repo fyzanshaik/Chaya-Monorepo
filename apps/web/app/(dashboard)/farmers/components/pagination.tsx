@@ -22,7 +22,6 @@ export default function Pagination({ query }: PaginationProps) {
 	const [totalPages, setTotalPages] = useState(1);
 	const [loading, setLoading] = useState(true);
 
-	// Fetch total pages with caching
 	useEffect(() => {
 		async function loadTotalPages() {
 			setLoading(true);
@@ -39,10 +38,8 @@ export default function Pagination({ query }: PaginationProps) {
 		loadTotalPages();
 	}, [fetchTotalPages, query]);
 
-	// Generate the array of page numbers to display
 	const allPages = generatePagination(currentPage, totalPages);
 
-	// Create a new URL with the updated page parameter
 	const createPageURL = (pageNumber: string | number) => {
 		const params = new URLSearchParams(searchParams);
 		params.set('page', pageNumber.toString());

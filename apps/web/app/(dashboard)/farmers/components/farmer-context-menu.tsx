@@ -37,6 +37,9 @@ export function FarmerContextMenu({ children, farmer, onEdit, isAdmin }: FarmerC
 				toast.success('Farmer deleted', {
 					description: `${farmer.name} has been successfully deleted.`,
 				});
+
+				const dataChangedEvent = new CustomEvent('farmerDataChanged');
+				document.dispatchEvent(dataChangedEvent);
 			} else {
 				toast.error('Error', {
 					description: result.error || 'Failed to delete farmer.',
@@ -80,7 +83,6 @@ export function FarmerContextMenu({ children, farmer, onEdit, isAdmin }: FarmerC
 				</ContextMenuContent>
 			</ContextMenu>
 
-			{/* Delete Confirmation Dialog */}
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
