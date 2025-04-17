@@ -5,8 +5,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "nodemon --exec bun src/index.ts",
-		"build": "tsc",
-		"start": "bun dist/index.js",
+		"build": "bun build src/index.ts --outdir dist",
+		"start": "bun run src/index.ts",
 		"lint": "eslint .",
 		"check-types": "tsc --noEmit"
 	},
