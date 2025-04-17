@@ -118,21 +118,60 @@ model Field {
   @@map("fields")
 }
 
+model Processing {
+  id                Int       @id @default(autoincrement())
+  procurementId     Int       // Links to the Procurement model
+  lotNo             Int
+  batchNo           String    @unique
+  crop              String
+  procuredForm      String
+  quantity          Float
+  speciality        String
+  processMethod     String    // wet or dry
+  dateOfProcessing  DateTime
+  dateOfCompletion  DateTime?
+  quantityAfterProcess Float?
+  doneBy            String
+  status            String    @default("IN_PROGRESS") // IN_PROGRESS, FINISHED
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  drying            Drying[]  // Relation to Drying model
+
+  procurement       Procurement @relation(fields: [procurementId], references: [id], onDelete: Cascade)
+  @@map("processing")
+}
+
 model Procurement {
-  id           Int      @id @default(autoincrement())
+  id           Int          @id @default(autoincrement())
   farmerId     Int
   crop         String
   procuredForm String
   speciality   String
   quantity     Float
-  batchCode    String   @unique
+  batchCode    String       @unique
   date         DateTime
   time         DateTime
   lotNo        Int
   procuredBy   String
   vehicleNo    String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  farmer Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  farmer       Farmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  processing   Processing[] // Relation to Processing model
   @@map("procurements")
+}
+
+model Drying {
+  id                Int       @id @default(autoincrement())
+  processingId      Int
+  day               Int       // Day number
+  temperature       Float
+  humidity          Float
+  pH                Float
+  moistureQuantity  Float
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  processing        Processing @relation(fields: [processingId], references: [id], onDelete: Cascade)
+  @@map("drying")
 }
