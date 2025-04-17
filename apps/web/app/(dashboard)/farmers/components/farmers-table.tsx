@@ -101,17 +101,6 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
 		loadData();
 	}, [fetchFarmers, prefetchPages, currentPage, query]);
 
-	useEffect(() => {
-		const handleDataChangeEvent = () => {
-			handleRefresh();
-		};
-
-		document.addEventListener('farmerDataChanged', handleDataChangeEvent as EventListener);
-
-		return () => {
-			document.removeEventListener('farmerDataChanged', handleDataChangeEvent as EventListener);
-		};
-	}, [currentPage, query]);
 	const table = useReactTable({
 		data: farmers,
 		columns,
@@ -179,7 +168,6 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
 		const handleViewFarmerEvent = (e: CustomEvent<{ farmer: FarmerWithRelations }>) => {
 			handleViewDetails(e.detail.farmer);
 		};
-
 		const handleDataChangeEvent = () => {
 			handleRefresh();
 		};
@@ -191,7 +179,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
 			document.removeEventListener('viewFarmer', handleViewFarmerEvent as EventListener);
 			document.removeEventListener('farmerDataChanged', handleDataChangeEvent as EventListener);
 		};
-	}, []);
+	}, [currentPage, query]);
 
 	const selectedCount = Object.keys(rowSelection).length;
 

@@ -44,28 +44,6 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 		[farmers, createKey]
 	);
 
-	const refreshCurrentPage = useCallback(
-		async (page: number, query: string): Promise<FarmerWithRelations[]> => {
-			const key = createKey(page, query);
-
-			console.log(`Force refreshing page ${page}, query "${query}" from server`);
-			try {
-				const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
-
-				setFarmers((prev) => ({
-					...prev,
-					[key]: data,
-				}));
-				fetchTotalPages(query);
-
-				return data;
-			} catch (error) {
-				console.error(`Error refreshing page ${page}:`, error);
-				throw error;
-			}
-		},
-		[createKey]
-	);
 	const fetchTotalPages = useCallback(
 		async (query: string): Promise<number> => {
 			if (totalPages[query] !== undefined) {
@@ -106,7 +84,28 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
 		},
 		[farmers, createKey]
 	);
+	const refreshCurrentPage = useCallback(
+		async (page: number, query: string): Promise<FarmerWithRelations[]> => {
+			const key = createKey(page, query);
 
+			console.log(`Force refreshing page ${page}, query "${query}" from server`);
+			try {
+				const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
+
+				setFarmers((prev) => ({
+					...prev,
+					[key]: data,
+				}));
+				fetchTotalPages(query);
+
+				return data;
+			} catch (error) {
+				console.error(`Error refreshing page ${page}:`, error);
+				throw error;
+			}
+		},
+		[createKey, fetchTotalPages]
+	);
 	const clearCache = useCallback(() => {
 		setFarmers({});
 		setTotalPages({});
