@@ -28,6 +28,7 @@ interface FarmerFormState {
 	resetForm: () => void;
 	updateFieldLocation: (index: number, location: LocationData) => void;
 	calculateAge: (birthDate: string) => void;
+	notifyFormSuccess: () => void;
 }
 
 export const useFarmerFormStore = create<FarmerFormState>((set, get) => ({
@@ -115,5 +116,13 @@ export const useFarmerFormStore = create<FarmerFormState>((set, get) => ({
 
 		const age = differenceInYears(new Date(), new Date(birthDate));
 		form.setValue('farmer.age', age);
+	},
+
+	notifyFormSuccess: () => {
+		if (typeof window !== 'undefined') {
+			const dataChangedEvent = new CustomEvent('farmerDataChanged');
+			document.dispatchEvent(dataChangedEvent);
+			console.log('Form submission success event dispatched');
+		}
 	},
 }));
