@@ -169,8 +169,8 @@ export async function exportFarmersData(query?: string) {
 		return { error: 'Failed to export farmers data. Please try again.' };
 	}
 }
-
-export async function getFarmers({ query = '', page = 1, selectedColumns = [] }: { query?: string; page?: number; selectedColumns?: string[] }) {
+//SelectedColumns is not used in the function, but it's included in the function signature for future use just adding for reference
+export async function getFarmers({ query = '', page = 1 }: { query?: string; page?: number; selectedColumns?: string[] }) {
 	const offset = (page - 1) * ITEMS_PER_PAGE;
 
 	try {

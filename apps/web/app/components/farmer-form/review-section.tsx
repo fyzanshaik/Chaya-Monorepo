@@ -22,10 +22,10 @@ export function ReviewSection() {
 							<dt className="text-sm font-medium text-muted-foreground">Name</dt>
 							<dd className="text-sm">{farmer.name || 'N/A'}</dd>
 						</div>
-						<div>
+						{/* <div>
 							<dt className="text-sm font-medium text-muted-foreground">Survey Number</dt>
 							<dd className="text-sm">{farmer.surveyNumber || 'N/A'}</dd>
-						</div>
+						</div> */}
 						<div>
 							<dt className="text-sm font-medium text-muted-foreground">Relationship</dt>
 							<dd className="text-sm">{farmer.relationship || 'N/A'}</dd>

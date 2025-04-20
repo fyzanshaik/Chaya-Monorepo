@@ -2,22 +2,21 @@ import { createUploadthing, type FileRouter } from 'uploadthing/next';
 
 const f = createUploadthing({
 	errorFormatter: (err) => {
-		console.log("Error uploading file", err.message)
-		console.log("- Above error caused this: ", err.cause)
+		console.log('Error uploading file', err.message);
+		console.log('- Above error caused this: ', err.cause);
 		return {
-			message : err.message
-		}
+			message: err.message,
+		};
 	},
 });
-
+//Each file router also had metadata which we are removing as we are not using it for now
 export const ourFileRouter: FileRouter = {
-	
 	profilePicture: f({ image: { maxFileSize: '1024KB', maxFileCount: 1 } })
 		.middleware(async () => {
 			console.log('Middleware running for profilePicture');
 			return { timestamp: Date.now() };
 		})
-		.onUploadComplete(async ({ metadata, file }) => {
+		.onUploadComplete(async ({ file }) => {
 			console.log('Profile picture upload complete', file.url);
 			return { url: file.ufsUrl };
 		}),
@@ -30,7 +29,7 @@ export const ourFileRouter: FileRouter = {
 			console.log('Middleware running for aadharDocument');
 			return { timestamp: Date.now() };
 		})
-		.onUploadComplete(async ({ metadata, file }) => {
+		.onUploadComplete(async ({ file }) => {
 			console.log('Aadhar document upload complete', file.ufsUrl);
 			return { url: file.ufsUrl };
 		}),
@@ -43,7 +42,7 @@ export const ourFileRouter: FileRouter = {
 			console.log('Middleware running for bankDocument');
 			return { timestamp: Date.now() };
 		})
-		.onUploadComplete(async ({ metadata, file }) => {
+		.onUploadComplete(async ({ file }) => {
 			console.log('Bank document upload complete', file.ufsUrl);
 			return { url: file.ufsUrl };
 		}),
@@ -56,7 +55,7 @@ export const ourFileRouter: FileRouter = {
 			console.log('Middleware running for landDocument');
 			return { timestamp: Date.now() };
 		})
-		.onUploadComplete(async ({ metadata, file }) => {
+		.onUploadComplete(async ({ file }) => {
 			console.log('Land document upload complete', file.ufsUrl);
 			return { url: file.ufsUrl };
 		}),

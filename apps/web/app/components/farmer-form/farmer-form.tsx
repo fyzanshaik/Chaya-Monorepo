@@ -1,4 +1,3 @@
-// components/farmer-form/farmer-form.tsx (updated for API submission)
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
@@ -60,6 +59,11 @@ export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormPro
 				console.log('PUT response:', response.data);
 				toast.success('Farmer updated successfully');
 			}
+
+			const dataChangedEvent = new CustomEvent('farmerDataChanged');
+			document.dispatchEvent(dataChangedEvent);
+			console.log('Data changed event dispatched after successful form submission');
+
 			onOpenChange(false);
 		} catch (error: any) {
 			console.error('Error submitting form:', error);

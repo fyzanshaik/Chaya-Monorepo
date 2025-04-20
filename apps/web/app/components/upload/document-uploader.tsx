@@ -1,10 +1,9 @@
-// components/upload/document-uploader.tsx
 'use client';
 
 import { useState } from 'react';
 import { UploadDropzone } from '@/utils/uploadthing';
 import { Card, CardContent } from '@workspace/ui/components/card';
-import { Check, X } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 
 type UploadEndpoint = 'profilePicture' | 'aadharDocument' | 'bankDocument' | 'landDocument';
@@ -19,6 +18,7 @@ interface DocumentUploaderProps {
 
 export function DocumentUploader({ endpoint, value, onChange, label }: DocumentUploaderProps) {
 	const [error, setError] = useState<string | null>(null);
+	const [isUploading, setIsUploading] = useState(false);
 
 	const handleRemove = () => {
 		onChange('');
@@ -44,17 +44,32 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
 						</div>
 					</CardContent>
 				</Card>
+			) : isUploading ? (
+				<Card className="overflow-hidden">
+					<CardContent className="p-4">
+						<div className="flex flex-col items-center justify-center py-6">
+							<Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
+							<p className="text-sm text-muted-foreground">Uploading document...</p>
+						</div>
+					</CardContent>
+				</Card>
 			) : (
 				<Card className="overflow-hidden">
 					<CardContent className="p-4">
 						<UploadDropzone
 							endpoint={endpoint}
+							onUploadBegin={() => {
+								setIsUploading(true);
+								setError(null);
+							}}
 							onClientUploadComplete={(res) => {
+								setIsUploading(false);
 								if (res && res[0]) {
 									onChange(res[0].url);
 								}
 							}}
 							onUploadError={(err) => {
+								setIsUploading(false);
 								setError(err.message);
 								console.error('Upload error:', err);
 							}}

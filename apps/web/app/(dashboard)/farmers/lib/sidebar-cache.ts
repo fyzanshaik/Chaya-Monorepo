@@ -7,7 +7,7 @@ const SIDEBAR_TIMESTAMP_KEY = 'app_sidebar_timestamp';
 const CACHE_TTL = 3600000; // 1 hour in milliseconds
 
 export interface SidebarCacheItem {
-	data: any;
+	data: object;
 	timestamp: number;
 }
 

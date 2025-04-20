@@ -1,11 +1,2 @@
-{
-  "root": [
-    "./src/index.ts",
-    "./src/schemas/auth.ts",
-    "./src/schemas/farmer.ts",
-    "./src/schemas/processing.ts",
-    "./src/schemas/procurement.ts",
-    "./src/schemas/users.ts"
-  ],
-  "version": "5.7.3"
-}
+
+{"root":["./src/index.ts","./src/schemas/auth.ts","./src/schemas/farmer.ts","./src/schemas/procurement.ts","./src/schemas/procurement.ts","./src/schemas/users.ts"],"version":"5.8.3"}

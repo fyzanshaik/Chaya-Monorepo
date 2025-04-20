@@ -1,8 +1,7 @@
-// components/farmer-form/location-button.tsx
 import { MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@workspace/ui/components/button';
 import { useState } from 'react';
-// import { useToast } from '@workspace/ui/components/use-toast';
+import { toast } from 'sonner';
 
 export interface LocationData {
 	lat: number;
@@ -18,18 +17,13 @@ interface LocationButtonProps {
 	fieldIndex: number;
 }
 
-export function LocationButton({ onLocationUpdate, fieldIndex }: LocationButtonProps) {
+export function LocationButton({ onLocationUpdate }: LocationButtonProps) {
 	const [isLoading, setIsLoading] = useState(false);
-	//   const { toast } = useToast();
 
 	const getCurrentLocation = () => {
 		setIsLoading(true);
 		if (!('geolocation' in navigator)) {
-			// toast({
-			// 	title: 'Error',
-			// 	description: 'Geolocation is not supported by your browser',
-			// 	variant: 'destructive',
-			// });
+			toast.error('Geolocation is not supported by your browser');
 			setIsLoading(false);
 			return;
 		}
@@ -52,10 +46,7 @@ export function LocationButton({ onLocationUpdate, fieldIndex }: LocationButtonP
 				};
 				onLocationUpdate(locationData);
 				setIsLoading(false);
-				// toast({
-				//   title: 'Location Updated',
-				//   description: `Field ${fieldIndex + 1} location captured successfully`,
-				// });
+				toast.success('Location Updated');
 			},
 			(error) => {
 				let errorMessage = 'Failed to get location';
@@ -70,11 +61,7 @@ export function LocationButton({ onLocationUpdate, fieldIndex }: LocationButtonP
 						errorMessage = 'Location request timed out';
 						break;
 				}
-				// toast({
-				//   title: 'Error',
-				//   description: errorMessage,
-				//   variant: 'destructive',
-				// });
+				toast.error(errorMessage);
 				setIsLoading(false);
 			},
 			options

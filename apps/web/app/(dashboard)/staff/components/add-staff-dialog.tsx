@@ -29,13 +29,12 @@ interface AddStaffDialogProps {
 }
 
 export function AddStaffDialog({ open, onOpenChange }: AddStaffDialogProps) {
-
 	const axiosConfig = {
 		withCredentials: true,
-		headers : {
+		headers: {
 			'Content-Type': 'application/json',
-		}
-	}
+		},
+	};
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,12 +51,12 @@ export function AddStaffDialog({ open, onOpenChange }: AddStaffDialogProps) {
 	const onSubmit = async (data: FormValues) => {
 		setIsSubmitting(true);
 		try {
-			await axios.post('http://localhost:5000/api/auth/register', data , axiosConfig);
+			await axios.post('http://localhost:5000/api/auth/register', data, axiosConfig);
 			toast.success('Staff member added successfully');
 			form.reset();
 			onOpenChange(false);
 		} catch (error: any) {
-			toast.error('Failed to add staff member');
+			toast.error('Failed to add staff member', error);
 		} finally {
 			setIsSubmitting(false);
 		}
