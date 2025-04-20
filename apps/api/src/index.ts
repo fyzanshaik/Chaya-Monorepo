@@ -8,6 +8,8 @@ import userRoutes from "./routes/users";
 import farmerRoutes from "./routes/farmer";
 import fieldRoutes from "./routes/fields";
 import procurementRoutes from "./routes/procurement";
+import processingRoutes from "./routes/processing";
+
 import helloWorldRoutes from "./routes/helloWorld";
 const fastify = Fastify({
   logger: {
@@ -48,6 +50,7 @@ async function registerRoutes() {
   fastify.register(fieldRoutes, { prefix: "/api/fields" });
   fastify.register(helloWorldRoutes, { prefix: "/api" });
   fastify.register(procurementRoutes, { prefix: "/api/procurements" });
+  fastify.register(processingRoutes, { prefix: "/api/processing" });
 }
 
 async function start() {
