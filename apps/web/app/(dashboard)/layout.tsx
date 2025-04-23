@@ -6,6 +6,7 @@ import { SidebarProvider } from "@workspace/ui/components/sidebar";
 import { AppSidebar } from "../components/layout/app-sidebar";
 import { FarmersCacheProvider } from "./farmers/context/farmer-cache-context";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function DashboardLayout({
   children,
@@ -30,14 +31,19 @@ export default function DashboardLayout({
     >
       <AuthProvider>
         <FarmersCacheProvider>
-          <div className="flex h-screen overflow-hidden">
+          <div className="flex h-screen overflow-hidden bg-gray-100">
             <SidebarProvider>
               <AppSidebar className="h-screen" />
-              <div className="flex flex-col flex-1 overflow-hidden">
-                <div className="flex flex-1 flex-col p-4 overflow-auto bg-gray-100">
+              <motion.div
+                className="flex flex-col flex-1 overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="flex flex-1 flex-col p-4 overflow-auto">
                   {children}
                 </div>
-              </div>
+              </motion.div>
             </SidebarProvider>
           </div>
         </FarmersCacheProvider>

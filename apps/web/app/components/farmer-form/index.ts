@@ -1,4 +1,3 @@
-// components/farmer-form/index.ts
 export * from './farmer-form';
 export * from './personal-info-section';
 export * from './address-section';

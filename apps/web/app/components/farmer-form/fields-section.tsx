@@ -115,7 +115,6 @@ export function FieldsSection() {
 									name={`fields.${index}.landDocumentUrl`}
 									render={({ field }) => (
 										<FormItem className="sm:col-span-2">
-											<FormLabel>Land Document</FormLabel>
 											<FormControl>
 												<DocumentUploader endpoint="landDocument" label="Land Document" value={field.value} onChange={field.onChange} accept="image/*,.pdf" />
 											</FormControl>
