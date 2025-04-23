@@ -6,15 +6,16 @@ import Loading from "./loading";
 import { ProcessingCacheProvider } from "./context/processing-cache-context";
 
 interface PageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     query?: string;
     page?: string;
-  };
+  }>;
 }
 
 export default async function ProcessingPage({ searchParams }: PageProps) {
-  const query = searchParams?.query || "";
-  const currentPage = Number(searchParams?.page) || 1;
+  const params = await searchParams;
+  const query = params?.query || "";
+  const currentPage = Number(params?.page) || 1;
 
   return (
     <ProcessingCacheProvider>
