@@ -1,27 +1,25 @@
-"use client";
+'use client';
 
-import { Button } from "@workspace/ui/components/button";
-import { FileDown, PlusCircle } from "lucide-react";
-import { useState } from "react";
-import { ProcurementFormDialog } from "./procurement-form-dialog";
-import { useAuth } from "@/app/providers/auth-provider";
+import { Button } from '@workspace/ui/components/button';
+import { FileDown, PlusCircle } from 'lucide-react';
+import { useState } from 'react';
+import { ProcurementFormDialog } from './procurement-form-dialog';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export default function ProcurementsHeader() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const handleExport = () => {
-    console.log("Export data clicked");
+    console.log('Export data clicked');
   };
 
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Procurement Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Procurement Dashboard</h1>
         <p className="text-gray-600">Manage and track crop procurements</p>
       </div>
 
@@ -47,11 +45,7 @@ export default function ProcurementsHeader() {
           Add Procurement
         </Button>
 
-        <ProcurementFormDialog
-          mode="add"
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-        />
+        <ProcurementFormDialog mode="add" open={showAddDialog} onOpenChange={setShowAddDialog} />
       </div>
     </div>
   );

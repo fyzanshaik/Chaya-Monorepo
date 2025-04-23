@@ -1,39 +1,24 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { createContext, useContext, useState, useCallback } from "react";
-import { getProcurements, getProcurementPages } from "../lib/actions";
-import type { ProcurementWithRelations } from "../lib/types";
+import type React from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
+import { getProcurements, getProcurementPages } from '../lib/actions';
+import type { ProcurementWithRelations } from '../lib/types';
 
 interface ProcurementsCacheContextType {
   procurements: Record<string, ProcurementWithRelations[]>;
   totalPages: Record<string, number>;
-  fetchProcurements: (
-    page: number,
-    query: string
-  ) => Promise<ProcurementWithRelations[]>;
+  fetchProcurements: (page: number, query: string) => Promise<ProcurementWithRelations[]>;
   fetchTotalPages: (query: string) => Promise<number>;
   clearCache: () => void;
-  prefetchPages: (
-    startPage: number,
-    endPage: number,
-    query: string
-  ) => Promise<void>;
+  prefetchPages: (startPage: number, endPage: number, query: string) => Promise<void>;
 }
 
-const ProcurementsCacheContext = createContext<
-  ProcurementsCacheContextType | undefined
->(undefined);
+const ProcurementsCacheContext = createContext<ProcurementsCacheContextType | undefined>(undefined);
 
-export function ProcurementsCacheProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ProcurementsCacheProvider({ children }: { children: React.ReactNode }) {
   // Cache state
-  const [procurements, setProcurements] = useState<
-    Record<string, ProcurementWithRelations[]>
-  >({});
+  const [procurements, setProcurements] = useState<Record<string, ProcurementWithRelations[]>>({});
   const [totalPages, setTotalPages] = useState<Record<string, number>>({});
 
   // Create a key from page and query
@@ -41,10 +26,7 @@ export function ProcurementsCacheProvider({
 
   // Fetch procurements with caching
   const fetchProcurements = useCallback(
-    async (
-      page: number,
-      query: string
-    ): Promise<ProcurementWithRelations[]> => {
+    async (page: number, query: string): Promise<ProcurementWithRelations[]> => {
       const key = createKey(page, query);
 
       // Return cached data if available
@@ -96,9 +78,7 @@ export function ProcurementsCacheProvider({
   // Prefetch multiple pages
   const prefetchPages = useCallback(
     async (startPage: number, endPage: number, query: string) => {
-      console.log(
-        `Prefetching pages ${startPage}-${endPage} for query "${query}"`
-      );
+      console.log(`Prefetching pages ${startPage}-${endPage} for query "${query}"`);
 
       for (let page = startPage; page <= endPage; page++) {
         const key = createKey(page, query);
@@ -139,20 +119,14 @@ export function ProcurementsCacheProvider({
     prefetchPages,
   };
 
-  return (
-    <ProcurementsCacheContext.Provider value={value}>
-      {children}
-    </ProcurementsCacheContext.Provider>
-  );
+  return <ProcurementsCacheContext.Provider value={value}>{children}</ProcurementsCacheContext.Provider>;
 }
 
 export function useProcurementsCache() {
   const context = useContext(ProcurementsCacheContext);
 
   if (context === undefined) {
-    throw new Error(
-      "useProcurementsCache must be used within a ProcurementsCacheProvider"
-    );
+    throw new Error('useProcurementsCache must be used within a ProcurementsCacheProvider');
   }
 
   return context;

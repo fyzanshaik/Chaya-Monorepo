@@ -4,32 +4,31 @@ import imageCompression from 'browser-image-compression';
 async function compressFile(file: File): Promise<File> {
   if (file.type.startsWith('image/')) {
     const options = {
-      maxSizeMB: 0.15, 
+      maxSizeMB: 0.15,
       maxWidthOrHeight: 1200,
       useWebWorker: true,
     };
-    
+
     try {
       return await imageCompression(file, options);
     } catch (error) {
       console.error('Error compressing image:', error);
-      return file; 
+      return file;
     }
-  } 
-  else if (file.type === 'application/pdf') {
+  } else if (file.type === 'application/pdf') {
     if (file.size <= 150 * 1024) {
       return file;
     }
-    
+
     console.warn('PDF compression not supported directly. PDF exceeds 150KB limit:', file.name);
     return file;
   }
-  
+
   return file;
 }
 
 const f = createUploadthing({
-  errorFormatter: (err) => {
+  errorFormatter: err => {
     console.log('Error uploading file', err.message);
     console.log('- Above error caused this: ', err.cause);
     return {

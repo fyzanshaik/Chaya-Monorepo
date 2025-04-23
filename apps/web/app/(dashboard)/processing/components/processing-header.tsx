@@ -1,23 +1,21 @@
-"use client";
+'use client';
 
-import { Button } from "@workspace/ui/components/button";
-import { FileDown } from "lucide-react";
-import { useAuth } from "@/app/providers/auth-provider";
+import { Button } from '@workspace/ui/components/button';
+import { FileDown } from 'lucide-react';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export default function ProcessingHeader() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const handleExport = () => {
-    console.log("Export data clicked");
+    console.log('Export data clicked');
   };
 
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Processing Dashboard
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight">Processing Dashboard</h1>
         <p className="text-gray-600">Manage and track crop processing</p>
       </div>
 

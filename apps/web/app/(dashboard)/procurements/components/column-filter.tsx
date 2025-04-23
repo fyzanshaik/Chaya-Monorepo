@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import type { Table } from "@tanstack/react-table";
-import { Button } from "@workspace/ui/components/button";
+import type { Table } from '@tanstack/react-table';
+import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -9,8 +9,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { SlidersHorizontal } from "lucide-react";
+} from '@workspace/ui/components/dropdown-menu';
+import { SlidersHorizontal } from 'lucide-react';
 
 interface ColumnFilterProps<TData> {
   table: Table<TData>;
@@ -30,10 +30,7 @@ export function ColumnFilter<TData>({ table }: ColumnFilterProps<TData>) {
         <DropdownMenuSeparator />
         {table
           .getAllColumns()
-          .filter(
-            column =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
-          )
+          .filter(column => typeof column.accessorFn !== 'undefined' && column.getCanHide())
           .map(column => {
             return (
               <DropdownMenuCheckboxItem

@@ -1,45 +1,35 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useProcessingFormStore } from "@/app/stores/processing-form";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import { Label } from "@workspace/ui/components/label";
-import { Input } from "@workspace/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
-import { Calendar } from "@workspace/ui/components/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@workspace/ui/lib/utils";
-import { format } from "date-fns";
-import axios from "axios";
-import { toast } from "sonner";
-import { Button } from "@workspace/ui/components/button";
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useProcessingFormStore } from '@/app/stores/processing-form';
+import { Card, CardContent } from '@workspace/ui/components/card';
+import { Label } from '@workspace/ui/components/label';
+import { Input } from '@workspace/ui/components/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
+import { Calendar } from '@workspace/ui/components/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@workspace/ui/lib/utils';
+import { format } from 'date-fns';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Button } from '@workspace/ui/components/button';
 
 const basicInfoSchema = z.object({
-  lotNo: z.number().int().min(1).max(3, "Lot number must be 1, 2, or 3"),
-  crop: z.string().min(1, "Crop is required"),
-  procuredForm: z.string().min(1, "Procured form is required"),
-  quantity: z.number().positive("Quantity must be a positive number"),
-  speciality: z.string().min(1, "Speciality is required"),
-  processMethod: z.enum(["wet", "dry"]),
+  lotNo: z.number().int().min(1).max(3, 'Lot number must be 1, 2, or 3'),
+  crop: z.string().min(1, 'Crop is required'),
+  procuredForm: z.string().min(1, 'Procured form is required'),
+  quantity: z.number().positive('Quantity must be a positive number'),
+  speciality: z.string().min(1, 'Speciality is required'),
+  processMethod: z.enum(['wet', 'dry']),
   dateOfProcessing: z.date({
-    required_error: "Processing date is required",
+    required_error: 'Processing date is required',
   }),
   dateOfCompletion: z.date().optional(),
-  doneBy: z.string().min(1, "Done by is required"),
+  doneBy: z.string().min(1, 'Done by is required'),
 });
 
 type BasicInfoFormValues = z.infer<typeof basicInfoSchema>;
@@ -51,16 +41,13 @@ export function BasicInfoSection() {
   useEffect(() => {
     const fetchProcurementData = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:5000/api/procurements/${procurementId}`,
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await axios.get(`http://localhost:5000/api/procurements/${procurementId}`, {
+          withCredentials: true,
+        });
         setProcurementData(response.data.procurement);
       } catch (error) {
-        console.error("Error fetching procurement data:", error);
-        toast.error("Failed to load procurement details");
+        console.error('Error fetching procurement data:', error);
+        toast.error('Failed to load procurement details');
       }
     };
 
@@ -73,13 +60,13 @@ export function BasicInfoSection() {
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       lotNo: procurementData?.lotNo || 1,
-      crop: procurementData?.crop || "",
-      procuredForm: procurementData?.procuredForm || "",
+      crop: procurementData?.crop || '',
+      procuredForm: procurementData?.procuredForm || '',
       quantity: procurementData?.quantity || 0,
-      speciality: procurementData?.speciality || "",
-      processMethod: "wet",
+      speciality: procurementData?.speciality || '',
+      processMethod: 'wet',
       dateOfProcessing: new Date(),
-      doneBy: "",
+      doneBy: '',
     },
   });
 
@@ -105,9 +92,7 @@ export function BasicInfoSection() {
                 name="lotNo"
                 render={({ field }) => (
                   <Select
-                    onValueChange={value =>
-                      field.onChange(Number.parseInt(value))
-                    }
+                    onValueChange={value => field.onChange(Number.parseInt(value))}
                     defaultValue={field.value?.toString()}
                   >
                     <SelectTrigger>
@@ -121,38 +106,24 @@ export function BasicInfoSection() {
                   </Select>
                 )}
               />
-              {errors.lotNo && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.lotNo.message}
-                </p>
-              )}
+              {errors.lotNo && <p className="text-sm text-red-500 mt-1">{errors.lotNo.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="crop">Crop</Label>
-              <Input
-                id="crop"
-                {...register("crop")}
-                readOnly
-                className="bg-gray-100"
-              />
+              <Input id="crop" {...register('crop')} readOnly className="bg-gray-100" />
             </div>
 
             <div>
               <Label htmlFor="procuredForm">Procured Form</Label>
-              <Input
-                id="procuredForm"
-                {...register("procuredForm")}
-                readOnly
-                className="bg-gray-100"
-              />
+              <Input id="procuredForm" {...register('procuredForm')} readOnly className="bg-gray-100" />
             </div>
 
             <div>
               <Label htmlFor="quantity">Quantity (kg)</Label>
               <Input
                 id="quantity"
-                {...register("quantity", { valueAsNumber: true })}
+                {...register('quantity', { valueAsNumber: true })}
                 readOnly
                 className="bg-gray-100"
               />
@@ -160,12 +131,7 @@ export function BasicInfoSection() {
 
             <div>
               <Label htmlFor="speciality">Speciality</Label>
-              <Input
-                id="speciality"
-                {...register("speciality")}
-                readOnly
-                className="bg-gray-100"
-              />
+              <Input id="speciality" {...register('speciality')} readOnly className="bg-gray-100" />
             </div>
 
             <div>
@@ -174,10 +140,7 @@ export function BasicInfoSection() {
                 control={control}
                 name="processMethod"
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select process method" />
                     </SelectTrigger>
@@ -188,11 +151,7 @@ export function BasicInfoSection() {
                   </Select>
                 )}
               />
-              {errors.processMethod && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.processMethod.message}
-                </p>
-              )}
+              {errors.processMethod && <p className="text-sm text-red-500 mt-1">{errors.processMethod.message}</p>}
             </div>
 
             <div>
@@ -206,44 +165,29 @@ export function BasicInfoSection() {
                       <Button
                         variant="outline"
                         className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          'w-full justify-start text-left font-normal',
+                          !field.value && 'text-muted-foreground'
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
+                        {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                     </PopoverContent>
                   </Popover>
                 )}
               />
               {errors.dateOfProcessing && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.dateOfProcessing.message}
-                </p>
+                <p className="text-sm text-red-500 mt-1">{errors.dateOfProcessing.message}</p>
               )}
             </div>
 
             <div>
               <Label htmlFor="doneBy">Done By</Label>
-              <Input id="doneBy" {...register("doneBy")} />
-              {errors.doneBy && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.doneBy.message}
-                </p>
-              )}
+              <Input id="doneBy" {...register('doneBy')} />
+              {errors.doneBy && <p className="text-sm text-red-500 mt-1">{errors.doneBy.message}</p>}
             </div>
           </div>
         </form>

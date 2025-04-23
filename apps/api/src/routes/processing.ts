@@ -1,16 +1,16 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@chaya/shared";
-import { authenticate } from "../middlewares/auth";
-import { createDryingSchema } from "@chaya/shared";
+import type { FastifyInstance } from 'fastify';
+import { prisma } from '@chaya/shared';
+import { authenticate } from '../middlewares/auth';
+import { createDryingSchema } from '@chaya/shared';
 
 async function processingRoutes(fastify: FastifyInstance) {
   // GET /api/processing
-  fastify.get("/", { preHandler: authenticate }, async (request, reply) => {
+  fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
     try {
       const {
-        query: rawQuery = "",
-        page: rawPage = "1",
-        limit: rawLimit = "10",
+        query: rawQuery = '',
+        page: rawPage = '1',
+        limit: rawLimit = '10',
       } = request.query as Record<string, string>;
 
       // parse
@@ -29,11 +29,11 @@ async function processingRoutes(fastify: FastifyInstance) {
           include: {
             processing: {
               include: { drying: true },
-              orderBy: { createdAt: "desc" },
+              orderBy: { createdAt: 'desc' },
               take: 1, // we only need the latest processing, if any
             },
           },
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           skip,
           take: limit,
         }),
@@ -86,7 +86,7 @@ async function processingRoutes(fastify: FastifyInstance) {
             dateOfCompletion: null,
             quantityAfterProcess: null,
             doneBy: null,
-            status: "NOT_STARTED",
+            status: 'NOT_STARTED',
             drying: [],
             processingCount: 0,
             procurement: {
@@ -107,13 +107,13 @@ async function processingRoutes(fastify: FastifyInstance) {
         totalPages: Math.ceil(totalCount / limit),
       };
     } catch (error) {
-      fastify.log.error("Get processing records error:", error);
-      return reply.status(500).send({ error: "Server error" });
+      fastify.log.error('Get processing records error:', error);
+      return reply.status(500).send({ error: 'Server error' });
     }
   });
 
   // POST /api/processing
-  fastify.post("/", { preHandler: authenticate }, async (request, reply) => {
+  fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
     try {
       const body = request.body as any;
       const {
@@ -128,20 +128,20 @@ async function processingRoutes(fastify: FastifyInstance) {
       } = body;
 
       if (!procurementId) {
-        return reply.status(400).send({ error: "procurementId is required" });
+        return reply.status(400).send({ error: 'procurementId is required' });
       }
 
       const procurement = await prisma.procurement.findUnique({
         where: { id: procurementId },
       });
       if (!procurement) {
-        return reply.status(404).send({ error: "Procurement not found" });
+        return reply.status(404).send({ error: 'Procurement not found' });
       }
 
       // Check if processing already exists
       const existingProcessing = await prisma.processing.findFirst({
         where: { procurementId },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       let processingCount = 1;
@@ -165,12 +165,10 @@ async function processingRoutes(fastify: FastifyInstance) {
           processMethod,
           dateOfProcessing: new Date(dateOfProcessing),
           doneBy,
-          status: finalAction === "selling" ? "FINISHED" : "IN_PROGRESS",
+          status: finalAction === 'selling' ? 'FINISHED' : 'IN_PROGRESS',
           processingCount,
           quantityAfterProcess: quantityAfterProcess || null,
-          dateOfCompletion: dateOfCompletion
-            ? new Date(dateOfCompletion)
-            : null,
+          dateOfCompletion: dateOfCompletion ? new Date(dateOfCompletion) : null,
         },
       });
 
@@ -192,111 +190,94 @@ async function processingRoutes(fastify: FastifyInstance) {
 
       return { processing };
     } catch (error) {
-      fastify.log.error("Create processing error:", error);
-      return reply.status(400).send({ error: "Invalid request data" });
+      fastify.log.error('Create processing error:', error);
+      return reply.status(400).send({ error: 'Invalid request data' });
     }
   });
 
   // POST /api/processing/:id/drying
-  fastify.post(
-    "/:id/drying",
-    { preHandler: authenticate },
-    async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const data = createDryingSchema.parse(request.body);
+  fastify.post('/:id/drying', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const data = createDryingSchema.parse(request.body);
 
-        const proc = await prisma.processing.findUnique({
-          where: { id: Number(id) },
-        });
-        if (!proc) {
-          return reply.status(404).send({ error: "Processing not found" });
-        }
-        if (proc.status !== "IN_PROGRESS") {
-          return reply
-            .status(400)
-            .send({ error: "Processing is not in progress" });
-        }
-
-        const dup = await prisma.drying.findFirst({
-          where: {
-            processingId: Number(id),
-            day: data.day,
-          },
-        });
-        if (dup) {
-          return reply
-            .status(400)
-            .send({ error: "Drying data already exists for this day" });
-        }
-
-        const drying = await prisma.drying.create({
-          data: { ...data, processingId: Number(id) },
-        });
-        return { drying };
-      } catch (error) {
-        fastify.log.error("Create drying error:", error);
-        return reply.status(400).send({ error: "Invalid request data" });
+      const proc = await prisma.processing.findUnique({
+        where: { id: Number(id) },
+      });
+      if (!proc) {
+        return reply.status(404).send({ error: 'Processing not found' });
       }
+      if (proc.status !== 'IN_PROGRESS') {
+        return reply.status(400).send({ error: 'Processing is not in progress' });
+      }
+
+      const dup = await prisma.drying.findFirst({
+        where: {
+          processingId: Number(id),
+          day: data.day,
+        },
+      });
+      if (dup) {
+        return reply.status(400).send({ error: 'Drying data already exists for this day' });
+      }
+
+      const drying = await prisma.drying.create({
+        data: { ...data, processingId: Number(id) },
+      });
+      return { drying };
+    } catch (error) {
+      fastify.log.error('Create drying error:', error);
+      return reply.status(400).send({ error: 'Invalid request data' });
     }
-  );
+  });
 
   // POST /api/processing/:id/complete
-  fastify.post(
-    "/:id/complete",
-    { preHandler: authenticate },
-    async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const { action, quantityAfterProcess } = request.body as {
-          action: "sell" | "continue";
-          quantityAfterProcess: number;
-        };
+  fastify.post('/:id/complete', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { action, quantityAfterProcess } = request.body as {
+        action: 'sell' | 'continue';
+        quantityAfterProcess: number;
+      };
 
-        const proc = await prisma.processing.findUnique({
-          where: { id: Number(id) },
-        });
-        if (!proc) {
-          return reply.status(404).send({ error: "Processing not found" });
-        }
-
-        const updated = await prisma.processing.update({
-          where: { id: Number(id) },
-          data: {
-            status: action === "sell" ? "FINISHED" : "IN_PROGRESS",
-            dateOfCompletion: action === "sell" ? new Date() : null,
-            quantityAfterProcess,
-            processingCount:
-              action === "continue" ? { increment: 1 } : proc.processingCount,
-          },
-        });
-
-        return { processing: updated };
-      } catch (error) {
-        fastify.log.error("Complete processing error:", error);
-        return reply.status(400).send({ error: "Invalid request data" });
+      const proc = await prisma.processing.findUnique({
+        where: { id: Number(id) },
+      });
+      if (!proc) {
+        return reply.status(404).send({ error: 'Processing not found' });
       }
+
+      const updated = await prisma.processing.update({
+        where: { id: Number(id) },
+        data: {
+          status: action === 'sell' ? 'FINISHED' : 'IN_PROGRESS',
+          dateOfCompletion: action === 'sell' ? new Date() : null,
+          quantityAfterProcess,
+          processingCount: action === 'continue' ? { increment: 1 } : proc.processingCount,
+        },
+      });
+
+      return { processing: updated };
+    } catch (error) {
+      fastify.log.error('Complete processing error:', error);
+      return reply.status(400).send({ error: 'Invalid request data' });
     }
-  );
+  });
 
   // GET /api/processing/:id/drying
-  fastify.get(
-    "/:id/drying",
-    { preHandler: authenticate },
-    async (request, reply) => {
-      try {
-        const { id } = request.params as { id: string };
-        const days = await prisma.drying.findMany({
-          where: { processingId: Number(id) },
-          orderBy: { day: "asc" },
-        });
-        return { dryingDays: days };
-      } catch (error) {
-        fastify.log.error("Get drying days error:", error);
-        return reply.status(400).send({ error: "Invalid request data" });
-      }
+  fastify.get('/:id/drying', { preHandler: authenticate }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const days = await prisma.drying.findMany({
+        where: { processingId: Number(id) },
+        orderBy: { day: 'asc' },
+      });
+      return { dryingDays: days };
+    } catch (error) {
+      fastify.log.error('Get drying days error:', error);
+      return reply.status(400).send({ error: 'Invalid request data' });
     }
-  );
+  });
 }
 
 export default processingRoutes;

@@ -1,33 +1,20 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useCallback } from "react";
-import type { ProcessingWithRelations } from "../lib/types";
+import { createContext, useContext, useState, useCallback } from 'react';
+import type { ProcessingWithRelations } from '../lib/types';
 
 interface ProcessingCacheContextType {
   processingRecords: Record<string, ProcessingWithRelations[]>;
-  fetchProcessingRecords: (
-    page: number,
-    query: string
-  ) => Promise<ProcessingWithRelations[]>;
+  fetchProcessingRecords: (page: number, query: string) => Promise<ProcessingWithRelations[]>;
   fetchTotalPages: (query: string) => Promise<number>;
   clearCache: () => void;
 }
 
-const ProcessingCacheContext = createContext<
-  ProcessingCacheContextType | undefined
->(undefined);
+const ProcessingCacheContext = createContext<ProcessingCacheContextType | undefined>(undefined);
 
-export function ProcessingCacheProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [processingRecords, setProcessingRecords] = useState<
-    Record<string, ProcessingWithRelations[]>
-  >({});
-  const [totalPagesCache, setTotalPagesCache] = useState<
-    Record<string, number>
-  >({});
+export function ProcessingCacheProvider({ children }: { children: React.ReactNode }) {
+  const [processingRecords, setProcessingRecords] = useState<Record<string, ProcessingWithRelations[]>>({});
+  const [totalPagesCache, setTotalPagesCache] = useState<Record<string, number>>({});
 
   const createKey = (page: number, query: string) => `${query}:${page}`;
 
@@ -41,12 +28,9 @@ export function ProcessingCacheProvider({
       }
 
       try {
-        const response = await fetch(
-          `/api/processing?query=${encodeURIComponent(query)}&page=${page}`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`/api/processing?query=${encodeURIComponent(query)}&page=${page}`, {
+          credentials: 'include',
+        });
         const data = await response.json();
         const records = data.processingRecords;
 
@@ -57,7 +41,7 @@ export function ProcessingCacheProvider({
         }));
 
         // Also cache totalPages for this query
-        if (typeof data.totalPages === "number") {
+        if (typeof data.totalPages === 'number') {
           setTotalPagesCache(prev => ({
             ...prev,
             [query]: data.totalPages,
@@ -66,7 +50,7 @@ export function ProcessingCacheProvider({
 
         return records;
       } catch (error) {
-        console.error("Error fetching processing records:", error);
+        console.error('Error fetching processing records:', error);
         throw error;
       }
     },
@@ -81,14 +65,11 @@ export function ProcessingCacheProvider({
       }
       try {
         // Fetch first page to get totalPages
-        const response = await fetch(
-          `/api/processing?query=${encodeURIComponent(query)}&page=1`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await fetch(`/api/processing?query=${encodeURIComponent(query)}&page=1`, {
+          credentials: 'include',
+        });
         const data = await response.json();
-        if (typeof data.totalPages === "number") {
+        if (typeof data.totalPages === 'number') {
           setTotalPagesCache(prev => ({
             ...prev,
             [query]: data.totalPages,
@@ -97,7 +78,7 @@ export function ProcessingCacheProvider({
         }
         return 1;
       } catch (error) {
-        console.error("Error fetching total pages:", error);
+        console.error('Error fetching total pages:', error);
         return 1;
       }
     },
@@ -126,9 +107,7 @@ export function ProcessingCacheProvider({
 export function useProcessingCache() {
   const context = useContext(ProcessingCacheContext);
   if (context === undefined) {
-    throw new Error(
-      "useProcessingCache must be used within a ProcessingCacheProvider"
-    );
+    throw new Error('useProcessingCache must be used within a ProcessingCacheProvider');
   }
   return context;
 }

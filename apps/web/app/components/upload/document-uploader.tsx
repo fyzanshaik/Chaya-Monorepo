@@ -31,34 +31,38 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
 
   const compressFile = useCallback(async (file: File): Promise<File> => {
     const fileSizeKB = Math.round(file.size / 1024);
-    
+
     if (file.type === 'application/pdf') {
       if (fileSizeKB > MAX_PDF_SIZE_KB) {
-        throw new Error(`PDF file is too large (${fileSizeKB}KB). Please compress to under ${MAX_PDF_SIZE_KB}KB before uploading.`);
+        throw new Error(
+          `PDF file is too large (${fileSizeKB}KB). Please compress to under ${MAX_PDF_SIZE_KB}KB before uploading.`
+        );
       }
       return file;
     }
-    
+
     if (!file.type.startsWith('image/')) {
       return file;
     }
 
     setIsCompressing(true);
-    
+
     try {
       const options = {
         maxSizeMB: MAX_IMAGE_SIZE_KB / 1024,
         maxWidthOrHeight: 1500,
         useWebWorker: true,
       };
-      
+
       const compressedFile = await imageCompression(file, options);
       const compressedSizeKB = Math.round(compressedFile.size / 1024);
-      
+
       if (compressedSizeKB > MAX_IMAGE_SIZE_KB) {
-        throw new Error(`Image could not be compressed enough (${compressedSizeKB}KB). Please use an image editor to reduce to under ${MAX_IMAGE_SIZE_KB}KB.`);
+        throw new Error(
+          `Image could not be compressed enough (${compressedSizeKB}KB). Please use an image editor to reduce to under ${MAX_IMAGE_SIZE_KB}KB.`
+        );
       }
-      
+
       return compressedFile;
     } catch (error) {
       if (error instanceof Error) {
@@ -70,28 +74,31 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
     }
   }, []);
 
-  const validateAndProcessFiles = useCallback(async (files: File[]): Promise<File[]> => {
-    try {
-      const processedFiles = await Promise.all(
-        files.map(async (file) => {
-          try {
-            return await compressFile(file);
-          } catch (error) {
-            if (error instanceof Error) {
-              setError(error.message);
-            } else {
-              setError(`Unknown error processing file`);
+  const validateAndProcessFiles = useCallback(
+    async (files: File[]): Promise<File[]> => {
+      try {
+        const processedFiles = await Promise.all(
+          files.map(async file => {
+            try {
+              return await compressFile(file);
+            } catch (error) {
+              if (error instanceof Error) {
+                setError(error.message);
+              } else {
+                setError(`Unknown error processing file`);
+              }
+              throw error;
             }
-            throw error;
-          }
-        })
-      );
-      
-      return processedFiles;
-    } catch (error) {
-      throw new Error('File processing failed');
-    }
-  }, [compressFile]);
+          })
+        );
+
+        return processedFiles;
+      } catch (error) {
+        throw new Error('File processing failed');
+      }
+    },
+    [compressFile]
+  );
 
   return (
     <div className="space-y-2">
@@ -119,7 +126,7 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
             <div className="flex flex-col items-center justify-center py-6">
               <Loader2 className="h-8 w-8 text-primary animate-spin mb-2" />
               <p className="text-sm text-muted-foreground">
-                {isCompressing ? "Compressing file..." : "Uploading document..."}
+                {isCompressing ? 'Compressing file...' : 'Uploading document...'}
               </p>
             </div>
           </CardContent>
@@ -138,20 +145,20 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
                 </div>
               </div>
             )}
-            
+
             <UploadDropzone
               endpoint={endpoint}
               onUploadBegin={() => {
                 setIsUploading(true);
                 setError(null);
               }}
-              onClientUploadComplete={(res) => {
+              onClientUploadComplete={res => {
                 setIsUploading(false);
                 if (res && res[0]) {
                   onChange(res[0].url);
                 }
               }}
-              onUploadError={(err) => {
+              onUploadError={err => {
                 setIsUploading(false);
                 setError(err.message);
               }}
@@ -164,7 +171,7 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
                 mode: 'auto',
               }}
             />
-            
+
             <div className="mt-3 text-xs text-muted-foreground space-y-1">
               <p>• Images will be automatically compressed if possible</p>
               <p>• PDFs must be under {MAX_PDF_SIZE_KB}KB (typically 1 page)</p>

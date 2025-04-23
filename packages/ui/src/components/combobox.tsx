@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@workspace/ui/lib/utils";
-import { Button } from "@workspace/ui/components/button";
+import * as React from 'react';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@workspace/ui/lib/utils';
+import { Button } from '@workspace/ui/components/button';
 import {
   Command,
   CommandEmpty,
@@ -11,12 +11,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@workspace/ui/components/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@workspace/ui/components/popover";
+} from '@workspace/ui/components/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover';
 
 interface ComboboxItem {
   label: string;
@@ -35,7 +31,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
   items,
   value,
   onChange,
-  placeholder = "Select an option...",
+  placeholder = 'Select an option...',
   isLoading = false,
 }) => {
   const [open, setOpen] = React.useState(false);
@@ -45,12 +41,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-        >
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
           {selectedItem ? selectedItem.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -74,12 +65,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                         setOpen(false);
                       }}
                     >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          value === item.value ? "opacity-100" : "opacity-0"
-                        )}
-                      />
+                      <Check className={cn('mr-2 h-4 w-4', value === item.value ? 'opacity-100' : 'opacity-0')} />
                       {item.label}
                     </CommandItem>
                   ))}

@@ -1,9 +1,9 @@
-import { Suspense } from "react";
-import ProcessingHeader from "./components/processing-header";
-import Search from "./components/search";
-import ProcessingTable from "./components/processing-table";
-import Loading from "./loading";
-import { ProcessingCacheProvider } from "./context/processing-cache-context";
+import { Suspense } from 'react';
+import ProcessingHeader from './components/processing-header';
+import Search from './components/search';
+import ProcessingTable from './components/processing-table';
+import Loading from './loading';
+import { ProcessingCacheProvider } from './context/processing-cache-context';
 
 interface PageProps {
   searchParams?: Promise<{
@@ -14,7 +14,7 @@ interface PageProps {
 
 export default async function ProcessingPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const query = params?.query || "";
+  const query = params?.query || '';
   const currentPage = Number(params?.page) || 1;
 
   return (

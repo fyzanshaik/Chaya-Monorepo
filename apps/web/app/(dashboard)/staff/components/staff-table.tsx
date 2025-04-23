@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@workspace/ui/components/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { Button } from '@workspace/ui/components/button';
 import {
   DropdownMenu,
@@ -32,16 +25,7 @@ import { Badge } from '@workspace/ui/components/badge';
 import { Switch } from '@workspace/ui/components/switch';
 import { Input } from '@workspace/ui/components/input';
 import { EditStaffDialog } from './edit-staff-dialog';
-import {
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Search,
-  UserCircle,
-  Calendar,
-  Mail,
-  RefreshCw,
-} from 'lucide-react';
+import { MoreHorizontal, Edit, Trash2, Search, UserCircle, Calendar, Mail, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { formatDate, getTimeSince } from '../lib/utils';
 import { toast } from 'sonner';
@@ -88,7 +72,7 @@ export function StaffTable() {
       const query = searchQuery.toLowerCase();
       setFilteredUsers(
         users.filter(
-          (user) =>
+          user =>
             user.name.toLowerCase().includes(query) ||
             user.email.toLowerCase().includes(query) ||
             user.role.toLowerCase().includes(query)
@@ -100,10 +84,7 @@ export function StaffTable() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(
-        'http://localhost:5000/api/users',
-        axiosConfig
-      );
+      const response = await axios.get('http://localhost:5000/api/users', axiosConfig);
       setUsers(response.data.users);
       setFilteredUsers(response.data.users);
     } catch (error) {
@@ -132,10 +113,7 @@ export function StaffTable() {
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     try {
-      await axios.delete(
-        `http://localhost:5000/api/users/${userToDelete.id}`,
-        axiosConfig
-      );
+      await axios.delete(`http://localhost:5000/api/users/${userToDelete.id}`, axiosConfig);
       toast.success('Staff member deleted successfully');
       fetchUsers();
     } catch (error: any) {
@@ -147,34 +125,14 @@ export function StaffTable() {
   };
 
   const toggleUserStatus = async (user: User) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u
-      )
-    );
-    setFilteredUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u
-      )
-    );
+    setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u)));
+    setFilteredUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u)));
     try {
-      await axios.patch(
-        `http://localhost:5000/api/users/${user.id}/toggle-status`,
-        {},
-        axiosConfig
-      );
+      await axios.patch(`http://localhost:5000/api/users/${user.id}/toggle-status`, {}, axiosConfig);
       toast.success('Staff member status updated successfully');
     } catch (error: any) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u
-        )
-      );
-      setFilteredUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u
-        )
-      );
+      setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u)));
+      setFilteredUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u)));
       toast.error('Failed to update staff member status');
     }
   };
@@ -187,19 +145,12 @@ export function StaffTable() {
           <Input
             placeholder="Search staff members..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={refreshUsers}
-          disabled={isRefreshing}
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`}
-          />
+        <Button variant="outline" size="sm" onClick={refreshUsers} disabled={isRefreshing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
@@ -249,13 +200,11 @@ export function StaffTable() {
             ) : filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8">
-                  {searchQuery
-                    ? 'No staff members match your search'
-                    : 'No staff members found'}
+                  {searchQuery ? 'No staff members match your search' : 'No staff members found'}
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsers.map((user) => (
+              filteredUsers.map(user => (
                 <TableRow key={user.id} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="flex items-center space-x-3">
@@ -273,14 +222,8 @@ export function StaffTable() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={
-                        user.role === 'ADMIN' ? 'default' : 'outline'
-                      }
-                      className={
-                        user.role === 'ADMIN'
-                          ? 'bg-primary text-primary-foreground'
-                          : ''
-                      }
+                      variant={user.role === 'ADMIN' ? 'default' : 'outline'}
+                      className={user.role === 'ADMIN' ? 'bg-primary text-primary-foreground' : ''}
                     >
                       {user.role}
                     </Badge>
@@ -292,13 +235,7 @@ export function StaffTable() {
                         disabled={user.role === 'ADMIN'}
                         onCheckedChange={() => toggleUserStatus(user)}
                       />
-                      <span
-                        className={
-                          user.isEnabled
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }
-                      >
+                      <span className={user.isEnabled ? 'text-green-600' : 'text-red-600'}>
                         {user.isEnabled ? 'Enabled' : 'Disabled'}
                       </span>
                     </div>
@@ -326,20 +263,14 @@ export function StaffTable() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleEditUser(user)}
-                        >
+                        <DropdownMenuItem onClick={() => handleEditUser(user)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDeleteUser(user)}
                           disabled={user.role === 'ADMIN'}
-                          className={
-                            user.role === 'ADMIN'
-                              ? 'opacity-50'
-                              : 'text-red-600'
-                          }
+                          className={user.role === 'ADMIN' ? 'opacity-50' : 'text-red-600'}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
@@ -363,25 +294,18 @@ export function StaffTable() {
         />
       )}
 
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action will permanently delete the staff member account for{' '}
-              <span className="font-semibold">{userToDelete?.name}</span>. This
-              action cannot be undone.
+              <span className="font-semibold">{userToDelete?.name}</span>. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteUser}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
+            <AlertDialogAction onClick={confirmDeleteUser} className="bg-red-600 hover:bg-red-700 text-white">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

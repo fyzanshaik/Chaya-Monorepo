@@ -8,19 +8,13 @@ export default function Loading() {
       <div className="rounded-md border">
         <div className="h-12 border-b bg-secondary px-4 flex items-center">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"
-            ></div>
+            <div key={i} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
           ))}
         </div>
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="border-b px-4 py-4 flex items-center">
             {Array.from({ length: 6 }).map((_, j) => (
-              <div
-                key={j}
-                className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"
-              ></div>
+              <div key={j} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
             ))}
           </div>
         ))}

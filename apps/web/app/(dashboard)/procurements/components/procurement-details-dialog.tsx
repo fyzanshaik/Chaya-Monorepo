@@ -1,14 +1,9 @@
-"use client";
+'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import type { ProcurementWithRelations } from "../lib/types";
-import { format } from "date-fns";
-import { Separator } from "@workspace/ui/components/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@workspace/ui/components/dialog';
+import type { ProcurementWithRelations } from '../lib/types';
+import { format } from 'date-fns';
+import { Separator } from '@workspace/ui/components/separator';
 
 interface ProcurementDetailsDialogProps {
   procurement: ProcurementWithRelations;
@@ -16,11 +11,7 @@ interface ProcurementDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProcurementDetailsDialog({
-  procurement,
-  open,
-  onOpenChange,
-}: ProcurementDetailsDialogProps) {
+export function ProcurementDetailsDialog({ procurement, open, onOpenChange }: ProcurementDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
@@ -54,13 +45,9 @@ export function ProcurementDetailsDialog({
               <Separator className="my-2" />
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm font-medium">Date:</div>
-                <div className="text-sm">
-                  {format(new Date(procurement.date), "dd/MM/yyyy")}
-                </div>
+                <div className="text-sm">{format(new Date(procurement.date), 'dd/MM/yyyy')}</div>
                 <div className="text-sm font-medium">Time:</div>
-                <div className="text-sm">
-                  {format(new Date(procurement.time), "hh:mm a")}
-                </div>
+                <div className="text-sm">{format(new Date(procurement.time), 'hh:mm a')}</div>
                 <div className="text-sm font-medium">Procured By:</div>
                 <div className="text-sm">{procurement.procuredBy}</div>
                 <div className="text-sm font-medium">Vehicle Number:</div>
@@ -90,19 +77,9 @@ export function ProcurementDetailsDialog({
               <Separator className="my-2" />
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm font-medium">Created At:</div>
-                <div className="text-sm">
-                  {format(
-                    new Date(procurement.createdAt),
-                    "dd/MM/yyyy hh:mm a"
-                  )}
-                </div>
+                <div className="text-sm">{format(new Date(procurement.createdAt), 'dd/MM/yyyy hh:mm a')}</div>
                 <div className="text-sm font-medium">Last Updated:</div>
-                <div className="text-sm">
-                  {format(
-                    new Date(procurement.updatedAt),
-                    "dd/MM/yyyy hh:mm a"
-                  )}
-                </div>
+                <div className="text-sm">{format(new Date(procurement.updatedAt), 'dd/MM/yyyy hh:mm a')}</div>
               </div>
             </div>
           </div>

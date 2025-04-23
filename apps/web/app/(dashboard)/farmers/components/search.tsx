@@ -1,15 +1,11 @@
-"use client";
+'use client';
 
-import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
-import { Input } from "@workspace/ui/components/input";
-import { Search as SearchIcon } from "lucide-react";
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useDebouncedCallback } from 'use-debounce';
+import { Input } from '@workspace/ui/components/input';
+import { Search as SearchIcon } from 'lucide-react';
 
-export default function Search({
-  placeholder = "Search farmers...",
-}: {
-  placeholder?: string;
-}) {
+export default function Search({ placeholder = 'Search farmers...' }: { placeholder?: string }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -17,12 +13,12 @@ export default function Search({
   const handleSearch = useDebouncedCallback((term: string) => {
     const params = new URLSearchParams(searchParams);
 
-    params.set("page", "1");
+    params.set('page', '1');
 
     if (term) {
-      params.set("query", term);
+      params.set('query', term);
     } else {
-      params.delete("query");
+      params.delete('query');
     }
 
     replace(`${pathname}?${params.toString()}`);
@@ -35,7 +31,7 @@ export default function Search({
         type="text"
         placeholder={placeholder}
         onChange={e => handleSearch(e.target.value)}
-        defaultValue={searchParams.get("query")?.toString()}
+        defaultValue={searchParams.get('query')?.toString()}
         className="pl-9"
       />
     </div>

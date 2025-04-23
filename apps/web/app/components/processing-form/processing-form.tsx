@@ -1,28 +1,17 @@
-"use client";
+'use client';
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@workspace/ui/components/tabs";
-import { Button } from "@workspace/ui/components/button";
-import { BasicInfoSection } from "./basic-info-section";
-import { DryingSection } from "./drying-section";
-import { FinalSection } from "./final-section";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@workspace/ui/components/dialog";
-import axios from "axios";
-import { useProcessingFormStore } from "@/app/stores/processing-form";
-import type { FieldValues } from "react-hook-form";
-import { useAuth } from "@/app/providers/auth-provider";
-import { toast } from "sonner";
-import { useProcessingFormContext } from "@/app/providers/processing-form-provider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
+import { Button } from '@workspace/ui/components/button';
+import { BasicInfoSection } from './basic-info-section';
+import { DryingSection } from './drying-section';
+import { FinalSection } from './final-section';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@workspace/ui/components/dialog';
+import axios from 'axios';
+import { useProcessingFormStore } from '@/app/stores/processing-form';
+import type { FieldValues } from 'react-hook-form';
+import { useAuth } from '@/app/providers/auth-provider';
+import { toast } from 'sonner';
+import { useProcessingFormContext } from '@/app/providers/processing-form-provider';
 
 interface ProcessingFormProps {
   procurementId: number;
@@ -30,34 +19,23 @@ interface ProcessingFormProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProcessingForm({
-  procurementId,
-  open,
-  onOpenChange,
-}: ProcessingFormProps) {
+export function ProcessingForm({ procurementId, open, onOpenChange }: ProcessingFormProps) {
   const { user } = useAuth();
-  const {
-    activeTab,
-    setActiveTab,
-    goToNextTab,
-    goToPreviousTab,
-    form,
-    isSubmitting,
-    setIsSubmitting,
-  } = useProcessingFormStore();
+  const { activeTab, setActiveTab, goToNextTab, goToPreviousTab, form, isSubmitting, setIsSubmitting } =
+    useProcessingFormStore();
   const { procurementId: contextProcurementId } = useProcessingFormContext();
 
-  const title = "Add Processing Details";
+  const title = 'Add Processing Details';
 
   const handleSubmit = async (data: FieldValues) => {
     setIsSubmitting(true);
-    console.log("Submitting processing data:", JSON.stringify(data, null, 2));
+    console.log('Submitting processing data:', JSON.stringify(data, null, 2));
 
     try {
       const axiosConfig = {
         withCredentials: true,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       };
 
@@ -73,14 +51,10 @@ export function ProcessingForm({
         dateOfProcessing: data.dateOfProcessing,
         dateOfCompletion: data.dateOfCompletion,
         quantityAfterProcess: data.quantityAfterProcess,
-        doneBy: user?.name || "Unknown",
+        doneBy: user?.name || 'Unknown',
       };
 
-      const processingResponse = await axios.post(
-        "http://localhost:5000/api/processing",
-        processingData,
-        axiosConfig
-      );
+      const processingResponse = await axios.post('http://localhost:5000/api/processing', processingData, axiosConfig);
 
       const processingId = processingResponse.data.processing.id;
 
@@ -88,7 +62,7 @@ export function ProcessingForm({
       if (data.drying && data.drying.length > 0) {
         for (const day of data.drying) {
           await axios.post(
-            "http://localhost:5000/api/processing/drying",
+            'http://localhost:5000/api/processing/drying',
             {
               processingId,
               day: day.day,
@@ -102,18 +76,16 @@ export function ProcessingForm({
         }
       }
 
-      toast.success("Processing details added successfully");
+      toast.success('Processing details added successfully');
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error submitting form:", error);
-      console.error("Error response:", error.response?.data);
+      console.error('Error submitting form:', error);
+      console.error('Error response:', error.response?.data);
 
       if (error.response?.status === 401) {
-        toast.error("Your session has expired. Please log in again.");
+        toast.error('Your session has expired. Please log in again.');
       } else {
-        toast.error(
-          `Error: ${error.response?.data?.error || error.message || "Something went wrong"}`
-        );
+        toast.error(`Error: ${error.response?.data?.error || error.message || 'Something went wrong'}`);
       }
     } finally {
       setIsSubmitting(false);
@@ -126,11 +98,7 @@ export function ProcessingForm({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab as any}
-          className="mt-4"
-        >
+        <Tabs value={activeTab} onValueChange={setActiveTab as any} className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="drying">Drying Details</TabsTrigger>
@@ -148,18 +116,10 @@ export function ProcessingForm({
         </Tabs>
         <DialogFooter className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={goToPreviousTab}
-              disabled={activeTab === "basic"}
-            >
+            <Button variant="outline" onClick={goToPreviousTab} disabled={activeTab === 'basic'}>
               Previous
             </Button>
-            <Button
-              variant="outline"
-              onClick={goToNextTab}
-              disabled={activeTab === "final"}
-            >
+            <Button variant="outline" onClick={goToNextTab} disabled={activeTab === 'final'}>
               Next
             </Button>
           </div>
@@ -167,11 +127,11 @@ export function ProcessingForm({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            {activeTab === "final" && (
+            {activeTab === 'final' && (
               <Button
                 type="button"
                 onClick={async () => {
-                  console.log("Submit button clicked, form exists:", !!form);
+                  console.log('Submit button clicked, form exists:', !!form);
                   if (form) {
                     const values = form.getValues();
 
@@ -182,17 +142,14 @@ export function ProcessingForm({
                     } else {
                       setTimeout(() => {
                         const errors = form.formState.errors;
-                        console.log(
-                          "Validation errors:",
-                          JSON.stringify(errors, null, 2)
-                        );
+                        console.log('Validation errors:', JSON.stringify(errors, null, 2));
                       }, 100);
                     }
                   }
                 }}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save Processing"}
+                {isSubmitting ? 'Saving...' : 'Save Processing'}
               </Button>
             )}
           </div>
