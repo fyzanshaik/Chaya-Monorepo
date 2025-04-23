@@ -34,8 +34,8 @@ export function AppSidebar({ ...props }) {
   const pathname = usePathname();
   const { signOut } = useAuth();
   const [isLoaded, setIsLoaded] = React.useState(false);
-  const [collapsed, setCollapsed] = React.useState(true); // Start collapsed by default
-  const [sidebarWidth, setSidebarWidth] = React.useState(MIN_WIDTH); // Start with minimal width
+  const [collapsed, setCollapsed] = React.useState(true); 
+  const [sidebarWidth, setSidebarWidth] = React.useState(MIN_WIDTH); 
   const [isResizing, setIsResizing] = React.useState(false);
   const [isHoveringResize, setIsHoveringResize] = React.useState(false);
 
@@ -43,7 +43,7 @@ export function AppSidebar({ ...props }) {
     pathname === href || pathname.startsWith(`${href}/`);
 
   React.useEffect(() => {
-    // Load state from localStorage after component mounts
+
     const loadState = () => {
       try {
         const storedCollapsed = localStorage.getItem("sidebar-collapsed");
@@ -68,7 +68,6 @@ export function AppSidebar({ ...props }) {
   React.useEffect(() => {
     if (!isLoaded) return;
 
-    // Save state to localStorage when it changes
     localStorage.setItem("sidebar-collapsed", JSON.stringify(collapsed));
     localStorage.setItem("sidebar-width", JSON.stringify(sidebarWidth));
   }, [collapsed, sidebarWidth, isLoaded]);
@@ -115,7 +114,6 @@ export function AppSidebar({ ...props }) {
     };
   }, [isResizing, collapsed]);
 
-  // Render minimal sidebar until state is loaded
   if (!isLoaded) {
     return (
       <div
@@ -238,7 +236,7 @@ export function AppSidebar({ ...props }) {
         </div>
       </div>
 
-      {/* Resize handle */}
+      {}
       <motion.div
         className={cn(
           "absolute right-0 top-0 bottom-0 w-1 cursor-col-resize",
