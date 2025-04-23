@@ -1,35 +1,24 @@
-"use client";
+'use client';
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const lineGraphData = [
-  { name: "Sep", value: 80 },
-  { name: "Oct", value: 100 },
-  { name: "Nov", value: 108 },
-  { name: "Dec", value: 95 },
-  { name: "Jan", value: 90 },
-  { name: "Feb", value: 92 },
+  { name: 'Sep', value: 80 },
+  { name: 'Oct', value: 100 },
+  { name: 'Nov', value: 108 },
+  { name: 'Dec', value: 95 },
+  { name: 'Jan', value: 90 },
+  { name: 'Feb', value: 92 },
 ];
 
 const pieChartData = [
-  { name: "Ginger", value: 15 },
-  { name: "Coffee", value: 30 },
-  { name: "Turmeric", value: 25 },
-  { name: "Your Files", value: 63 },
+  { name: 'Ginger', value: 15 },
+  { name: 'Coffee', value: 30 },
+  { name: 'Turmeric', value: 25 },
+  { name: 'Your Files', value: 63 },
 ];
 
-const COLORS = ["#FFB703", "#FB8500", "#219EBC", "#8ECAE6"];
+const COLORS = ['#FFB703', '#FB8500', '#219EBC', '#8ECAE6'];
 
 export default function DashboardPage() {
   return (
@@ -37,9 +26,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">Farmer Details</h1>
-        <p className="text-gray-600">
-          Manage and track crop procurement information
-        </p>
+        <p className="text-gray-600">Manage and track crop procurement information</p>
       </div>
 
       {/* Analytics Section */}
@@ -48,9 +35,7 @@ export default function DashboardPage() {
         <div className="p-4 bg-white rounded shadow">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Procurement</h2>
-            <button className="text-sm text-gray-500 hover:underline">
-              Month
-            </button>
+            <button className="text-sm text-gray-500 hover:underline">Month</button>
           </div>
           <p className="text-2xl font-bold text-green-600">2000.00 kg</p>
           <div className="mt-4">
@@ -59,12 +44,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#4CAF50"
-                  strokeWidth={2}
-                />
+                <Line type="monotone" dataKey="value" stroke="#4CAF50" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -74,9 +54,7 @@ export default function DashboardPage() {
         <div className="p-4 bg-white rounded shadow">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold">Crop</h2>
-            <button className="text-sm text-gray-500 hover:underline">
-              Month
-            </button>
+            <button className="text-sm text-gray-500 hover:underline">Month</button>
           </div>
           <div className="mt-4">
             <ResponsiveContainer width="100%" height={200}>
@@ -91,10 +69,7 @@ export default function DashboardPage() {
                   fill="#8884d8"
                 >
                   {pieChartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Legend />

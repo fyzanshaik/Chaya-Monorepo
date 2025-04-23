@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   flexRender,
@@ -8,26 +8,19 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
-import { columns, defaultVisibleColumns } from "../lib/columns";
-import { ColumnFilter } from "./column-filter";
-import { useState, useEffect } from "react";
-import { ScrollArea } from "@workspace/ui/components/scroll-area";
-import { useAuth } from "@/app/providers/auth-provider";
-import { ProcurementContextMenu } from "./procurement-context-menu";
-import { ProcurementDetailsDialog } from "./procurement-details-dialog";
-import { ProcurementFormDialog } from "./procurement-form-dialog";
-import { bulkDeleteProcurements } from "../lib/actions";
-import { Button } from "@workspace/ui/components/button";
-import { TrashIcon } from "lucide-react";
+} from '@tanstack/react-table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
+import { columns, defaultVisibleColumns } from '../lib/columns';
+import { ColumnFilter } from './column-filter';
+import { useState, useEffect } from 'react';
+import { ScrollArea } from '@workspace/ui/components/scroll-area';
+import { useAuth } from '@/app/providers/auth-provider';
+import { ProcurementContextMenu } from './procurement-context-menu';
+import { ProcurementDetailsDialog } from './procurement-details-dialog';
+import { ProcurementFormDialog } from './procurement-form-dialog';
+import { bulkDeleteProcurements } from '../lib/actions';
+import { Button } from '@workspace/ui/components/button';
+import { TrashIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,35 +30,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog";
-import { toast } from "sonner";
-import { useProcurementsCache } from "../context/procurement-cache-context";
-import type { ProcurementWithRelations } from "../lib/types";
+} from '@workspace/ui/components/alert-dialog';
+import { toast } from 'sonner';
+import { useProcurementsCache } from '../context/procurement-cache-context';
+import type { ProcurementWithRelations } from '../lib/types';
 
 interface ProcurementsTableProps {
   query: string;
   currentPage: number;
 }
 
-export default function ProcurementsTable({
-  query,
-  currentPage,
-}: ProcurementsTableProps) {
+export default function ProcurementsTable({ query, currentPage }: ProcurementsTableProps) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
   const { fetchProcurements, prefetchPages } = useProcurementsCache();
 
   // State for procurements data
-  const [procurements, setProcurements] = useState<ProcurementWithRelations[]>(
-    []
-  );
+  const [procurements, setProcurements] = useState<ProcurementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
 
   // State for dialogs
-  const [viewingProcurement, setViewingProcurement] =
-    useState<ProcurementWithRelations | null>(null);
-  const [editingProcurement, setEditingProcurement] =
-    useState<ProcurementWithRelations | null>(null);
+  const [viewingProcurement, setViewingProcurement] = useState<ProcurementWithRelations | null>(null);
+  const [editingProcurement, setEditingProcurement] = useState<ProcurementWithRelations | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
@@ -99,15 +85,11 @@ export default function ProcurementsTable({
         if (currentPage > 1) pagesToPrefetch.push(currentPage - 1);
         if (currentPage < 100) pagesToPrefetch.push(currentPage + 1); // Arbitrary upper limit
         if (pagesToPrefetch.length > 0) {
-          prefetchPages(
-            Math.min(...pagesToPrefetch),
-            Math.max(...pagesToPrefetch),
-            query
-          );
+          prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
         }
       } catch (error) {
-        console.error("Error fetching procurements:", error);
-        toast.error("Failed to fetch procurement data.");
+        console.error('Error fetching procurements:', error);
+        toast.error('Failed to fetch procurement data.');
       } finally {
         setLoading(false);
       }
@@ -155,14 +137,12 @@ export default function ProcurementsTable({
       const selectedProcurementIds = Object.keys(rowSelection)
         .map(index => {
           const idx = Number.parseInt(index);
-          return idx >= 0 && idx < procurements.length && procurements[idx]
-            ? procurements[idx].id
-            : null;
+          return idx >= 0 && idx < procurements.length && procurements[idx] ? procurements[idx].id : null;
         })
         .filter((id): id is number => id !== null);
 
       if (selectedProcurementIds.length === 0) {
-        toast.error("No procurements selected for deletion.");
+        toast.error('No procurements selected for deletion.');
         setShowBulkDeleteDialog(false);
         return;
       }
@@ -170,38 +150,30 @@ export default function ProcurementsTable({
       const result = await bulkDeleteProcurements(selectedProcurementIds);
 
       if (result.success) {
-        toast("Procurements deleted successfully.");
+        toast('Procurements deleted successfully.');
         setRowSelection({});
       } else {
-        toast.error("Failed to delete procurements.");
+        toast.error('Failed to delete procurements.');
       }
 
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error("Error bulk deleting procurements:", error);
-      toast.error("Failed to delete procurements.");
+      console.error('Error bulk deleting procurements:', error);
+      toast.error('Failed to delete procurements.');
     } finally {
       setIsDeleting(false);
     }
   };
 
   useEffect(() => {
-    const handleViewProcurementEvent = (
-      e: CustomEvent<{ procurement: ProcurementWithRelations }>
-    ) => {
+    const handleViewProcurementEvent = (e: CustomEvent<{ procurement: ProcurementWithRelations }>) => {
       handleViewDetails(e.detail.procurement);
     };
 
-    document.addEventListener(
-      "viewProcurement",
-      handleViewProcurementEvent as EventListener
-    );
+    document.addEventListener('viewProcurement', handleViewProcurementEvent as EventListener);
 
     return () => {
-      document.removeEventListener(
-        "viewProcurement",
-        handleViewProcurementEvent as EventListener
-      );
+      document.removeEventListener('viewProcurement', handleViewProcurementEvent as EventListener);
     };
   }, []);
 
@@ -217,19 +189,13 @@ export default function ProcurementsTable({
         <div className="rounded-md border">
           <div className="h-12 border-b bg-secondary px-4 flex items-center">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"
-              ></div>
+              <div key={i} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
             ))}
           </div>
           {Array.from({ length: 10 }).map((_, i) => (
             <div key={i} className="border-b px-4 py-4 flex items-center">
               {Array.from({ length: 6 }).map((_, j) => (
-                <div
-                  key={j}
-                  className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"
-                ></div>
+                <div key={j} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
               ))}
             </div>
           ))}
@@ -244,15 +210,8 @@ export default function ProcurementsTable({
         <div>
           {isAdmin && selectedCount > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                {selectedCount} selected
-              </span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowBulkDeleteDialog(true)}
-                className="h-8"
-              >
+              <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
+              <Button variant="destructive" size="sm" onClick={() => setShowBulkDeleteDialog(true)} className="h-8">
                 <TrashIcon className="mr-2 h-4 w-4" />
                 Delete Selected
               </Button>
@@ -269,12 +228,7 @@ export default function ProcurementsTable({
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -290,27 +244,19 @@ export default function ProcurementsTable({
                     isAdmin={isAdmin}
                   >
                     <TableRow
-                      data-state={row.getIsSelected() && "selected"}
+                      data-state={row.getIsSelected() && 'selected'}
                       onDoubleClick={() => handleViewDetails(row.original)}
                     >
                       {row.getVisibleCells().map(cell => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
+                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                       ))}
                     </TableRow>
                   </ProcurementContextMenu>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    {loading ? "Loading..." : "No procurements found."}
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    {loading ? 'Loading...' : 'No procurements found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -339,18 +285,12 @@ export default function ProcurementsTable({
       )}
 
       {/* Bulk Delete Confirmation Dialog */}
-      <AlertDialog
-        open={showBulkDeleteDialog}
-        onOpenChange={setShowBulkDeleteDialog}
-      >
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Are you sure you want to delete these procurements?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete these procurements?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete{" "}
-              {selectedCount} procurement records.
+              This action cannot be undone. This will permanently delete {selectedCount} procurement records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -360,7 +300,7 @@ export default function ProcurementsTable({
               className="bg-destructive hover:bg-destructive/90"
               disabled={isDeleting}
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,39 +1,21 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from "@tanstack/react-table";
-import { columns } from "../lib/columns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@workspace/ui/components/table";
-import { toast } from "sonner";
-import type { ProcessingWithRelations } from "../lib/types";
-import { Button } from "@workspace/ui/components/button";
-import { PlusCircle } from "lucide-react";
-import { ProcessingFormDialog } from "./processing-form-dialog";
-import { useProcessingCache } from "../context/processing-cache-context";
+import { useEffect, useState } from 'react';
+import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { columns } from '../lib/columns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
+import { toast } from 'sonner';
+import type { ProcessingWithRelations } from '../lib/types';
+import { Button } from '@workspace/ui/components/button';
+import { PlusCircle } from 'lucide-react';
+import { ProcessingFormDialog } from './processing-form-dialog';
+import { useProcessingCache } from '../context/processing-cache-context';
 
-export default function ProcessingTable({
-  query,
-  currentPage,
-}: {
-  query: string;
-  currentPage: number;
-}) {
+export default function ProcessingTable({ query, currentPage }: { query: string; currentPage: number }) {
   const { fetchProcessingRecords } = useProcessingCache();
   const [records, setRecords] = useState<ProcessingWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRecord, setSelectedRecord] =
-    useState<ProcessingWithRelations | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<ProcessingWithRelations | null>(null);
   const [showProcessingForm, setShowProcessingForm] = useState(false);
 
   const loadData = async () => {
@@ -42,8 +24,8 @@ export default function ProcessingTable({
       const data = await fetchProcessingRecords(currentPage, query);
       setRecords(data);
     } catch (error) {
-      console.error("Error loading processing records:", error);
-      toast.error("Failed to load processing records");
+      console.error('Error loading processing records:', error);
+      toast.error('Failed to load processing records');
     } finally {
       setLoading(false);
     }
@@ -72,10 +54,7 @@ export default function ProcessingTable({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
                   <TableHead key={header.id}>
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
                 <TableHead>Actions</TableHead>
@@ -87,12 +66,7 @@ export default function ProcessingTable({
               table.getRowModel().rows.map(row => (
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                   ))}
                   <TableCell>
                     {!row.original.processing && (
@@ -113,10 +87,7 @@ export default function ProcessingTable({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length + 1}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length + 1} className="h-24 text-center">
                   No records found.
                 </TableCell>
               </TableRow>

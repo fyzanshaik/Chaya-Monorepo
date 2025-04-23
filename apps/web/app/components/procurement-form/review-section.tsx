@@ -1,8 +1,8 @@
-"use client";
-import { useProcurementFormStore } from "@/app/stores/procurement-form";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import { Separator } from "@workspace/ui/components/separator";
-import { format } from "date-fns";
+'use client';
+import { useProcurementFormStore } from '@/app/stores/procurement-form';
+import { Card, CardContent } from '@workspace/ui/components/card';
+import { Separator } from '@workspace/ui/components/separator';
+import { format } from 'date-fns';
 
 export function ReviewSection() {
   const { form } = useProcurementFormStore();
@@ -56,9 +56,7 @@ export function ReviewSection() {
               <div className="space-y-1">
                 <p className="text-sm font-medium">Date:</p>
                 <p className="text-sm">
-                  {formValues.date
-                    ? format(new Date(formValues.date), "dd/MM/yyyy")
-                    : "Not set"}
+                  {formValues.date ? format(new Date(formValues.date), 'dd/MM/yyyy') : 'Not set'}
                 </p>
               </div>
               <div className="space-y-1">
@@ -82,8 +80,8 @@ export function ReviewSection() {
 
           <div className="rounded-md bg-muted p-4">
             <p className="text-sm text-muted-foreground">
-              Please review the information above before submitting. Once
-              submitted, a batch code will be automatically generated.
+              Please review the information above before submitting. Once submitted, a batch code will be automatically
+              generated.
             </p>
           </div>
         </div>

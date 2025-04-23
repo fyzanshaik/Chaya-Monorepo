@@ -3,66 +3,66 @@
 ## Table of Contents
 
 - [Chaya App Frontend Development Guide](#chaya-app-frontend-development-guide)
-	- [Table of Contents](#table-of-contents)
-	- [Project Overview](#project-overview)
-		- [Key Features](#key-features)
-		- [Tech Stack](#tech-stack)
-	- [Architecture](#architecture)
-		- [Frontend-Backend Communication](#frontend-backend-communication)
-	- [Authentication Flow](#authentication-flow)
-		- [Login Process](#login-process)
-		- [Auth Verification](#auth-verification)
-		- [Logout Process](#logout-process)
-		- [Implementation](#implementation)
-		- [Middleware for Route Protection](#middleware-for-route-protection)
-	- [Frontend Structure](#frontend-structure)
-		- [File/Folder Organization](#filefolder-organization)
-		- [Key Pages and Components](#key-pages-and-components)
-			- [Root Layout](#root-layout)
-			- [Dashboard Layout](#dashboard-layout)
-	- [Data Fetching Strategies](#data-fetching-strategies)
-		- [Server Components](#server-components)
-		- [Client Components](#client-components)
-		- [Search and Pagination](#search-and-pagination)
-	- [Form Handling](#form-handling)
-	- [File Uploads with UploadThing](#file-uploads-with-uploadthing)
-		- [Setup UploadThing in Next.js](#setup-uploadthing-in-nextjs)
-		- [Handling Multiple Fields within a Form](#handling-multiple-fields-within-a-form)
-	- [Role-Based Access Control](#role-based-access-control)
-		- [Custom Hook for Permissions](#custom-hook-for-permissions)
+  - [Table of Contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+    - [Key Features](#key-features)
+    - [Tech Stack](#tech-stack)
+  - [Architecture](#architecture)
+    - [Frontend-Backend Communication](#frontend-backend-communication)
+  - [Authentication Flow](#authentication-flow)
+    - [Login Process](#login-process)
+    - [Auth Verification](#auth-verification)
+    - [Logout Process](#logout-process)
+    - [Implementation](#implementation)
+    - [Middleware for Route Protection](#middleware-for-route-protection)
+  - [Frontend Structure](#frontend-structure)
+    - [File/Folder Organization](#filefolder-organization)
+    - [Key Pages and Components](#key-pages-and-components)
+      - [Root Layout](#root-layout)
+      - [Dashboard Layout](#dashboard-layout)
+  - [Data Fetching Strategies](#data-fetching-strategies)
+    - [Server Components](#server-components)
+    - [Client Components](#client-components)
+    - [Search and Pagination](#search-and-pagination)
+  - [Form Handling](#form-handling)
+  - [File Uploads with UploadThing](#file-uploads-with-uploadthing)
+    - [Setup UploadThing in Next.js](#setup-uploadthing-in-nextjs)
+    - [Handling Multiple Fields within a Form](#handling-multiple-fields-within-a-form)
+  - [Role-Based Access Control](#role-based-access-control)
+    - [Custom Hook for Permissions](#custom-hook-for-permissions)
 - [Chaya App Frontend Development Guide (Continued)](#chaya-app-frontend-development-guide-continued)
-	- [Role-Based Access Control (Continued)](#role-based-access-control-continued)
-		- [Server-Side Role Checks](#server-side-role-checks)
-	- [UI Components](#ui-components)
-		- [Using shadcn/ui](#using-shadcnui)
-			- [Installation](#installation)
-			- [Creating a Data Table](#creating-a-data-table)
-			- [Custom Pagination Component](#custom-pagination-component)
-	- [Routing and Navigation](#routing-and-navigation)
-		- [Page URLs and Structure](#page-urls-and-structure)
-		- [Navigation Between Pages](#navigation-between-pages)
-	- [State Management](#state-management)
-		- [Setup React Query for Data Fetching](#setup-react-query-for-data-fetching)
-	- [Error Handling](#error-handling)
-		- [Global Error Handling](#global-error-handling)
-		- [API Error Handling](#api-error-handling)
-	- [Performance Optimization](#performance-optimization)
-		- [Image Optimization](#image-optimization)
-		- [React Server Components](#react-server-components)
-		- [Suspense for Loading States](#suspense-for-loading-states)
-	- [Common Patterns](#common-patterns)
-		- [Custom Forms with React Hook Form and Zod](#custom-forms-with-react-hook-form-and-zod)
-		- [Reusable Modal/Dialog](#reusable-modaldialog)
-	- [Development Workflow](#development-workflow)
-		- [Working with the Monorepo](#working-with-the-monorepo)
-		- [Implementing New Features](#implementing-new-features)
+  - [Role-Based Access Control (Continued)](#role-based-access-control-continued)
+    - [Server-Side Role Checks](#server-side-role-checks)
+  - [UI Components](#ui-components)
+    - [Using shadcn/ui](#using-shadcnui)
+      - [Installation](#installation)
+      - [Creating a Data Table](#creating-a-data-table)
+      - [Custom Pagination Component](#custom-pagination-component)
+  - [Routing and Navigation](#routing-and-navigation)
+    - [Page URLs and Structure](#page-urls-and-structure)
+    - [Navigation Between Pages](#navigation-between-pages)
+  - [State Management](#state-management)
+    - [Setup React Query for Data Fetching](#setup-react-query-for-data-fetching)
+  - [Error Handling](#error-handling)
+    - [Global Error Handling](#global-error-handling)
+    - [API Error Handling](#api-error-handling)
+  - [Performance Optimization](#performance-optimization)
+    - [Image Optimization](#image-optimization)
+    - [React Server Components](#react-server-components)
+    - [Suspense for Loading States](#suspense-for-loading-states)
+  - [Common Patterns](#common-patterns)
+    - [Custom Forms with React Hook Form and Zod](#custom-forms-with-react-hook-form-and-zod)
+    - [Reusable Modal/Dialog](#reusable-modaldialog)
+  - [Development Workflow](#development-workflow)
+    - [Working with the Monorepo](#working-with-the-monorepo)
+    - [Implementing New Features](#implementing-new-features)
 - [Authentication Flow Clarification](#authentication-flow-clarification)
-	- [Auth Provider](#auth-provider)
-	- [Middleware](#middleware)
-	- [Root Layout (`app/layout.tsx`)](#root-layout-applayouttsx)
-	- [Dashboard Layout (`app/(dashboard)/layout.tsx`)](#dashboard-layout-appdashboardlayouttsx)
-	- [Authentication Flow Diagram](#authentication-flow-diagram)
-	- [Key Points to Remember](#key-points-to-remember)
+  - [Auth Provider](#auth-provider)
+  - [Middleware](#middleware)
+  - [Root Layout (`app/layout.tsx`)](#root-layout-applayouttsx)
+  - [Dashboard Layout (`app/(dashboard)/layout.tsx`)](#dashboard-layout-appdashboardlayouttsx)
+  - [Authentication Flow Diagram](#authentication-flow-diagram)
+  - [Key Points to Remember](#key-points-to-remember)
 
 ## Project Overview
 
@@ -220,32 +220,33 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-	const { pathname } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-	// Get token from cookie
-	const token = request.cookies.get('token')?.value;
+  // Get token from cookie
+  const token = request.cookies.get('token')?.value;
 
-	// Protected routes pattern
-	const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/farmers') || pathname.startsWith('/staff');
+  // Protected routes pattern
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') || pathname.startsWith('/farmers') || pathname.startsWith('/staff');
 
-	// Auth routes pattern
-	const isAuthRoute = pathname === '/login';
+  // Auth routes pattern
+  const isAuthRoute = pathname === '/login';
 
-	// Redirect to login if accessing protected route without token
-	if (isProtectedRoute && !token) {
-		return NextResponse.redirect(new URL('/login', request.url));
-	}
+  // Redirect to login if accessing protected route without token
+  if (isProtectedRoute && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
 
-	// Redirect to dashboard if accessing auth route with token
-	if (isAuthRoute && token) {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
-	}
+  // Redirect to dashboard if accessing auth route with token
+  if (isAuthRoute && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
 
-	return NextResponse.next();
+  return NextResponse.next();
 }
 
 export const config = {
-	matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 ```
 
@@ -321,15 +322,15 @@ import { ThemeProvider } from '@/providers/theme-provider';
 import '@/styles/globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-	return (
-		<html lang="en">
-			<body>
-				<ThemeProvider>
-					<AuthProvider>{children}</AuthProvider>
-				</ThemeProvider>
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en">
+      <body>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }
 ```
 
@@ -344,30 +345,30 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@chaya/shared';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-	// Get user session on server
-	const session = await getServerSession();
-	if (!session) {
-		redirect('/login');
-	}
+  // Get user session on server
+  const session = await getServerSession();
+  if (!session) {
+    redirect('/login');
+  }
 
-	// Get full user data
-	const user = await prisma.user.findUnique({
-		where: { email: session.user.email },
-	});
+  // Get full user data
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
 
-	if (!user) {
-		redirect('/login');
-	}
+  if (!user) {
+    redirect('/login');
+  }
 
-	return (
-		<div className="flex h-screen">
-			<Sidebar userRole={user.role} />
-			<div className="flex-1 flex flex-col overflow-hidden">
-				<TopNav user={user} />
-				<main className="flex-1 overflow-y-auto p-4">{children}</main>
-			</div>
-		</div>
-	);
+  return (
+    <div className="flex h-screen">
+      <Sidebar userRole={user.role} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <TopNav user={user} />
+        <main className="flex-1 overflow-y-auto p-4">{children}</main>
+      </div>
+    </div>
+  );
 }
 ```
 
@@ -383,41 +384,44 @@ import { DataTable } from '@/components/farmer/data-table';
 import { prisma } from '@chaya/shared';
 
 export default async function FarmersPage({ searchParams }: { searchParams: { page?: string; search?: string } }) {
-	const page = Number(searchParams.page) || 1;
-	const limit = 10;
-	const skip = (page - 1) * limit;
-	const search = searchParams.search || '';
+  const page = Number(searchParams.page) || 1;
+  const limit = 10;
+  const skip = (page - 1) * limit;
+  const search = searchParams.search || '';
 
-	// Build filter
-	const where = {
-		...(search
-			? {
-					OR: [{ name: { contains: search, mode: 'insensitive' } }, { surveyNumber: { contains: search, mode: 'insensitive' } }],
-				}
-			: {}),
-		isActive: true,
-	};
+  // Build filter
+  const where = {
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { surveyNumber: { contains: search, mode: 'insensitive' } },
+          ],
+        }
+      : {}),
+    isActive: true,
+  };
 
-	// Fetch data and count in parallel
-	const [farmers, totalCount] = await Promise.all([
-		prisma.farmer.findMany({
-			where,
-			include: {
-				bankDetails: true,
-			},
-			skip,
-			take: limit,
-			orderBy: { createdAt: 'desc' },
-		}),
-		prisma.farmer.count({ where }),
-	]);
+  // Fetch data and count in parallel
+  const [farmers, totalCount] = await Promise.all([
+    prisma.farmer.findMany({
+      where,
+      include: {
+        bankDetails: true,
+      },
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    }),
+    prisma.farmer.count({ where }),
+  ]);
 
-	return (
-		<div>
-			<h1 className="text-2xl font-bold mb-4">Farmers</h1>
-			<DataTable data={farmers} pageCount={Math.ceil(totalCount / limit)} currentPage={page} />
-		</div>
-	);
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Farmers</h1>
+      <DataTable data={farmers} pageCount={Math.ceil(totalCount / limit)} currentPage={page} />
+    </div>
+  );
 }
 ```
 
@@ -434,43 +438,43 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 export function DeleteFarmerButton({ farmerId }: { farmerId: number }) {
-	const [isDeleting, setIsDeleting] = useState(false);
-	const router = useRouter();
-	const { user } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
 
-	// Only show for admin users
-	if (user?.role !== 'ADMIN') return null;
+  // Only show for admin users
+  if (user?.role !== 'ADMIN') return null;
 
-	const handleDelete = async () => {
-		if (!confirm('Are you sure you want to delete this farmer?')) return;
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this farmer?')) return;
 
-		setIsDeleting(true);
-		try {
-			const response = await fetch(`/api/farmers/${farmerId}`, {
-				method: 'DELETE',
-				credentials: 'include',
-			});
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/farmers/${farmerId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-			if (response.ok) {
-				router.push('/farmers');
-				router.refresh(); // Refresh server components
-			} else {
-				const error = await response.json();
-				throw new Error(error.message);
-			}
-		} catch (error) {
-			console.error('Failed to delete farmer:', error);
-			alert('Failed to delete farmer');
-		} finally {
-			setIsDeleting(false);
-		}
-	};
+      if (response.ok) {
+        router.push('/farmers');
+        router.refresh(); // Refresh server components
+      } else {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+    } catch (error) {
+      console.error('Failed to delete farmer:', error);
+      alert('Failed to delete farmer');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
-	return (
-		<button onClick={handleDelete} disabled={isDeleting} className="bg-red-500 text-white px-4 py-2 rounded">
-			{isDeleting ? 'Deleting...' : 'Delete Farmer'}
-		</button>
-	);
+  return (
+    <button onClick={handleDelete} disabled={isDeleting} className="bg-red-500 text-white px-4 py-2 rounded">
+      {isDeleting ? 'Deleting...' : 'Delete Farmer'}
+    </button>
+  );
 }
 ```
 
@@ -485,34 +489,39 @@ For search and pagination, update the URL with search params:
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export function SearchForm() {
-	const router = useRouter();
-	const pathname = usePathname();
-	const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const formData = new FormData(e.currentTarget);
-		const search = formData.get('search') as string;
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const search = formData.get('search') as string;
 
-		const params = new URLSearchParams(searchParams);
-		if (search) {
-			params.set('search', search);
-		} else {
-			params.delete('search');
-		}
-		params.set('page', '1'); // Reset to first page when searching
+    const params = new URLSearchParams(searchParams);
+    if (search) {
+      params.set('search', search);
+    } else {
+      params.delete('search');
+    }
+    params.set('page', '1'); // Reset to first page when searching
 
-		router.push(`${pathname}?${params.toString()}`);
-	};
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
-	return (
-		<form onSubmit={handleSubmit} className="flex gap-2">
-			<input name="search" defaultValue={searchParams.get('search') || ''} placeholder="Search farmers..." className="px-3 py-2 border rounded" />
-			<button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-				Search
-			</button>
-		</form>
-	);
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2">
+      <input
+        name="search"
+        defaultValue={searchParams.get('search') || ''}
+        placeholder="Search farmers..."
+        className="px-3 py-2 border rounded"
+      />
+      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+        Search
+      </button>
+    </form>
+  );
 }
 ```
 
@@ -532,115 +541,131 @@ import { useRouter } from 'next/navigation';
 import { FileUpload } from '@/components/common/file-upload';
 
 export function FarmerForm() {
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
-	const form = useForm<CreateFarmerInput>({
-		resolver: zodResolver(createFarmerSchema),
-		defaultValues: {
-			farmer: {
-				name: '',
-				surveyNumber: '',
-				relationship: 'SELF',
-				gender: 'MALE',
-				community: '',
-				aadharNumber: '',
-				state: '',
-				district: '',
-				mandal: '',
-				village: '',
-				panchayath: '',
-				dateOfBirth: '',
-				age: 0,
-				contactNumber: '',
-				isActive: true,
-			},
-			bankDetails: {
-				ifscCode: '',
-				bankName: '',
-				branchName: '',
-				accountNumber: '',
-				address: '',
-				bankCode: '',
-			},
-			documents: {
-				profilePicUrl: '',
-				aadharDocUrl: '',
-				bankDocUrl: '',
-			},
-			fields: [],
-		},
-	});
+  const form = useForm<CreateFarmerInput>({
+    resolver: zodResolver(createFarmerSchema),
+    defaultValues: {
+      farmer: {
+        name: '',
+        surveyNumber: '',
+        relationship: 'SELF',
+        gender: 'MALE',
+        community: '',
+        aadharNumber: '',
+        state: '',
+        district: '',
+        mandal: '',
+        village: '',
+        panchayath: '',
+        dateOfBirth: '',
+        age: 0,
+        contactNumber: '',
+        isActive: true,
+      },
+      bankDetails: {
+        ifscCode: '',
+        bankName: '',
+        branchName: '',
+        accountNumber: '',
+        address: '',
+        bankCode: '',
+      },
+      documents: {
+        profilePicUrl: '',
+        aadharDocUrl: '',
+        bankDocUrl: '',
+      },
+      fields: [],
+    },
+  });
 
-	const onSubmit = async (data: CreateFarmerInput) => {
-		setIsSubmitting(true);
-		try {
-			const response = await fetch('/api/farmers', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data),
-				credentials: 'include',
-			});
+  const onSubmit = async (data: CreateFarmerInput) => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/farmers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
 
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.error || 'Failed to create farmer');
-			}
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create farmer');
+      }
 
-			router.push('/farmers');
-			router.refresh(); // Refresh server components
-		} catch (error) {
-			console.error('Failed to create farmer:', error);
-			alert(error.message || 'Failed to create farmer');
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+      router.push('/farmers');
+      router.refresh(); // Refresh server components
+    } catch (error) {
+      console.error('Failed to create farmer:', error);
+      alert(error.message || 'Failed to create farmer');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	return (
-		<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-			{/* Personal Details Section */}
-			<div className="space-y-4">
-				<h2 className="text-xl font-semibold">Personal Details</h2>
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      {/* Personal Details Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Personal Details</h2>
 
-				<div className="grid grid-cols-2 gap-4">
-					<div>
-						<label className="block mb-1">Name</label>
-						<input {...form.register('farmer.name')} className="w-full px-3 py-2 border rounded" />
-						{form.formState.errors.farmer?.name && <p className="text-red-500 text-sm mt-1">{form.formState.errors.farmer.name.message}</p>}
-					</div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-1">Name</label>
+            <input {...form.register('farmer.name')} className="w-full px-3 py-2 border rounded" />
+            {form.formState.errors.farmer?.name && (
+              <p className="text-red-500 text-sm mt-1">{form.formState.errors.farmer.name.message}</p>
+            )}
+          </div>
 
-					{/* Add more fields... */}
-				</div>
-			</div>
+          {/* Add more fields... */}
+        </div>
+      </div>
 
-			{/* Documents Section */}
-			<div className="space-y-4">
-				<h2 className="text-xl font-semibold">Documents</h2>
+      {/* Documents Section */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Documents</h2>
 
-				<div className="grid grid-cols-2 gap-4">
-					<div>
-						<FileUpload endpoint="profileImage" value={form.watch('documents.profilePicUrl')} onChange={(url) => form.setValue('documents.profilePicUrl', url)} label="Profile Picture" />
-						{form.formState.errors.documents?.profilePicUrl && <p className="text-red-500 text-sm mt-1">{form.formState.errors.documents.profilePicUrl.message}</p>}
-					</div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <FileUpload
+              endpoint="profileImage"
+              value={form.watch('documents.profilePicUrl')}
+              onChange={url => form.setValue('documents.profilePicUrl', url)}
+              label="Profile Picture"
+            />
+            {form.formState.errors.documents?.profilePicUrl && (
+              <p className="text-red-500 text-sm mt-1">{form.formState.errors.documents.profilePicUrl.message}</p>
+            )}
+          </div>
 
-					<div>
-						<FileUpload endpoint="farmerDocuments" value={form.watch('documents.aadharDocUrl')} onChange={(url) => form.setValue('documents.aadharDocUrl', url)} label="Aadhar Document" />
-						{form.formState.errors.documents?.aadharDocUrl && <p className="text-red-500 text-sm mt-1">{form.formState.errors.documents.aadharDocUrl.message}</p>}
-					</div>
+          <div>
+            <FileUpload
+              endpoint="farmerDocuments"
+              value={form.watch('documents.aadharDocUrl')}
+              onChange={url => form.setValue('documents.aadharDocUrl', url)}
+              label="Aadhar Document"
+            />
+            {form.formState.errors.documents?.aadharDocUrl && (
+              <p className="text-red-500 text-sm mt-1">{form.formState.errors.documents.aadharDocUrl.message}</p>
+            )}
+          </div>
 
-					{/* More file uploads... */}
-				</div>
-			</div>
+          {/* More file uploads... */}
+        </div>
+      </div>
 
-			{/* Bank Details Section */}
-			{/* Fields Section */}
+      {/* Bank Details Section */}
+      {/* Fields Section */}
 
-			<button type="submit" disabled={isSubmitting} className="bg-blue-500 text-white px-6 py-2 rounded">
-				{isSubmitting ? 'Creating...' : 'Create Farmer'}
-			</button>
-		</form>
-	);
+      <button type="submit" disabled={isSubmitting} className="bg-blue-500 text-white px-6 py-2 rounded">
+        {isSubmitting ? 'Creating...' : 'Create Farmer'}
+      </button>
+    </form>
+  );
 }
 ```
 
@@ -660,51 +685,51 @@ const f = createUploadthing();
 
 // FileRouter for your app, can contain multiple FileRoutes
 export const ourFileRouter = {
-	// Route for profile images
-	profileImage: f({
-		image: {
-			maxFileSize: '1MB',
-			maxFileCount: 1,
-		},
-	})
-		.middleware(({ req }) => {
-			// This code runs on your server before upload
-			return { userId: req.cookies.get('userId')?.value };
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('Upload complete for userId:', metadata.userId);
-			return { uploadedBy: metadata.userId };
-		}),
+  // Route for profile images
+  profileImage: f({
+    image: {
+      maxFileSize: '1MB',
+      maxFileCount: 1,
+    },
+  })
+    .middleware(({ req }) => {
+      // This code runs on your server before upload
+      return { userId: req.cookies.get('userId')?.value };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Upload complete for userId:', metadata.userId);
+      return { uploadedBy: metadata.userId };
+    }),
 
-	// Route for farmer documents (PDFs)
-	farmerDocuments: f({
-		pdf: {
-			maxFileSize: '200KB',
-			maxFileCount: 1,
-		},
-	})
-		.middleware(({ req }) => {
-			return { userId: req.cookies.get('userId')?.value };
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('PDF Upload complete for userId:', metadata.userId);
-			return { uploadedBy: metadata.userId };
-		}),
+  // Route for farmer documents (PDFs)
+  farmerDocuments: f({
+    pdf: {
+      maxFileSize: '200KB',
+      maxFileCount: 1,
+    },
+  })
+    .middleware(({ req }) => {
+      return { userId: req.cookies.get('userId')?.value };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('PDF Upload complete for userId:', metadata.userId);
+      return { uploadedBy: metadata.userId };
+    }),
 
-	// Route for land documents
-	landDocuments: f({
-		pdf: {
-			maxFileSize: '200KB',
-			maxFileCount: 1,
-		},
-	})
-		.middleware(({ req }) => {
-			return { userId: req.cookies.get('userId')?.value };
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			console.log('Land doc upload complete for userId:', metadata.userId);
-			return { uploadedBy: metadata.userId };
-		}),
+  // Route for land documents
+  landDocuments: f({
+    pdf: {
+      maxFileSize: '200KB',
+      maxFileCount: 1,
+    },
+  })
+    .middleware(({ req }) => {
+      return { userId: req.cookies.get('userId')?.value };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Land doc upload complete for userId:', metadata.userId);
+      return { uploadedBy: metadata.userId };
+    }),
 };
 
 export type OurFileRouter = typeof ourFileRouter;
@@ -718,7 +743,7 @@ import { createRouteHandler } from 'uploadthing/next';
 import { ourFileRouter } from './core';
 
 export const { GET, POST } = createRouteHandler({
-	router: ourFileRouter,
+  router: ourFileRouter,
 });
 ```
 
@@ -837,16 +862,31 @@ export function FileUpload({
 ```tsx
 // Using in a form
 <div className="space-y-4">
-	<h2 className="text-xl font-semibold">Documents</h2>
+  <h2 className="text-xl font-semibold">Documents</h2>
 
-	{/* Profile Picture Upload */}
-	<FileUpload endpoint="profileImage" value={form.watch('documents.profilePicUrl')} onChange={(url) => form.setValue('documents.profilePicUrl', url)} label="Profile Picture" />
+  {/* Profile Picture Upload */}
+  <FileUpload
+    endpoint="profileImage"
+    value={form.watch('documents.profilePicUrl')}
+    onChange={url => form.setValue('documents.profilePicUrl', url)}
+    label="Profile Picture"
+  />
 
-	{/* Aadhar Document Upload */}
-	<FileUpload endpoint="farmerDocuments" value={form.watch('documents.aadharDocUrl')} onChange={(url) => form.setValue('documents.aadharDocUrl', url)} label="Aadhar Document" />
+  {/* Aadhar Document Upload */}
+  <FileUpload
+    endpoint="farmerDocuments"
+    value={form.watch('documents.aadharDocUrl')}
+    onChange={url => form.setValue('documents.aadharDocUrl', url)}
+    label="Aadhar Document"
+  />
 
-	{/* Bank Document Upload */}
-	<FileUpload endpoint="farmerDocuments" value={form.watch('documents.bankDocUrl')} onChange={(url) => form.setValue('documents.bankDocUrl', url)} label="Bank Document" />
+  {/* Bank Document Upload */}
+  <FileUpload
+    endpoint="farmerDocuments"
+    value={form.watch('documents.bankDocUrl')}
+    onChange={url => form.setValue('documents.bankDocUrl', url)}
+    label="Bank Document"
+  />
 </div>
 ```
 
@@ -857,52 +897,64 @@ For fields that require multiple document uploads:
 ```tsx
 // Dynamic field array with file uploads
 const { fields, append, remove } = useFieldArray({
-	control: form.control,
-	name: 'fields',
+  control: form.control,
+  name: 'fields',
 });
 
 // Render field array
 <div className="space-y-4">
-	<h2 className="text-xl font-semibold">Fields</h2>
+  <h2 className="text-xl font-semibold">Fields</h2>
 
-	{fields.map((field, index) => (
-		<div key={field.id} className="border p-4 rounded-md">
-			<div className="flex justify-between mb-4">
-				<h3 className="font-medium">Field {index + 1}</h3>
-				<button type="button" onClick={() => remove(index)} className="text-red-500">
-					Remove
-				</button>
-			</div>
+  {fields.map((field, index) => (
+    <div key={field.id} className="border p-4 rounded-md">
+      <div className="flex justify-between mb-4">
+        <h3 className="font-medium">Field {index + 1}</h3>
+        <button type="button" onClick={() => remove(index)} className="text-red-500">
+          Remove
+        </button>
+      </div>
 
-			<div className="grid grid-cols-2 gap-4 mb-4">
-				{/* Field properties */}
-				<div>
-					<label className="block mb-1">Area (Ha)</label>
-					<input type="number" step="0.01" {...form.register(`fields.${index}.areaHa`, { valueAsNumber: true })} className="w-full px-3 py-2 border rounded" />
-				</div>
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Field properties */}
+        <div>
+          <label className="block mb-1">Area (Ha)</label>
+          <input
+            type="number"
+            step="0.01"
+            {...form.register(`fields.${index}.areaHa`, {
+              valueAsNumber: true,
+            })}
+            className="w-full px-3 py-2 border rounded"
+          />
+        </div>
 
-				{/* More field properties... */}
-			</div>
+        {/* More field properties... */}
+      </div>
 
-			{/* Land document upload */}
-			<FileUpload endpoint="landDocuments" value={form.watch(`fields.${index}.landDocumentUrl`)} onChange={(url) => form.setValue(`fields.${index}.landDocumentUrl`, url)} label="Land Document" />
-		</div>
-	))}
+      {/* Land document upload */}
+      <FileUpload
+        endpoint="landDocuments"
+        value={form.watch(`fields.${index}.landDocumentUrl`)}
+        onChange={url => form.setValue(`fields.${index}.landDocumentUrl`, url)}
+        label="Land Document"
+      />
+    </div>
+  ))}
 
-	<button
-		type="button"
-		onClick={() =>
-			append({
-				areaHa: 0,
-				yieldEstimate: 0,
-				location: { latitude: 0, longitude: 0 },
-				landDocumentUrl: '',
-			})
-		}
-		className="bg-gray-200 px-4 py-2 rounded"
-	>
-		Add Field
-	</button>
+  <button
+    type="button"
+    onClick={() =>
+      append({
+        areaHa: 0,
+        yieldEstimate: 0,
+        location: { latitude: 0, longitude: 0 },
+        landDocumentUrl: '',
+      })
+    }
+    className="bg-gray-200 px-4 py-2 rounded"
+  >
+    Add Field
+  </button>
 </div>;
 ```
 
@@ -915,19 +967,19 @@ const { fields, append, remove } = useFieldArray({
 import { useAuth } from '@/providers/auth-provider';
 
 export function usePermissions() {
-	const { user } = useAuth();
+  const { user } = useAuth();
 
-	return {
-		isAdmin: user?.role === 'ADMIN',
-		canCreateFarmer: !!user, // Both admin and staff
-		canUpdateFarmer: user?.role === 'ADMIN',
-		canDeleteFarmer: user?.role === 'ADMIN',
-		canExportData: user?.role === 'ADMIN',
-		canManageStaff: user?.role === 'ADMIN',
-		canViewDashboard: user?.role === 'ADMIN',
-		canViewProcurement: !!user, // Both admin and staff
-		canViewProcessing: !!user, // Both admin and staff
-	};
+  return {
+    isAdmin: user?.role === 'ADMIN',
+    canCreateFarmer: !!user, // Both admin and staff
+    canUpdateFarmer: user?.role === 'ADMIN',
+    canDeleteFarmer: user?.role === 'ADMIN',
+    canExportData: user?.role === 'ADMIN',
+    canManageStaff: user?.role === 'ADMIN',
+    canViewDashboard: user?.role === 'ADMIN',
+    canViewProcurement: !!user, // Both admin and staff
+    canViewProcessing: !!user, // Both admin and staff
+  };
 }
 ```
 
@@ -947,82 +999,90 @@ import { Home, Users, Plant, Package, BarChart, LogOut } from 'lucide-react';
 import { useAuth } from '@/providers/auth-provider';
 
 export function Sidebar() {
-	const pathname = usePathname();
-	const permissions = usePermissions();
-	const { signOut, user } = useAuth();
+  const pathname = usePathname();
+  const permissions = usePermissions();
+  const { signOut, user } = useAuth();
 
-	// Define navigation items with permission checks
-	const navItems = [
-		{
-			title: 'Dashboard',
-			href: '/dashboard',
-			icon: Home,
-			show: permissions.canViewDashboard,
-		},
-		{
-			title: 'Farmers',
-			href: '/farmers',
-			icon: Plant,
-			show: true, // Available to all
-		},
-		{
-			title: 'Procurement',
-			href: '/procurement',
-			icon: Package,
-			show: permissions.canViewProcurement,
-		},
-		{
-			title: 'Processing',
-			href: '/processing',
-			icon: BarChart,
-			show: permissions.canViewProcessing,
-		},
-		{
-			title: 'Staff Management',
-			href: '/staff',
-			icon: Users,
-			show: permissions.canManageStaff,
-		},
-	];
+  // Define navigation items with permission checks
+  const navItems = [
+    {
+      title: 'Dashboard',
+      href: '/dashboard',
+      icon: Home,
+      show: permissions.canViewDashboard,
+    },
+    {
+      title: 'Farmers',
+      href: '/farmers',
+      icon: Plant,
+      show: true, // Available to all
+    },
+    {
+      title: 'Procurement',
+      href: '/procurement',
+      icon: Package,
+      show: permissions.canViewProcurement,
+    },
+    {
+      title: 'Processing',
+      href: '/processing',
+      icon: BarChart,
+      show: permissions.canViewProcessing,
+    },
+    {
+      title: 'Staff Management',
+      href: '/staff',
+      icon: Users,
+      show: permissions.canManageStaff,
+    },
+  ];
 
-	return (
-		<div className="w-64 bg-slate-800 text-white flex flex-col h-full">
-			<div className="p-4 border-b border-slate-700">
-				<h1 className="text-xl font-bold">Chaya App</h1>
-			</div>
+  return (
+    <div className="w-64 bg-slate-800 text-white flex flex-col h-full">
+      <div className="p-4 border-b border-slate-700">
+        <h1 className="text-xl font-bold">Chaya App</h1>
+      </div>
 
-			<div className="flex-1 py-4">
-				<nav className="space-y-1">
-					{navItems.map((item) =>
-						item.show ? (
-							<Link
-								key={item.href}
-								href={item.href}
-								className={cn('flex items-center px-4 py-2 text-sm', pathname === item.href ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white')}
-							>
-								<item.icon className="mr-3 h-5 w-5" />
-								{item.title}
-							</Link>
-						) : null
-					)}
-				</nav>
-			</div>
+      <div className="flex-1 py-4">
+        <nav className="space-y-1">
+          {navItems.map(item =>
+            item.show ? (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center px-4 py-2 text-sm',
+                  pathname === item.href
+                    ? 'bg-slate-700 text-white'
+                    : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                )}
+              >
+                <item.icon className="mr-3 h-5 w-5" />
+                {item.title}
+              </Link>
+            ) : null
+          )}
+        </nav>
+      </div>
 
-			<div className="p-4 border-t border-slate-700">
-				<div className="flex items-center mb-4">
-					<div className="ml-2">
-						<p className="text-sm font-medium">{user?.name}</p>
-						<p className="text-xs text-slate-400">{user?.role}</p>
-					</div>
-				</div>
+      <div className="p-4 border-t border-slate-700">
+        <div className="flex items-center mb-4">
+          <div className="ml-2">
+            <p className="text-sm font-medium">{user?.name}</p>
+            <p className="text-xs text-slate-400">{user?.role}</p>
+          </div>
+        </div>
 
-				<button onClick={signOut} className="flex items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white w-full rounded">
-					<LogOut className="mr-3 h-5 w-5" />
-					Sign Out
-				</button>
-			</div>
-		</div>
-	);
+        <button
+          onClick={signOut}
+          className="flex items-center px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white w-full rounded"
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
 }
 ```
 
@@ -1038,34 +1098,34 @@ import { prisma } from '@chaya/shared';
 import { StaffList } from '@/components/staff/staff-list';
 
 export default async function StaffPage() {
-	// Get user session on server
-	const session = await getServerSession();
-	if (!session?.user?.email) {
-		redirect('/login');
-	}
+  // Get user session on server
+  const session = await getServerSession();
+  if (!session?.user?.email) {
+    redirect('/login');
+  }
 
-	// Get full user data
-	const user = await prisma.user.findUnique({
-		where: { email: session.user.email },
-	});
+  // Get full user data
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
 
-	// Check if user is admin
-	if (!user || user.role !== 'ADMIN') {
-		redirect('/dashboard'); // Redirect non-admins
-	}
+  // Check if user is admin
+  if (!user || user.role !== 'ADMIN') {
+    redirect('/dashboard'); // Redirect non-admins
+  }
 
-	// Fetch staff users
-	const staffUsers = await prisma.user.findMany({
-		where: { role: 'STAFF' },
-		orderBy: { createdAt: 'desc' },
-	});
+  // Fetch staff users
+  const staffUsers = await prisma.user.findMany({
+    where: { role: 'STAFF' },
+    orderBy: { createdAt: 'desc' },
+  });
 
-	return (
-		<div>
-			<h1 className="text-2xl font-bold mb-4">Staff Management</h1>
-			<StaffList staffUsers={staffUsers} />
-		</div>
-	);
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Staff Management</h1>
+      <StaffList staffUsers={staffUsers} />
+    </div>
+  );
 }
 ```
 
@@ -1108,87 +1168,87 @@ import { Pagination } from '@/components/common/pagination';
 import { usePermissions } from '@/lib/hooks/use-permissions';
 
 interface DataTableProps {
-	data: any[];
-	pageCount: number;
-	currentPage: number;
+  data: any[];
+  pageCount: number;
+  currentPage: number;
 }
 
 export function DataTable({ data, pageCount, currentPage }: DataTableProps) {
-	const permissions = usePermissions();
+  const permissions = usePermissions();
 
-	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>Farmers List</CardTitle>
-				<CardDescription>Manage farmer records and access detailed information.</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<div className="rounded-md border">
-					<Table>
-						<TableHeader>
-							<TableRow>
-								<TableHead>Name</TableHead>
-								<TableHead>Survey Number</TableHead>
-								<TableHead>State</TableHead>
-								<TableHead>District</TableHead>
-								<TableHead>Contact</TableHead>
-								<TableHead className="text-right">Actions</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{data.map((farmer) => (
-								<TableRow key={farmer.id}>
-									<TableCell className="font-medium">{farmer.name}</TableCell>
-									<TableCell>{farmer.surveyNumber}</TableCell>
-									<TableCell>{farmer.state}</TableCell>
-									<TableCell>{farmer.district}</TableCell>
-									<TableCell>{farmer.contactNumber}</TableCell>
-									<TableCell className="text-right">
-										<div className="flex justify-end gap-2">
-											<Link href={`/farmers/${farmer.id}`}>
-												<Button size="sm" variant="outline">
-													<Eye className="h-4 w-4 mr-1" />
-													View
-												</Button>
-											</Link>
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Farmers List</CardTitle>
+        <CardDescription>Manage farmer records and access detailed information.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Survey Number</TableHead>
+                <TableHead>State</TableHead>
+                <TableHead>District</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map(farmer => (
+                <TableRow key={farmer.id}>
+                  <TableCell className="font-medium">{farmer.name}</TableCell>
+                  <TableCell>{farmer.surveyNumber}</TableCell>
+                  <TableCell>{farmer.state}</TableCell>
+                  <TableCell>{farmer.district}</TableCell>
+                  <TableCell>{farmer.contactNumber}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/farmers/${farmer.id}`}>
+                        <Button size="sm" variant="outline">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </Link>
 
-											{permissions.canUpdateFarmer && (
-												<Link href={`/farmers/${farmer.id}/edit`}>
-													<Button size="sm" variant="outline">
-														<Edit className="h-4 w-4 mr-1" />
-														Edit
-													</Button>
-												</Link>
-											)}
+                      {permissions.canUpdateFarmer && (
+                        <Link href={`/farmers/${farmer.id}/edit`}>
+                          <Button size="sm" variant="outline">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </Link>
+                      )}
 
-											{permissions.canDeleteFarmer && (
-												<Button size="sm" variant="destructive">
-													<Trash2 className="h-4 w-4 mr-1" />
-													Delete
-												</Button>
-											)}
-										</div>
-									</TableCell>
-								</TableRow>
-							))}
+                      {permissions.canDeleteFarmer && (
+                        <Button size="sm" variant="destructive">
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
 
-							{data.length === 0 && (
-								<TableRow>
-									<TableCell colSpan={6} className="text-center py-6">
-										No farmers found.
-									</TableCell>
-								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				</div>
+              {data.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-6">
+                    No farmers found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-				<div className="mt-4 flex justify-end">
-					<Pagination currentPage={currentPage} totalPages={pageCount} basePath="/farmers" />
-				</div>
-			</CardContent>
-		</Card>
-	);
+        <div className="mt-4 flex justify-end">
+          <Pagination currentPage={currentPage} totalPages={pageCount} basePath="/farmers" />
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 ```
 
@@ -1204,62 +1264,65 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface PaginationProps {
-	currentPage: number;
-	totalPages: number;
-	basePath: string;
+  currentPage: number;
+  totalPages: number;
+  basePath: string;
 }
 
 export function Pagination({ currentPage, totalPages, basePath }: PaginationProps) {
-	const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-	// Create new URLSearchParams object to preserve existing params
-	const createPageURL = (pageNumber: number) => {
-		const params = new URLSearchParams(searchParams);
-		params.set('page', pageNumber.toString());
-		return `${basePath}?${params.toString()}`;
-	};
+  // Create new URLSearchParams object to preserve existing params
+  const createPageURL = (pageNumber: number) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', pageNumber.toString());
+    return `${basePath}?${params.toString()}`;
+  };
 
-	return (
-		<div className="flex items-center gap-1">
-			<Link href={currentPage > 1 ? createPageURL(currentPage - 1) : '#'} aria-disabled={currentPage <= 1}>
-				<Button variant="outline" size="sm" disabled={currentPage <= 1}>
-					<ChevronLeft className="h-4 w-4" />
-					Previous
-				</Button>
-			</Link>
+  return (
+    <div className="flex items-center gap-1">
+      <Link href={currentPage > 1 ? createPageURL(currentPage - 1) : '#'} aria-disabled={currentPage <= 1}>
+        <Button variant="outline" size="sm" disabled={currentPage <= 1}>
+          <ChevronLeft className="h-4 w-4" />
+          Previous
+        </Button>
+      </Link>
 
-			<div className="flex gap-1 mx-2">
-				{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-					// Logic to show pages around current page
-					let pageNum = i + 1;
-					if (totalPages > 5) {
-						if (currentPage <= 3) {
-							pageNum = i + 1;
-						} else if (currentPage >= totalPages - 2) {
-							pageNum = totalPages - 4 + i;
-						} else {
-							pageNum = currentPage - 2 + i;
-						}
-					}
+      <div className="flex gap-1 mx-2">
+        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+          // Logic to show pages around current page
+          let pageNum = i + 1;
+          if (totalPages > 5) {
+            if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+          }
 
-					return (
-						<Link key={pageNum} href={createPageURL(pageNum)}>
-							<Button variant={pageNum === currentPage ? 'default' : 'outline'} size="sm" className="w-9">
-								{pageNum}
-							</Button>
-						</Link>
-					);
-				})}
-			</div>
+          return (
+            <Link key={pageNum} href={createPageURL(pageNum)}>
+              <Button variant={pageNum === currentPage ? 'default' : 'outline'} size="sm" className="w-9">
+                {pageNum}
+              </Button>
+            </Link>
+          );
+        })}
+      </div>
 
-			<Link href={currentPage < totalPages ? createPageURL(currentPage + 1) : '#'} aria-disabled={currentPage >= totalPages}>
-				<Button variant="outline" size="sm" disabled={currentPage >= totalPages}>
-					Next
-					<ChevronRight className="h-4 w-4" />
-				</Button>
-			</Link>
-		</div>
-	);
+      <Link
+        href={currentPage < totalPages ? createPageURL(currentPage + 1) : '#'}
+        aria-disabled={currentPage >= totalPages}
+      >
+        <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </Link>
+    </div>
+  );
 }
 ```
 
@@ -1304,13 +1367,13 @@ For programmatic navigation in client components:
 import { useRouter } from 'next/navigation';
 
 export function CreateButton() {
-	const router = useRouter();
+  const router = useRouter();
 
-	return (
-		<button onClick={() => router.push('/farmers/create')} className="bg-blue-500 text-white px-4 py-2 rounded">
-			Create Farmer
-		</button>
-	);
+  return (
+    <button onClick={() => router.push('/farmers/create')} className="bg-blue-500 text-white px-4 py-2 rounded">
+      Create Farmer
+    </button>
+  );
 }
 ```
 
@@ -1320,13 +1383,13 @@ For redirect in server components:
 import { redirect } from 'next/navigation';
 
 export default async function Page() {
-	const isAuthenticated = await checkAuth();
+  const isAuthenticated = await checkAuth();
 
-	if (!isAuthenticated) {
-		redirect('/login');
-	}
+  if (!isAuthenticated) {
+    redirect('/login');
+  }
 
-	// Rest of the page...
+  // Rest of the page...
 }
 ```
 
@@ -1348,19 +1411,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
-	const [queryClient] = useState(
-		() =>
-			new QueryClient({
-				defaultOptions: {
-					queries: {
-						staleTime: 60 * 1000, // 1 minute
-						retry: 1,
-					},
-				},
-			})
-	);
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000, // 1 minute
+            retry: 1,
+          },
+        },
+      })
+  );
 
-	return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 ```
 
@@ -1371,15 +1434,15 @@ Add to layout:
 import { QueryProvider } from '@/providers/query-provider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-	return (
-		<html lang="en">
-			<body>
-				<QueryProvider>
-					<AuthProvider>{children}</AuthProvider>
-				</QueryProvider>
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en">
+      <body>
+        <QueryProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </QueryProvider>
+      </body>
+    </html>
+  );
 }
 ```
 
@@ -1390,39 +1453,39 @@ Use React Query in components:
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export function useFarmers(page = 1, search = '') {
-	return useQuery({
-		queryKey: ['farmers', page, search],
-		queryFn: async () => {
-			const response = await fetch(`/api/farmers?page=${page}&search=${search}`, { credentials: 'include' });
-			if (!response.ok) {
-				throw new Error('Failed to fetch farmers');
-			}
-			return response.json();
-		},
-	});
+  return useQuery({
+    queryKey: ['farmers', page, search],
+    queryFn: async () => {
+      const response = await fetch(`/api/farmers?page=${page}&search=${search}`, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch farmers');
+      }
+      return response.json();
+    },
+  });
 }
 
 export function useDeleteFarmer() {
-	const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-	return useMutation({
-		mutationFn: async (farmerId: number) => {
-			const response = await fetch(`/api/farmers/${farmerId}`, {
-				method: 'DELETE',
-				credentials: 'include',
-			});
+  return useMutation({
+    mutationFn: async (farmerId: number) => {
+      const response = await fetch(`/api/farmers/${farmerId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
 
-			if (!response.ok) {
-				throw new Error('Failed to delete farmer');
-			}
+      if (!response.ok) {
+        throw new Error('Failed to delete farmer');
+      }
 
-			return response.json();
-		},
-		onSuccess: () => {
-			// Invalidate farmers list queries to refresh data
-			queryClient.invalidateQueries({ queryKey: ['farmers'] });
-		},
-	});
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate farmers list queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['farmers'] });
+    },
+  });
 }
 ```
 
@@ -1440,25 +1503,25 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
 interface ErrorBoundaryProps {
-	error: Error & { digest?: string };
-	reset: () => void;
+  error: Error & { digest?: string };
+  reset: () => void;
 }
 
 export function ErrorBoundary({ error, reset }: ErrorBoundaryProps) {
-	useEffect(() => {
-		// Log error to an error reporting service
-		console.error('Error boundary caught error:', error);
-	}, [error]);
+  useEffect(() => {
+    // Log error to an error reporting service
+    console.error('Error boundary caught error:', error);
+  }, [error]);
 
-	return (
-		<div className="flex h-screen items-center justify-center p-6">
-			<div className="text-center">
-				<h2 className="text-2xl font-bold mb-4">Something went wrong!</h2>
-				<p className="text-gray-600 mb-6">{error.message || 'An unexpected error occurred'}</p>
-				<Button onClick={reset}>Try again</Button>
-			</div>
-		</div>
-	);
+  return (
+    <div className="flex h-screen items-center justify-center p-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-4">Something went wrong!</h2>
+        <p className="text-gray-600 mb-6">{error.message || 'An unexpected error occurred'}</p>
+        <Button onClick={reset}>Try again</Button>
+      </div>
+    </div>
+  );
 }
 ```
 
@@ -1471,7 +1534,7 @@ Create a global error page:
 import { ErrorBoundary } from '@/components/error-boundary';
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-	return <ErrorBoundary error={error} reset={reset} />;
+  return <ErrorBoundary error={error} reset={reset} />;
 }
 ```
 
@@ -1484,44 +1547,44 @@ Create a custom hook for API error handling:
 import { useState } from 'react';
 
 interface ApiOptions<T> {
-	url: string;
-	method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-	body?: T;
+  url: string;
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  body?: T;
 }
 
 export function useApi<TData, TBody = any>() {
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-	const request = async ({ url, method = 'GET', body }: ApiOptions<TBody>): Promise<TData> => {
-		setLoading(true);
-		setError(null);
+  const request = async ({ url, method = 'GET', body }: ApiOptions<TBody>): Promise<TData> => {
+    setLoading(true);
+    setError(null);
 
-		try {
-			const response = await fetch(url, {
-				method,
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				credentials: 'include',
-				body: body ? JSON.stringify(body) : undefined,
-			});
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: body ? JSON.stringify(body) : undefined,
+      });
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || 'Something went wrong');
-			}
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Something went wrong');
+      }
 
-			return await response.json();
-		} catch (err) {
-			setError(err.message || 'An error occurred');
-			throw err;
-		} finally {
-			setLoading(false);
-		}
-	};
+      return await response.json();
+    } catch (err) {
+      setError(err.message || 'An error occurred');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-	return { request, loading, error };
+  return { request, loading, error };
 }
 ```
 
@@ -1539,46 +1602,46 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema } from '@chaya/shared';
 
 export function CreateStaffForm() {
-	const router = useRouter();
-	const api = useApi();
+  const router = useRouter();
+  const api = useApi();
 
-	const form = useForm({
-		resolver: zodResolver(registerSchema),
-		defaultValues: {
-			name: '',
-			email: '',
-			password: '',
-			role: 'STAFF',
-		},
-	});
+  const form = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      role: 'STAFF',
+    },
+  });
 
-	const onSubmit = async (data) => {
-		try {
-			await api.request({
-				url: '/api/auth/register',
-				method: 'POST',
-				body: data,
-			});
+  const onSubmit = async data => {
+    try {
+      await api.request({
+        url: '/api/auth/register',
+        method: 'POST',
+        body: data,
+      });
 
-			router.push('/staff');
-			router.refresh();
-		} catch (error) {
-			// Error is already handled by the useApi hook
-			console.error('Failed to create staff:', error);
-		}
-	};
+      router.push('/staff');
+      router.refresh();
+    } catch (error) {
+      // Error is already handled by the useApi hook
+      console.error('Failed to create staff:', error);
+    }
+  };
 
-	return (
-		<form onSubmit={form.handleSubmit(onSubmit)}>
-			{/* Form fields */}
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Form fields */}
 
-			{api.error && <div className="bg-red-100 text-red-800 p-3 rounded mb-4">{api.error}</div>}
+      {api.error && <div className="bg-red-100 text-red-800 p-3 rounded mb-4">{api.error}</div>}
 
-			<button type="submit" disabled={api.loading} className="bg-blue-500 text-white px-4 py-2 rounded">
-				{api.loading ? 'Creating...' : 'Create Staff'}
-			</button>
-		</form>
-	);
+      <button type="submit" disabled={api.loading} className="bg-blue-500 text-white px-4 py-2 rounded">
+        {api.loading ? 'Creating...' : 'Create Staff'}
+      </button>
+    </form>
+  );
 }
 ```
 
@@ -1593,7 +1656,13 @@ import Image from 'next/image';
 
 // For profile pictures
 <div className="relative h-24 w-24 overflow-hidden rounded-full">
-	<Image src={farmer.documents.profilePicUrl || '/placeholder-avatar.png'} alt={farmer.name} fill className="object-cover" priority />
+  <Image
+    src={farmer.documents.profilePicUrl || '/placeholder-avatar.png'}
+    alt={farmer.name}
+    fill
+    className="object-cover"
+    priority
+  />
 </div>;
 ```
 
@@ -1606,25 +1675,25 @@ Use Server Components for content that doesn't need interactivity:
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MetricsCardProps {
-	title: string;
-	value: string | number;
-	description?: string;
-	icon: React.ReactNode;
+  title: string;
+  value: string | number;
+  description?: string;
+  icon: React.ReactNode;
 }
 
 export function MetricsCard({ title, value, description, icon }: MetricsCardProps) {
-	return (
-		<Card>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<CardTitle className="text-sm font-medium">{title}</CardTitle>
-				{icon}
-			</CardHeader>
-			<CardContent>
-				<div className="text-2xl font-bold">{value}</div>
-				{description && <p className="text-xs text-muted-foreground">{description}</p>}
-			</CardContent>
-		</Card>
-	);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      </CardContent>
+    </Card>
+  );
 }
 ```
 
@@ -1639,15 +1708,15 @@ import { FarmerList } from './components/farmer-list';
 import { FarmerListSkeleton } from './components/farmer-list-skeleton';
 
 export default function FarmersPage() {
-	return (
-		<div>
-			<h1 className="text-2xl font-bold mb-4">Farmers</h1>
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-4">Farmers</h1>
 
-			<Suspense fallback={<FarmerListSkeleton />}>
-				<FarmerList />
-			</Suspense>
-		</div>
-	);
+      <Suspense fallback={<FarmerListSkeleton />}>
+        <FarmerList />
+      </Suspense>
+    </div>
+  );
 }
 ```
 
@@ -1669,71 +1738,85 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function LoginForm() {
-	const [error, setError] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-	const form = useForm({
-		resolver: zodResolver(loginSchema),
-		defaultValues: {
-			email: '',
-			password: '',
-		},
-	});
+  const form = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-	const onSubmit = async (data) => {
-		setIsLoading(true);
-		setError(null);
+  const onSubmit = async data => {
+    setIsLoading(true);
+    setError(null);
 
-		try {
-			const response = await fetch('/api/auth/login', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(data),
-			});
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-			if (!response.ok) {
-				const error = await response.json();
-				throw new Error(error.error || 'Login failed');
-			}
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Login failed');
+      }
 
-			router.push('/dashboard');
-			router.refresh();
-		} catch (err) {
-			setError(err.message);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-	return (
-		<Card className="w-full max-w-md mx-auto">
-			<CardHeader>
-				<CardTitle className="text-center">Login to Chaya App</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<div>
-						<label className="block text-sm font-medium mb-1">Email</label>
-						<Input {...form.register('email')} type="email" placeholder="you@example.com" error={form.formState.errors.email?.message} />
-						{form.formState.errors.email && <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>}
-					</div>
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-center">Login to Chaya App</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <Input
+              {...form.register('email')}
+              type="email"
+              placeholder="you@example.com"
+              error={form.formState.errors.email?.message}
+            />
+            {form.formState.errors.email && (
+              <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
+            )}
+          </div>
 
-					<div>
-						<label className="block text-sm font-medium mb-1">Password</label>
-						<Input {...form.register('password')} type="password" placeholder="••••••••" error={form.formState.errors.password?.message} />
-						{form.formState.errors.password && <p className="text-red-500 text-sm mt-1">{form.formState.errors.password.message}</p>}
-					</div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Password</label>
+            <Input
+              {...form.register('password')}
+              type="password"
+              placeholder="••••••••"
+              error={form.formState.errors.password?.message}
+            />
+            {form.formState.errors.password && (
+              <p className="text-red-500 text-sm mt-1">{form.formState.errors.password.message}</p>
+            )}
+          </div>
 
-					{error && <div className="bg-red-100 text-red-800 p-3 rounded">{error}</div>}
+          {error && <div className="bg-red-100 text-red-800 p-3 rounded">{error}</div>}
 
-					<Button type="submit" className="w-full" disabled={isLoading}>
-						{isLoading ? 'Logging in...' : 'Log in'}
-					</Button>
-				</form>
-			</CardContent>
-		</Card>
-	);
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Log in'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
 }
 ```
 
@@ -1744,46 +1827,57 @@ export function LoginForm() {
 'use client';
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { ReactNode } from 'react';
 
 interface ConfirmDialogProps {
-	trigger: ReactNode;
-	title: string;
-	description: string;
-	confirmLabel?: string;
-	cancelLabel?: string;
-	onConfirm: () => void;
-	variant?: 'default' | 'destructive';
+  trigger: ReactNode;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => void;
+  variant?: 'default' | 'destructive';
 }
 
-export function ConfirmDialog({ trigger, title, description, confirmLabel = 'Confirm', cancelLabel = 'Cancel', onConfirm, variant = 'default' }: ConfirmDialogProps) {
-	return (
-		<AlertDialog>
-			<AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>{title}</AlertDialogTitle>
-					<AlertDialogDescription>{description}</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
-					<AlertDialogAction onClick={onConfirm} className={variant === 'destructive' ? 'bg-red-500 hover:bg-red-600' : undefined}>
-						{confirmLabel}
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	);
+export function ConfirmDialog({
+  trigger,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  onConfirm,
+  variant = 'default',
+}: ConfirmDialogProps) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            className={variant === 'destructive' ? 'bg-red-500 hover:bg-red-600' : undefined}
+          >
+            {confirmLabel}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
 ```
 
@@ -1791,13 +1885,13 @@ Usage:
 
 ```tsx
 <ConfirmDialog
-	trigger={<Button variant="destructive">Delete</Button>}
-	title="Delete Farmer"
-	description="Are you sure you want to delete this farmer? This action cannot be undone."
-	confirmLabel="Delete"
-	cancelLabel="Cancel"
-	onConfirm={() => handleDelete(farmer.id)}
-	variant="destructive"
+  trigger={<Button variant="destructive">Delete</Button>}
+  title="Delete Farmer"
+  description="Are you sure you want to delete this farmer? This action cannot be undone."
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  onConfirm={() => handleDelete(farmer.id)}
+  variant="destructive"
 />
 ```
 
@@ -1865,16 +1959,16 @@ The `AuthProvider` component serves as a central state manager for user authenti
 import { useAuth } from '@/providers/auth-provider';
 
 function MyComponent() {
-	const { user, loading } = useAuth();
+  const { user, loading } = useAuth();
 
-	if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
 
-	return (
-		<div>
-			{user.role === 'ADMIN' && <AdminOnlyButton />}
-			Hello, {user.name}!
-		</div>
-	);
+  return (
+    <div>
+      {user.role === 'ADMIN' && <AdminOnlyButton />}
+      Hello, {user.name}!
+    </div>
+  );
 }
 ```
 
@@ -1909,29 +2003,29 @@ This layout is specifically for the dashboard and protected pages:
 ```jsx
 // Corrected version that uses your custom backend
 async function getDashboardLayout() {
-	// Get the token from cookies
-	const cookies = parseCookies();
-	const token = cookies.token;
+  // Get the token from cookies
+  const cookies = parseCookies();
+  const token = cookies.token;
 
-	if (!token) {
-		redirect('/login');
-	}
+  if (!token) {
+    redirect('/login');
+  }
 
-	// Verify token with your backend
-	try {
-		const response = await fetch('http://your-api/api/auth/me', {
-			headers: { Cookie: `token=${token}` },
-		});
+  // Verify token with your backend
+  try {
+    const response = await fetch('http://your-api/api/auth/me', {
+      headers: { Cookie: `token=${token}` },
+    });
 
-		if (!response.ok) {
-			redirect('/login');
-		}
+    if (!response.ok) {
+      redirect('/login');
+    }
 
-		const data = await response.json();
-		return data.user;
-	} catch (error) {
-		redirect('/login');
-	}
+    const data = await response.json();
+    return data.user;
+  } catch (error) {
+    redirect('/login');
+  }
 }
 ```
 

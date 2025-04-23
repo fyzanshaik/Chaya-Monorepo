@@ -1,4 +1,9 @@
-import { nextJsConfig } from "@workspace/eslint-config/next-js"
+import { defineConfig } from 'eslint-define-config';
 
-/** @type {import("eslint").Linter.Config} */
-export default nextJsConfig
+export const nextJsConfig = defineConfig({
+  extends: ['next/core-web-vitals', 'turbo', 'prettier'],
+  plugins: ['prettier'],
+  rules: {
+    'prettier/prettier': 'error',
+  },
+});

@@ -2,25 +2,25 @@
 
 ## 1. Project Setup
 
-- [X] Initialize Next.js application with app router
-- [X] Set up Tailwind CSS
-- [X] Initialize shadcn/ui
-- [X] Create basic folder structure (app, components, providers, lib)
-- [X] Configure TypeScript
-- [X] Set up ESLint and Prettier
+- [x] Initialize Next.js application with app router
+- [x] Set up Tailwind CSS
+- [x] Initialize shadcn/ui
+- [x] Create basic folder structure (app, components, providers, lib)
+- [x] Configure TypeScript
+- [x] Set up ESLint and Prettier
 
 ## 2. Authentication System
 
-- [X] Create `middleware.ts` for route protection
-- [X] Create `auth-provider.tsx` with auth context
-- [X] Implement login page and form
-- [X] Create auth utility functions (login/logout API calls)
-- [X] Test authentication flow (login, refresh, logout)
+- [x] Create `middleware.ts` for route protection
+- [x] Create `auth-provider.tsx` with auth context
+- [x] Implement login page and form
+- [x] Create auth utility functions (login/logout API calls)
+- [x] Test authentication flow (login, refresh, logout)
 
 ## 3. Layout and Navigation
 
-- [X] Create root layout (`app/layout.tsx`)
-- [X] Create dashboard layout (`app/(dashboard)/layout.tsx`)
+- [x] Create root layout (`app/layout.tsx`)
+- [x] Create dashboard layout (`app/(dashboard)/layout.tsx`)
 - [ ] Implement sidebar component with navigation
 - [ ] Implement top navigation bar with user info and logout
 - [ ] Test layout with different screen sizes

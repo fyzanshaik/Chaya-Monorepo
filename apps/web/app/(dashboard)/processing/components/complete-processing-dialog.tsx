@@ -1,36 +1,21 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@workspace/ui/components/form";
-import { Input } from "@workspace/ui/components/input";
-import { Button } from "@workspace/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@workspace/ui/components/radio-group";
-import { Label } from "@workspace/ui/components/label";
-import axios from "axios";
-import { toast } from "sonner";
-import type { ProcessingWithRelations } from "../lib/types";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@workspace/ui/components/form';
+import { Input } from '@workspace/ui/components/input';
+import { Button } from '@workspace/ui/components/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@workspace/ui/components/dialog';
+import { RadioGroup, RadioGroupItem } from '@workspace/ui/components/radio-group';
+import { Label } from '@workspace/ui/components/label';
+import axios from 'axios';
+import { toast } from 'sonner';
+import type { ProcessingWithRelations } from '../lib/types';
 
 const completeProcessingSchema = z.object({
-  action: z.enum(["sell", "continue"]),
-  quantityAfterProcess: z.number().min(0, "Quantity must be positive"),
+  action: z.enum(['sell', 'continue']),
+  quantityAfterProcess: z.number().min(0, 'Quantity must be positive'),
 });
 
 type CompleteProcessingValues = z.infer<typeof completeProcessingSchema>;
@@ -49,7 +34,7 @@ export function CompleteProcessingDialog({
   const form = useForm<CompleteProcessingValues>({
     resolver: zodResolver(completeProcessingSchema),
     defaultValues: {
-      action: "sell",
+      action: 'sell',
       quantityAfterProcess: processing.quantityAfterProcess || 0,
     },
   });
@@ -59,16 +44,12 @@ export function CompleteProcessingDialog({
       await axios.post(`/api/processing/${processing.id}/complete`, data, {
         withCredentials: true,
       });
-      toast.success(
-        data.action === "sell"
-          ? "Processing marked as finished"
-          : "Processing continued for next stage"
-      );
+      toast.success(data.action === 'sell' ? 'Processing marked as finished' : 'Processing continued for next stage');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error completing processing:", error);
-      toast.error("Failed to complete processing");
+      console.error('Error completing processing:', error);
+      toast.error('Failed to complete processing');
     }
   };
 
@@ -98,9 +79,7 @@ export function CompleteProcessingDialog({
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="continue" id="continue" />
-                        <Label htmlFor="continue">
-                          Continue Processing (Curing/Roasting)
-                        </Label>
+                        <Label htmlFor="continue">Continue Processing (Curing/Roasting)</Label>
                       </div>
                     </RadioGroup>
                   </FormControl>

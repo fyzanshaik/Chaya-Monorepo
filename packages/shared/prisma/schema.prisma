@@ -38,9 +38,9 @@ model User {
   password       String
   name           String
   role           Role      @default(STAFF)
-  isActive       Boolean   @default(true) // For tracking active status
-  isEnabled      Boolean   @default(true) // For admin to disable staff accounts
-  lastLoginAt    DateTime? // Optional tracking for last login time
+  isActive       Boolean   @default(true) 
+  isEnabled      Boolean   @default(true) 
+  lastLoginAt    DateTime? 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   farmersCreated Farmer[]  @relation("CreatedByUser")
@@ -120,19 +120,19 @@ model Field {
 
 model Processing {
   id                Int       @id @default(autoincrement())
-  procurementId     Int       // Links to the Procurement model
+  procurementId     Int       
   lotNo             Int
   batchNo           String    @unique
   crop              String
   procuredForm      String
   quantity          Float
   speciality        String
-  processMethod     String    // wet or dry
+  processMethod     String    
   dateOfProcessing  DateTime
   dateOfCompletion  DateTime?
   quantityAfterProcess Float?
   doneBy            String
-  status            String    @default("IN_PROGRESS") // IN_PROGRESS, FINISHED
+  status            String    @default("IN_PROGRESS") 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   drying            Drying[]
@@ -158,14 +158,14 @@ model Procurement {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   farmer       Farmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
-  processing   Processing[] // Relation to Processing model
+  processing   Processing[] 
   @@map("procurements")
 }
 
 model Drying {
   id                Int       @id @default(autoincrement())
   processingId      Int
-  day               Int       // Day number
+  day               Int       
   temperature       Float
   humidity          Float
   pH                Float

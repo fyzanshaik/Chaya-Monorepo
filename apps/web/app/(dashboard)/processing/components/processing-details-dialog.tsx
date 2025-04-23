@@ -1,15 +1,10 @@
-"use client";
+'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import type { ProcessingWithRelations } from "../lib/types";
-import { format } from "date-fns";
-import { Separator } from "@workspace/ui/components/separator";
-import { Badge } from "@workspace/ui/components/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@workspace/ui/components/dialog';
+import type { ProcessingWithRelations } from '../lib/types';
+import { format } from 'date-fns';
+import { Separator } from '@workspace/ui/components/separator';
+import { Badge } from '@workspace/ui/components/badge';
 
 interface ProcessingDetailsDialogProps {
   processing: ProcessingWithRelations;
@@ -17,16 +12,12 @@ interface ProcessingDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProcessingDetailsDialog({
-  processing,
-  open,
-  onOpenChange,
-}: ProcessingDetailsDialogProps) {
-  const status = processing.status || "NOT_STARTED";
+export function ProcessingDetailsDialog({ processing, open, onOpenChange }: ProcessingDetailsDialogProps) {
+  const status = processing.status || 'NOT_STARTED';
   const variant = {
-    FINISHED: "default",
-    RUNNING: "secondary",
-    NOT_STARTED: "outline",
+    FINISHED: 'default',
+    RUNNING: 'secondary',
+    NOT_STARTED: 'outline',
   }[status];
 
   return (
@@ -45,22 +36,13 @@ export function ProcessingDetailsDialog({
                 <div className="text-sm font-medium">Batch No:</div>
                 <div className="text-sm">{processing.batchNo}</div>
                 <div className="text-sm font-medium">Crop:</div>
-                <div className="text-sm">
-                  {processing.procurement?.crop || processing.crop}
-                </div>
+                <div className="text-sm">{processing.procurement?.crop || processing.crop}</div>
                 <div className="text-sm font-medium">Procured Form:</div>
-                <div className="text-sm">
-                  {processing.procurement?.procuredForm ||
-                    processing.procuredForm}
-                </div>
+                <div className="text-sm">{processing.procurement?.procuredForm || processing.procuredForm}</div>
                 <div className="text-sm font-medium">Quantity:</div>
-                <div className="text-sm">
-                  {processing.procurement?.quantity || processing.quantity} kg
-                </div>
+                <div className="text-sm">{processing.procurement?.quantity || processing.quantity} kg</div>
                 <div className="text-sm font-medium">Speciality:</div>
-                <div className="text-sm">
-                  {processing.procurement?.speciality || processing.speciality}
-                </div>
+                <div className="text-sm">{processing.procurement?.speciality || processing.speciality}</div>
                 <div className="text-sm font-medium">Lot Number:</div>
                 <div className="text-sm">{processing.lotNo}</div>
               </div>
@@ -71,47 +53,25 @@ export function ProcessingDetailsDialog({
               <Separator className="my-2" />
               <div className="grid grid-cols-2 gap-2">
                 <div className="text-sm font-medium">Process Method:</div>
-                <div className="text-sm">
-                  {processing.processMethod
-                    ? processing.processMethod.toUpperCase()
-                    : "-"}
-                </div>
+                <div className="text-sm">{processing.processMethod ? processing.processMethod.toUpperCase() : '-'}</div>
                 <div className="text-sm font-medium">Processing Date:</div>
                 <div className="text-sm">
-                  {processing.dateOfProcessing
-                    ? format(
-                        new Date(processing.dateOfProcessing),
-                        "dd/MM/yyyy"
-                      )
-                    : "-"}
+                  {processing.dateOfProcessing ? format(new Date(processing.dateOfProcessing), 'dd/MM/yyyy') : '-'}
                 </div>
                 <div className="text-sm font-medium">Completion Date:</div>
                 <div className="text-sm">
-                  {processing.dateOfCompletion
-                    ? format(
-                        new Date(processing.dateOfCompletion),
-                        "dd/MM/yyyy"
-                      )
-                    : "-"}
+                  {processing.dateOfCompletion ? format(new Date(processing.dateOfCompletion), 'dd/MM/yyyy') : '-'}
                 </div>
-                <div className="text-sm font-medium">
-                  Quantity After Process:
-                </div>
+                <div className="text-sm font-medium">Quantity After Process:</div>
                 <div className="text-sm">
-                  {processing.quantityAfterProcess
-                    ? `${processing.quantityAfterProcess} kg`
-                    : "-"}
+                  {processing.quantityAfterProcess ? `${processing.quantityAfterProcess} kg` : '-'}
                 </div>
                 <div className="text-sm font-medium">Done By:</div>
-                <div className="text-sm">{processing.doneBy || "-"}</div>
+                <div className="text-sm">{processing.doneBy || '-'}</div>
                 <div className="text-sm font-medium">Status:</div>
                 <div className="text-sm">
                   <Badge variant={variant as any}>
-                    {status === "FINISHED"
-                      ? "Finished"
-                      : status === "RUNNING"
-                        ? "Running"
-                        : "Not Started"}
+                    {status === 'FINISHED' ? 'Finished' : status === 'RUNNING' ? 'Running' : 'Not Started'}
                   </Badge>
                 </div>
               </div>

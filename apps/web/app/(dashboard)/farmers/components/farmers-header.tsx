@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { Button } from "@workspace/ui/components/button";
-import { FileDown, PlusCircle } from "lucide-react";
-import { useState } from "react";
-import { FarmerFormDialog } from "./farmer-form-dialog";
-import { useAuth } from "@/app/providers/auth-provider";
+import { Button } from '@workspace/ui/components/button';
+import { FileDown, PlusCircle } from 'lucide-react';
+import { useState } from 'react';
+import { FarmerFormDialog } from './farmer-form-dialog';
+import { useAuth } from '@/app/providers/auth-provider';
 
 export default function FarmersHeader() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const handleExport = () => {
-    console.log("Export data clicked");
+    console.log('Export data clicked');
   };
 
   return (
@@ -24,7 +24,7 @@ export default function FarmersHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        {isAdmin && (
+        {/* {isAdmin && (
           <Button
             variant="outline"
             size="sm"
@@ -34,7 +34,7 @@ export default function FarmersHeader() {
             <FileDown className="mr-2 h-4 w-4" />
             Export Data
           </Button>
-        )}
+        )} */}
 
         <Button
           size="sm"
@@ -45,11 +45,7 @@ export default function FarmersHeader() {
           Add Farmer
         </Button>
 
-        <FarmerFormDialog
-          mode="add"
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-        />
+        <FarmerFormDialog mode="add" open={showAddDialog} onOpenChange={setShowAddDialog} />
       </div>
     </div>
   );

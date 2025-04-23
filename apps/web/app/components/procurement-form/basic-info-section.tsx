@@ -1,39 +1,33 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useProcurementFormStore } from "@/app/stores/procurement-form";
-import { Card, CardContent } from "@workspace/ui/components/card";
-import { Label } from "@workspace/ui/components/label";
-import { Input } from "@workspace/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
-import { Combobox } from "@workspace/ui/components/combobox";
-import { useState } from "react";
-import axios from "axios";
-import { toast } from "sonner";
+import { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useProcurementFormStore } from '@/app/stores/procurement-form';
+import { Card, CardContent } from '@workspace/ui/components/card';
+import { Label } from '@workspace/ui/components/label';
+import { Input } from '@workspace/ui/components/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
+import { Combobox } from '@workspace/ui/components/combobox';
+import { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 // Define the schema for the basic info section
 const basicInfoSchema = z.object({
   farmerId: z.number({
-    required_error: "Farmer is required",
+    required_error: 'Farmer is required',
   }),
-  crop: z.string().min(1, "Crop is required"),
-  procuredForm: z.string().min(1, "Procured form is required"),
-  speciality: z.string().min(1, "Speciality is required"),
+  crop: z.string().min(1, 'Crop is required'),
+  procuredForm: z.string().min(1, 'Procured form is required'),
+  speciality: z.string().min(1, 'Speciality is required'),
   quantity: z
     .number({
-      required_error: "Quantity is required",
-      invalid_type_error: "Quantity must be a number",
+      required_error: 'Quantity is required',
+      invalid_type_error: 'Quantity must be a number',
     })
-    .positive("Quantity must be a positive number"),
+    .positive('Quantity must be a positive number'),
 });
 
 type BasicInfoFormValues = z.infer<typeof basicInfoSchema>;
@@ -55,9 +49,9 @@ export function BasicInfoSection() {
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       farmerId: initialData?.farmerId || 0,
-      crop: initialData?.crop || "",
-      procuredForm: initialData?.procuredForm || "",
-      speciality: initialData?.speciality || "",
+      crop: initialData?.crop || '',
+      procuredForm: initialData?.procuredForm || '',
+      speciality: initialData?.speciality || '',
       quantity: initialData?.quantity || 0,
     },
   });
@@ -78,13 +72,13 @@ export function BasicInfoSection() {
     const fetchFarmers = async () => {
       setIsLoadingFarmers(true);
       try {
-        const response = await axios.get("http://localhost:5000/api/farmers", {
+        const response = await axios.get('http://localhost:5000/api/farmers', {
           withCredentials: true,
         });
         setFarmers(response.data.farmers);
       } catch (error) {
-        console.error("Error fetching farmers:", error);
-        toast.error("Failed to load farmers");
+        console.error('Error fetching farmers:', error);
+        toast.error('Failed to load farmers');
       } finally {
         setIsLoadingFarmers(false);
       }
@@ -109,18 +103,14 @@ export function BasicInfoSection() {
                       label: `${farmer.name} (${farmer.village}, ${farmer.mandal})`,
                       value: farmer.id.toString(),
                     }))}
-                    value={field.value ? field.value.toString() : ""}
+                    value={field.value ? field.value.toString() : ''}
                     onChange={val => field.onChange(parseInt(val))}
                     placeholder="Select a farmer"
                     isLoading={isLoadingFarmers}
                   />
                 )}
               />
-              {errors.farmerId && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.farmerId.message}
-                </p>
-              )}
+              {errors.farmerId && <p className="text-sm text-red-500 mt-1">{errors.farmerId.message}</p>}
             </div>
 
             <div>
@@ -129,10 +119,7 @@ export function BasicInfoSection() {
                 control={control}
                 name="crop"
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
@@ -146,11 +133,7 @@ export function BasicInfoSection() {
                   </Select>
                 )}
               />
-              {errors.crop && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.crop.message}
-                </p>
-              )}
+              {errors.crop && <p className="text-sm text-red-500 mt-1">{errors.crop.message}</p>}
             </div>
 
             <div>
@@ -159,28 +142,19 @@ export function BasicInfoSection() {
                 control={control}
                 name="procuredForm"
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select form" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Raw">Raw</SelectItem>
                       <SelectItem value="Processed">Processed</SelectItem>
-                      <SelectItem value="Semi-processed">
-                        Semi-processed
-                      </SelectItem>
+                      <SelectItem value="Semi-processed">Semi-processed</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
-              {errors.procuredForm && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.procuredForm.message}
-                </p>
-              )}
+              {errors.procuredForm && <p className="text-sm text-red-500 mt-1">{errors.procuredForm.message}</p>}
             </div>
 
             <div>
@@ -189,10 +163,7 @@ export function BasicInfoSection() {
                 control={control}
                 name="speciality"
                 render={({ field }) => (
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select speciality" />
                     </SelectTrigger>
@@ -205,11 +176,7 @@ export function BasicInfoSection() {
                   </Select>
                 )}
               />
-              {errors.speciality && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.speciality.message}
-                </p>
-              )}
+              {errors.speciality && <p className="text-sm text-red-500 mt-1">{errors.speciality.message}</p>}
             </div>
 
             <div>
@@ -223,17 +190,11 @@ export function BasicInfoSection() {
                     step="0.01"
                     min="0"
                     {...field}
-                    onChange={e =>
-                      field.onChange(Number.parseFloat(e.target.value))
-                    }
+                    onChange={e => field.onChange(Number.parseFloat(e.target.value))}
                   />
                 )}
               />
-              {errors.quantity && (
-                <p className="text-sm text-red-500 mt-1">
-                  {errors.quantity.message}
-                </p>
-              )}
+              {errors.quantity && <p className="text-sm text-red-500 mt-1">{errors.quantity.message}</p>}
             </div>
           </div>
         </form>

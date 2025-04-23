@@ -1,32 +1,18 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@chaya/shared";
-import { authenticate } from "../middlewares/auth";
-import { createProcurementSchema } from "@chaya/shared";
-import { generateBatchCode } from "../helper";
+import type { FastifyInstance } from 'fastify';
+import { prisma } from '@chaya/shared';
+import { authenticate } from '../middlewares/auth';
+import { createProcurementSchema } from '@chaya/shared';
+import { generateBatchCode } from '../helper';
 
 async function procurementRoutes(fastify: FastifyInstance) {
-  fastify.post("/", { preHandler: authenticate }, async (request, reply) => {
+  fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
     try {
-      const {
-        farmerId,
-        crop,
-        procuredForm,
-        speciality,
-        quantity,
-        date,
-        time,
-        lotNo,
-        procuredBy,
-        vehicleNo,
-      } = createProcurementSchema.parse(request.body);
+      const { farmerId, crop, procuredForm, speciality, quantity, date, time, lotNo, procuredBy, vehicleNo } =
+        createProcurementSchema.parse(request.body);
 
-      const combinedDateTime = new Date(
-        `${date.toISOString().split("T")[0]}T${time}`
-      );
+      const combinedDateTime = new Date(`${date.toISOString().split('T')[0]}T${time}`);
       if (isNaN(combinedDateTime.getTime())) {
-        return reply
-          .status(400)
-          .send({ error: "Invalid date or time combination" });
+        return reply.status(400).send({ error: 'Invalid date or time combination' });
       }
 
       const batchCode = generateBatchCode(crop, date, lotNo);
@@ -36,7 +22,7 @@ async function procurementRoutes(fastify: FastifyInstance) {
       });
 
       if (existingBatch) {
-        return reply.status(400).send({ error: "Batch code already exists" });
+        return reply.status(400).send({ error: 'Batch code already exists' });
       }
 
       const procurement = await prisma.procurement.create({
@@ -57,12 +43,12 @@ async function procurementRoutes(fastify: FastifyInstance) {
 
       return { procurement };
     } catch (error) {
-      console.error("Create procurement error:", error);
-      return reply.status(400).send({ error: "Invalid request data" });
+      console.error('Create procurement error:', error);
+      return reply.status(400).send({ error: 'Invalid request data' });
     }
   });
 
-  fastify.get("/", { preHandler: authenticate }, async (request, reply) => {
+  fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
     try {
       const procurements = await prisma.procurement.findMany({
         include: {
@@ -75,13 +61,13 @@ async function procurementRoutes(fastify: FastifyInstance) {
             },
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { createdAt: 'desc' },
       });
 
       return { procurements };
     } catch (error) {
-      console.error("Get procurements error:", error);
-      return reply.status(500).send({ error: "Server error" });
+      console.error('Get procurements error:', error);
+      return reply.status(500).send({ error: 'Server error' });
     }
   });
 }

@@ -1,29 +1,18 @@
-"use client";
+'use client';
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { Checkbox } from "@workspace/ui/components/checkbox";
-import type { ProcurementWithRelations } from "./types";
-import { format } from "date-fns";
+import type { ColumnDef } from '@tanstack/react-table';
+import { Checkbox } from '@workspace/ui/components/checkbox';
+import type { ProcurementWithRelations } from './types';
+import { format } from 'date-fns';
 
-export const defaultVisibleColumns = [
-  "select",
-  "batchCode",
-  "crop",
-  "farmerName",
-  "quantity",
-  "date",
-  "procuredBy",
-];
+export const defaultVisibleColumns = ['select', 'batchCode', 'crop', 'farmerName', 'quantity', 'date', 'procuredBy'];
 
 export const columns: ColumnDef<ProcurementWithRelations>[] = [
   {
-    id: "select",
+    id: 'select',
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
         onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
@@ -39,73 +28,66 @@ export const columns: ColumnDef<ProcurementWithRelations>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "batchCode",
-    header: "Batch Code",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("batchCode")}</div>
-    ),
+    accessorKey: 'batchCode',
+    header: 'Batch Code',
+    cell: ({ row }) => <div className="font-medium">{row.getValue('batchCode')}</div>,
   },
   {
-    accessorKey: "crop",
-    header: "Crop",
-    cell: ({ row }) => <div>{row.getValue("crop")}</div>,
+    accessorKey: 'crop',
+    header: 'Crop',
+    cell: ({ row }) => <div>{row.getValue('crop')}</div>,
   },
   {
-    accessorKey: "farmerName",
-    header: "Farmer",
+    accessorKey: 'farmerName',
+    header: 'Farmer',
     cell: ({ row }) => <div>{row.original.farmer.name}</div>,
   },
   {
-    accessorKey: "procuredForm",
-    header: "Form",
-    cell: ({ row }) => <div>{row.getValue("procuredForm")}</div>,
+    accessorKey: 'procuredForm',
+    header: 'Form',
+    cell: ({ row }) => <div>{row.getValue('procuredForm')}</div>,
   },
   {
-    accessorKey: "speciality",
-    header: "Speciality",
-    cell: ({ row }) => <div>{row.getValue("speciality")}</div>,
+    accessorKey: 'speciality',
+    header: 'Speciality',
+    cell: ({ row }) => <div>{row.getValue('speciality')}</div>,
   },
   {
-    accessorKey: "quantity",
-    header: "Quantity",
-    cell: ({ row }) => <div>{row.getValue("quantity")} kg</div>,
+    accessorKey: 'quantity',
+    header: 'Quantity',
+    cell: ({ row }) => <div>{row.getValue('quantity')} kg</div>,
   },
   {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => (
-      <div>{format(new Date(row.original.date), "dd/MM/yyyy")}</div>
-    ),
+    accessorKey: 'date',
+    header: 'Date',
+    cell: ({ row }) => <div>{format(new Date(row.original.date), 'dd/MM/yyyy')}</div>,
   },
   {
-    accessorKey: "time",
-    header: "Time",
-    cell: ({ row }) => (
-      <div>{format(new Date(row.original.time), "hh:mm a")}</div>
-    ),
+    accessorKey: 'time',
+    header: 'Time',
+    cell: ({ row }) => <div>{format(new Date(row.original.time), 'hh:mm a')}</div>,
   },
   {
-    accessorKey: "lotNo",
-    header: "Lot No",
-    cell: ({ row }) => <div>{row.getValue("lotNo")}</div>,
+    accessorKey: 'lotNo',
+    header: 'Lot No',
+    cell: ({ row }) => <div>{row.getValue('lotNo')}</div>,
   },
   {
-    accessorKey: "procuredBy",
-    header: "Procured By",
-    cell: ({ row }) => <div>{row.getValue("procuredBy")}</div>,
+    accessorKey: 'procuredBy',
+    header: 'Procured By',
+    cell: ({ row }) => <div>{row.getValue('procuredBy')}</div>,
   },
   {
-    accessorKey: "vehicleNo",
-    header: "Vehicle No",
-    cell: ({ row }) => <div>{row.getValue("vehicleNo")}</div>,
+    accessorKey: 'vehicleNo',
+    header: 'Vehicle No',
+    cell: ({ row }) => <div>{row.getValue('vehicleNo')}</div>,
   },
   {
-    accessorKey: "location",
-    header: "Location",
+    accessorKey: 'location',
+    header: 'Location',
     cell: ({ row }) => (
       <div>
-        {row.original.farmer.village}, {row.original.farmer.panchayath},{" "}
-        {row.original.farmer.mandal}
+        {row.original.farmer.village}, {row.original.farmer.panchayath}, {row.original.farmer.mandal}
       </div>
     ),
   },

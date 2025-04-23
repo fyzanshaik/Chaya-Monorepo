@@ -1,33 +1,33 @@
 {
-	"name": "api",
-	"module": "index.ts",
-	"type": "module",
-	"private": true,
-	"scripts": {
-		"dev": "nodemon --exec bun src/index.ts",
-		"build": "bun build src/index.ts --outdir dist",
-		"start": "bun run src/index.ts",
-		"lint": "eslint .",
-		"check-types": "tsc --noEmit"
-	},
-	"devDependencies": {
-		"@types/bcryptjs": "^2.4.6",
-		"@types/bun": "latest",
-		"@types/node": "^20.10.4",
-		"typescript": "^5.3.3"
-	},
-	"peerDependencies": {
-		"typescript": "^5.8.3"
-	},
-	"dependencies": {
-		"@chaya/shared": "workspace:*",
-		"@fastify/cookie": "^11.0.2",
-		"@fastify/cors": "^11.0.0",
-		"@fastify/jwt": "^9.0.4",
-		"bcryptjs": "^2.4.3",
-		"fastify": "^5.2.1",
-		"nodemon": "^3.1.9",
-		"pino-pretty": "^13.0.0",
-		"uploadthing": "^7.6.0"
-	}
+  "name": "api",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --exec bun src/index.ts",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun run src/index.ts",
+    "lint": "eslint .",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/bun": "latest",
+    "@types/node": "^20.10.4",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@chaya/shared": "workspace:*",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/jwt": "^9.0.4",
+    "bcryptjs": "^2.4.3",
+    "fastify": "^5.2.1",
+    "nodemon": "^3.1.9",
+    "pino-pretty": "^13.0.0",
+    "uploadthing": "^7.6.0"
+  }
 }

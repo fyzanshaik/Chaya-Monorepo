@@ -1,34 +1,22 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@workspace/ui/components/form";
-import { Input } from "@workspace/ui/components/input";
-import { Button } from "@workspace/ui/components/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@workspace/ui/components/dialog";
-import axios from "axios";
-import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@workspace/ui/components/form';
+import { Input } from '@workspace/ui/components/input';
+import { Button } from '@workspace/ui/components/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@workspace/ui/components/dialog';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
 
 const dryingFormSchema = z.object({
-  day: z.number().min(1, "Day must be at least 1"),
-  temperature: z.number().min(0, "Temperature must be positive"),
-  humidity: z.number().min(0, "Humidity must be positive"),
-  pH: z.number().min(0, "pH must be positive"),
-  moistureQuantity: z.number().min(0, "Moisture must be positive"),
+  day: z.number().min(1, 'Day must be at least 1'),
+  temperature: z.number().min(0, 'Temperature must be positive'),
+  humidity: z.number().min(0, 'Humidity must be positive'),
+  pH: z.number().min(0, 'pH must be positive'),
+  moistureQuantity: z.number().min(0, 'Moisture must be positive'),
 });
 
 type DryingFormValues = z.infer<typeof dryingFormSchema>;
@@ -63,16 +51,13 @@ export function DryingFormDialog({
       const fetchDryingDays = async () => {
         try {
           setLoading(true);
-          const response = await fetch(
-            `/api/processing/${processingId}/drying`,
-            {
-              credentials: "include",
-            }
-          );
+          const response = await fetch(`/api/processing/${processingId}/drying`, {
+            credentials: 'include',
+          });
           const data = await response.json();
           setDryingDays(data.dryingDays);
         } catch (error) {
-          console.error("Error fetching drying days:", error);
+          console.error('Error fetching drying days:', error);
         } finally {
           setLoading(false);
         }
@@ -85,9 +70,9 @@ export function DryingFormDialog({
   useEffect(() => {
     if (dryingDays.length > 0) {
       const nextDay = Math.max(...dryingDays.map(d => d.day)) + 1;
-      form.setValue("day", nextDay);
+      form.setValue('day', nextDay);
     } else {
-      form.setValue("day", 1);
+      form.setValue('day', 1);
     }
   }, [dryingDays, form]);
 
@@ -96,12 +81,12 @@ export function DryingFormDialog({
       await axios.post(`/api/processing/${processingId}/drying`, data, {
         withCredentials: true,
       });
-      toast.success("Drying data added successfully");
+      toast.success('Drying data added successfully');
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error adding drying data:", error);
-      toast.error("Failed to add drying data");
+      console.error('Error adding drying data:', error);
+      toast.error('Failed to add drying data');
     }
   };
 
@@ -120,12 +105,7 @@ export function DryingFormDialog({
                 <FormItem>
                   <FormLabel>Day</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      {...field}
-                      onChange={e => field.onChange(parseInt(e.target.value))}
-                    />
+                    <Input type="number" min="1" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -215,7 +195,7 @@ export function DryingFormDialog({
             />
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Adding..." : "Add Drying Data"}
+              {loading ? 'Adding...' : 'Add Drying Data'}
             </Button>
           </form>
         </Form>

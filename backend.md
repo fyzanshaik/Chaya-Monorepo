@@ -51,8 +51,8 @@ Authenticates a user and returns a JWT token.
 
 ```json
 {
-	"email": "admin@chaya.org",
-	"password": "admin123"
+  "email": "admin@chaya.org",
+  "password": "admin123"
 }
 ```
 
@@ -60,12 +60,12 @@ Authenticates a user and returns a JWT token.
 
 ```json
 {
-	"user": {
-		"id": 1,
-		"name": "Admin User",
-		"email": "admin@chaya.org",
-		"role": "ADMIN"
-	}
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@chaya.org",
+    "role": "ADMIN"
+  }
 }
 ```
 
@@ -77,7 +77,7 @@ Logs out the current user.
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -89,12 +89,12 @@ Returns the current authenticated user.
 
 ```json
 {
-	"user": {
-		"id": 1,
-		"name": "Admin User",
-		"email": "admin@chaya.org",
-		"role": "ADMIN"
-	}
+  "user": {
+    "id": 1,
+    "name": "Admin User",
+    "email": "admin@chaya.org",
+    "role": "ADMIN"
+  }
 }
 ```
 
@@ -106,10 +106,10 @@ Registers a new staff user (admin only).
 
 ```json
 {
-	"name": "New Staff",
-	"email": "newstaff@chaya.org",
-	"password": "password123",
-	"role": "STAFF"
+  "name": "New Staff",
+  "email": "newstaff@chaya.org",
+  "password": "password123",
+  "role": "STAFF"
 }
 ```
 
@@ -117,12 +117,12 @@ Registers a new staff user (admin only).
 
 ```json
 {
-	"user": {
-		"id": 3,
-		"name": "New Staff",
-		"email": "newstaff@chaya.org",
-		"role": "STAFF"
-	}
+  "user": {
+    "id": 3,
+    "name": "New Staff",
+    "email": "newstaff@chaya.org",
+    "role": "STAFF"
+  }
 }
 ```
 
@@ -136,18 +136,18 @@ Lists all staff users.
 
 ```json
 {
-	"users": [
-		{
-			"id": 2,
-			"name": "Staff User",
-			"email": "staff@chaya.org",
-			"role": "STAFF",
-			"isEnabled": true,
-			"isActive": false,
-			"lastLoginAt": null,
-			"createdAt": "2023-06-15T10:30:00.000Z"
-		}
-	]
+  "users": [
+    {
+      "id": 2,
+      "name": "Staff User",
+      "email": "staff@chaya.org",
+      "role": "STAFF",
+      "isEnabled": true,
+      "isActive": false,
+      "lastLoginAt": null,
+      "createdAt": "2023-06-15T10:30:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -159,16 +159,16 @@ Gets a specific user by ID.
 
 ```json
 {
-	"user": {
-		"id": 2,
-		"name": "Staff User",
-		"email": "staff@chaya.org",
-		"role": "STAFF",
-		"isEnabled": true,
-		"isActive": false,
-		"lastLoginAt": null,
-		"createdAt": "2023-06-15T10:30:00.000Z"
-	}
+  "user": {
+    "id": 2,
+    "name": "Staff User",
+    "email": "staff@chaya.org",
+    "role": "STAFF",
+    "isEnabled": true,
+    "isActive": false,
+    "lastLoginAt": null,
+    "createdAt": "2023-06-15T10:30:00.000Z"
+  }
 }
 ```
 
@@ -180,8 +180,8 @@ Updates a user (admin only).
 
 ```json
 {
-	"name": "Updated Staff Name",
-	"isEnabled": true
+  "name": "Updated Staff Name",
+  "isEnabled": true
 }
 ```
 
@@ -189,14 +189,14 @@ Updates a user (admin only).
 
 ```json
 {
-	"user": {
-		"id": 2,
-		"name": "Updated Staff Name",
-		"email": "staff@chaya.org",
-		"role": "STAFF",
-		"isEnabled": true,
-		"isActive": false
-	}
+  "user": {
+    "id": 2,
+    "name": "Updated Staff Name",
+    "email": "staff@chaya.org",
+    "role": "STAFF",
+    "isEnabled": true,
+    "isActive": false
+  }
 }
 ```
 
@@ -208,13 +208,13 @@ Toggles a user's enabled status (admin only).
 
 ```json
 {
-	"user": {
-		"id": 2,
-		"name": "Staff User",
-		"email": "staff@chaya.org",
-		"role": "STAFF",
-		"isEnabled": false
-	}
+  "user": {
+    "id": 2,
+    "name": "Staff User",
+    "email": "staff@chaya.org",
+    "role": "STAFF",
+    "isEnabled": false
+  }
 }
 ```
 
@@ -226,7 +226,7 @@ Deletes a staff user (admin only).
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -250,39 +250,39 @@ Lists farmers with pagination and filtering.
 
 ```json
 {
-	"farmers": [
-		{
-			"id": 1,
-			"name": "Farmer Name",
-			"surveyNumber": "12345",
-			"aadharNumber": "123456789012",
-			"gender": "MALE",
-			"state": "Karnataka",
-			"isActive": true,
-			"documents": {
-				"profilePicUrl": "https://example.com/pic.jpg",
-				"aadharDocUrl": "https://example.com/aadhar.pdf",
-				"bankDocUrl": "https://example.com/bank.pdf"
-			},
-			"bankDetails": {
-				"bankName": "State Bank",
-				"accountNumber": "12345678901"
-			},
-			"fields": [
-				{
-					"id": 1,
-					"areaHa": 2.5,
-					"yieldEstimate": 500
-				}
-			]
-		}
-	],
-	"pagination": {
-		"page": 1,
-		"limit": 10,
-		"totalCount": 45,
-		"totalPages": 5
-	}
+  "farmers": [
+    {
+      "id": 1,
+      "name": "Farmer Name",
+      "surveyNumber": "12345",
+      "aadharNumber": "123456789012",
+      "gender": "MALE",
+      "state": "Karnataka",
+      "isActive": true,
+      "documents": {
+        "profilePicUrl": "https://example.com/pic.jpg",
+        "aadharDocUrl": "https://example.com/aadhar.pdf",
+        "bankDocUrl": "https://example.com/bank.pdf"
+      },
+      "bankDetails": {
+        "bankName": "State Bank",
+        "accountNumber": "12345678901"
+      },
+      "fields": [
+        {
+          "id": 1,
+          "areaHa": 2.5,
+          "yieldEstimate": 500
+        }
+      ]
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalCount": 45,
+    "totalPages": 5
+  }
 }
 ```
 
@@ -294,35 +294,35 @@ Gets a specific farmer by ID.
 
 ```json
 {
-	"farmer": {
-		"id": 1,
-		"name": "Farmer Name",
-		"surveyNumber": "12345",
-		"aadharNumber": "123456789012",
-		"gender": "MALE",
-		"state": "Karnataka",
-		"documents": {
-			"profilePicUrl": "https://example.com/pic.jpg",
-			"aadharDocUrl": "https://example.com/aadhar.pdf",
-			"bankDocUrl": "https://example.com/bank.pdf"
-		},
-		"bankDetails": {
-			"bankName": "State Bank",
-			"accountNumber": "12345678901"
-		},
-		"fields": [
-			{
-				"id": 1,
-				"areaHa": 2.5,
-				"yieldEstimate": 500,
-				"location": {
-					"latitude": 12.9716,
-					"longitude": 77.5946
-				},
-				"landDocumentUrl": "https://example.com/land.pdf"
-			}
-		]
-	}
+  "farmer": {
+    "id": 1,
+    "name": "Farmer Name",
+    "surveyNumber": "12345",
+    "aadharNumber": "123456789012",
+    "gender": "MALE",
+    "state": "Karnataka",
+    "documents": {
+      "profilePicUrl": "https://example.com/pic.jpg",
+      "aadharDocUrl": "https://example.com/aadhar.pdf",
+      "bankDocUrl": "https://example.com/bank.pdf"
+    },
+    "bankDetails": {
+      "bankName": "State Bank",
+      "accountNumber": "12345678901"
+    },
+    "fields": [
+      {
+        "id": 1,
+        "areaHa": 2.5,
+        "yieldEstimate": 500,
+        "location": {
+          "latitude": 12.9716,
+          "longitude": 77.5946
+        },
+        "landDocumentUrl": "https://example.com/land.pdf"
+      }
+    ]
+  }
 }
 ```
 
@@ -334,46 +334,46 @@ Creates a new farmer.
 
 ```json
 {
-	"farmer": {
-		"name": "New Farmer",
-		"surveyNumber": "12345",
-		"relationship": "SELF",
-		"gender": "MALE",
-		"community": "General",
-		"aadharNumber": "123456789012",
-		"state": "Karnataka",
-		"district": "Bangalore Rural",
-		"mandal": "Nelamangala",
-		"village": "Soladevanahalli",
-		"panchayath": "Solur",
-		"dateOfBirth": "1985-05-15",
-		"age": 38,
-		"contactNumber": "9876543210"
-	},
-	"bankDetails": {
-		"ifscCode": "SBIN0001234",
-		"bankName": "State Bank of India",
-		"branchName": "Solur Branch",
-		"accountNumber": "12345678901",
-		"address": "Main Road, Solur",
-		"bankCode": "SBI001"
-	},
-	"documents": {
-		"profilePicUrl": "https://example.com/pic.jpg",
-		"aadharDocUrl": "https://example.com/aadhar.pdf",
-		"bankDocUrl": "https://example.com/bank.pdf"
-	},
-	"fields": [
-		{
-			"areaHa": 2.5,
-			"yieldEstimate": 500,
-			"location": {
-				"latitude": 12.9716,
-				"longitude": 77.5946
-			},
-			"landDocumentUrl": "https://example.com/land.pdf"
-		}
-	]
+  "farmer": {
+    "name": "New Farmer",
+    "surveyNumber": "12345",
+    "relationship": "SELF",
+    "gender": "MALE",
+    "community": "General",
+    "aadharNumber": "123456789012",
+    "state": "Karnataka",
+    "district": "Bangalore Rural",
+    "mandal": "Nelamangala",
+    "village": "Soladevanahalli",
+    "panchayath": "Solur",
+    "dateOfBirth": "1985-05-15",
+    "age": 38,
+    "contactNumber": "9876543210"
+  },
+  "bankDetails": {
+    "ifscCode": "SBIN0001234",
+    "bankName": "State Bank of India",
+    "branchName": "Solur Branch",
+    "accountNumber": "12345678901",
+    "address": "Main Road, Solur",
+    "bankCode": "SBI001"
+  },
+  "documents": {
+    "profilePicUrl": "https://example.com/pic.jpg",
+    "aadharDocUrl": "https://example.com/aadhar.pdf",
+    "bankDocUrl": "https://example.com/bank.pdf"
+  },
+  "fields": [
+    {
+      "areaHa": 2.5,
+      "yieldEstimate": 500,
+      "location": {
+        "latitude": 12.9716,
+        "longitude": 77.5946
+      },
+      "landDocumentUrl": "https://example.com/land.pdf"
+    }
+  ]
 }
 ```
 
@@ -381,26 +381,26 @@ Creates a new farmer.
 
 ```json
 {
-	"farmer": {
-		"id": 1,
-		"name": "New Farmer",
-		"surveyNumber": "12345",
-		"gender": "MALE",
-		"state": "Karnataka",
-		"documents": {
-			"profilePicUrl": "https://example.com/pic.jpg"
-		},
-		"bankDetails": {
-			"bankName": "State Bank of India"
-		},
-		"fields": [
-			{
-				"id": 1,
-				"areaHa": 2.5,
-				"yieldEstimate": 500
-			}
-		]
-	}
+  "farmer": {
+    "id": 1,
+    "name": "New Farmer",
+    "surveyNumber": "12345",
+    "gender": "MALE",
+    "state": "Karnataka",
+    "documents": {
+      "profilePicUrl": "https://example.com/pic.jpg"
+    },
+    "bankDetails": {
+      "bankName": "State Bank of India"
+    },
+    "fields": [
+      {
+        "id": 1,
+        "areaHa": 2.5,
+        "yieldEstimate": 500
+      }
+    ]
+  }
 }
 ```
 
@@ -412,13 +412,13 @@ Updates a farmer (admin only).
 
 ```json
 {
-	"farmer": {
-		"name": "Updated Farmer Name",
-		"contactNumber": "9876543211"
-	},
-	"bankDetails": {
-		"accountNumber": "98765432109"
-	}
+  "farmer": {
+    "name": "Updated Farmer Name",
+    "contactNumber": "9876543211"
+  },
+  "bankDetails": {
+    "accountNumber": "98765432109"
+  }
 }
 ```
 
@@ -426,14 +426,14 @@ Updates a farmer (admin only).
 
 ```json
 {
-	"farmer": {
-		"id": 1,
-		"name": "Updated Farmer Name",
-		"contactNumber": "9876543211",
-		"bankDetails": {
-			"accountNumber": "98765432109"
-		}
-	}
+  "farmer": {
+    "id": 1,
+    "name": "Updated Farmer Name",
+    "contactNumber": "9876543211",
+    "bankDetails": {
+      "accountNumber": "98765432109"
+    }
+  }
 }
 ```
 
@@ -445,11 +445,11 @@ Toggles a farmer's active status (admin only).
 
 ```json
 {
-	"farmer": {
-		"id": 1,
-		"name": "Farmer Name",
-		"isActive": false
-	}
+  "farmer": {
+    "id": 1,
+    "name": "Farmer Name",
+    "isActive": false
+  }
 }
 ```
 
@@ -461,7 +461,7 @@ Deletes a farmer (admin only).
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 
@@ -483,21 +483,21 @@ Gets all fields for a specific farmer.
 
 ```json
 {
-	"fields": [
-		{
-			"id": 1,
-			"areaHa": 2.5,
-			"yieldEstimate": 500,
-			"location": {
-				"latitude": 12.9716,
-				"longitude": 77.5946
-			},
-			"landDocumentUrl": "https://example.com/land.pdf",
-			"farmerId": 1,
-			"createdAt": "2023-06-15T10:30:00.000Z",
-			"updatedAt": "2023-06-15T10:30:00.000Z"
-		}
-	]
+  "fields": [
+    {
+      "id": 1,
+      "areaHa": 2.5,
+      "yieldEstimate": 500,
+      "location": {
+        "latitude": 12.9716,
+        "longitude": 77.5946
+      },
+      "landDocumentUrl": "https://example.com/land.pdf",
+      "farmerId": 1,
+      "createdAt": "2023-06-15T10:30:00.000Z",
+      "updatedAt": "2023-06-15T10:30:00.000Z"
+    }
+  ]
 }
 ```
 
@@ -509,19 +509,19 @@ Gets a specific field by ID.
 
 ```json
 {
-	"field": {
-		"id": 1,
-		"areaHa": 2.5,
-		"yieldEstimate": 500,
-		"location": {
-			"latitude": 12.9716,
-			"longitude": 77.5946
-		},
-		"landDocumentUrl": "https://example.com/land.pdf",
-		"farmerId": 1,
-		"createdAt": "2023-06-15T10:30:00.000Z",
-		"updatedAt": "2023-06-15T10:30:00.000Z"
-	}
+  "field": {
+    "id": 1,
+    "areaHa": 2.5,
+    "yieldEstimate": 500,
+    "location": {
+      "latitude": 12.9716,
+      "longitude": 77.5946
+    },
+    "landDocumentUrl": "https://example.com/land.pdf",
+    "farmerId": 1,
+    "createdAt": "2023-06-15T10:30:00.000Z",
+    "updatedAt": "2023-06-15T10:30:00.000Z"
+  }
 }
 ```
 
@@ -533,13 +533,13 @@ Adds a new field to a farmer.
 
 ```json
 {
-	"areaHa": 3.5,
-	"yieldEstimate": 700,
-	"location": {
-		"latitude": 12.9716,
-		"longitude": 77.5946
-	},
-	"landDocumentUrl": "https://example.com/newland.pdf"
+  "areaHa": 3.5,
+  "yieldEstimate": 700,
+  "location": {
+    "latitude": 12.9716,
+    "longitude": 77.5946
+  },
+  "landDocumentUrl": "https://example.com/newland.pdf"
 }
 ```
 
@@ -547,19 +547,19 @@ Adds a new field to a farmer.
 
 ```json
 {
-	"field": {
-		"id": 2,
-		"areaHa": 3.5,
-		"yieldEstimate": 700,
-		"location": {
-			"latitude": 12.9716,
-			"longitude": 77.5946
-		},
-		"landDocumentUrl": "https://example.com/newland.pdf",
-		"farmerId": 1,
-		"createdAt": "2023-06-16T10:30:00.000Z",
-		"updatedAt": "2023-06-16T10:30:00.000Z"
-	}
+  "field": {
+    "id": 2,
+    "areaHa": 3.5,
+    "yieldEstimate": 700,
+    "location": {
+      "latitude": 12.9716,
+      "longitude": 77.5946
+    },
+    "landDocumentUrl": "https://example.com/newland.pdf",
+    "farmerId": 1,
+    "createdAt": "2023-06-16T10:30:00.000Z",
+    "updatedAt": "2023-06-16T10:30:00.000Z"
+  }
 }
 ```
 
@@ -571,8 +571,8 @@ Updates a field.
 
 ```json
 {
-	"areaHa": 4.0,
-	"yieldEstimate": 800
+  "areaHa": 4.0,
+  "yieldEstimate": 800
 }
 ```
 
@@ -580,18 +580,18 @@ Updates a field.
 
 ```json
 {
-	"field": {
-		"id": 2,
-		"areaHa": 4.0,
-		"yieldEstimate": 800,
-		"location": {
-			"latitude": 12.9716,
-			"longitude": 77.5946
-		},
-		"landDocumentUrl": "https://example.com/newland.pdf",
-		"farmerId": 1,
-		"updatedAt": "2023-06-17T10:30:00.000Z"
-	}
+  "field": {
+    "id": 2,
+    "areaHa": 4.0,
+    "yieldEstimate": 800,
+    "location": {
+      "latitude": 12.9716,
+      "longitude": 77.5946
+    },
+    "landDocumentUrl": "https://example.com/newland.pdf",
+    "farmerId": 1,
+    "updatedAt": "2023-06-17T10:30:00.000Z"
+  }
 }
 ```
 
@@ -603,7 +603,7 @@ Deletes a field (admin only).
 
 ```json
 {
-	"success": true
+  "success": true
 }
 ```
 

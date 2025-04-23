@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import type React from "react";
+import type React from 'react';
 
 import {
   ContextMenu,
@@ -8,9 +8,9 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@workspace/ui/components/context-menu";
-import type { ProcurementWithRelations } from "../lib/types";
-import { Edit, Eye, Trash } from "lucide-react";
+} from '@workspace/ui/components/context-menu';
+import type { ProcurementWithRelations } from '../lib/types';
+import { Edit, Eye, Trash } from 'lucide-react';
 
 interface ProcurementContextMenuProps {
   procurement: ProcurementWithRelations;
@@ -29,7 +29,7 @@ export function ProcurementContextMenu({
 }: ProcurementContextMenuProps) {
   const handleView = () => {
     // Dispatch a custom event to open the details dialog
-    const event = new CustomEvent("viewProcurement", {
+    const event = new CustomEvent('viewProcurement', {
       detail: { procurement },
     });
     document.dispatchEvent(event);
@@ -51,10 +51,7 @@ export function ProcurementContextMenu({
               Edit Procurement
             </ContextMenuItem>
             {onDelete && (
-              <ContextMenuItem
-                onClick={onDelete}
-                className="cursor-pointer text-destructive focus:text-destructive"
-              >
+              <ContextMenuItem onClick={onDelete} className="cursor-pointer text-destructive focus:text-destructive">
                 <Trash className="mr-2 h-4 w-4" />
                 Delete Procurement
               </ContextMenuItem>

@@ -2,9 +2,11 @@ import { generateUploadButton, generateUploadDropzone, generateReactHelpers } fr
 import type { OurFileRouter } from '@/app/api/uploadthing/core';
 
 // Explicit type annotations for each export
-export const UploadButton: ReturnType<typeof generateUploadButton<OurFileRouter>> = generateUploadButton<OurFileRouter>();
+export const UploadButton: ReturnType<typeof generateUploadButton<OurFileRouter>> =
+  generateUploadButton<OurFileRouter>();
 
-export const UploadDropzone: ReturnType<typeof generateUploadDropzone<OurFileRouter>> = generateUploadDropzone<OurFileRouter>();
+export const UploadDropzone: ReturnType<typeof generateUploadDropzone<OurFileRouter>> =
+  generateUploadDropzone<OurFileRouter>();
 
 // Generate helpers, but do NOT export the object itself
 const uploadHelpers: ReturnType<typeof generateReactHelpers<OurFileRouter>> = generateReactHelpers<OurFileRouter>();
