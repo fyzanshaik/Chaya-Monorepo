@@ -24,7 +24,7 @@ export default function FarmersHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        {isAdmin && (
+        {/* {isAdmin && (
           <Button
             variant="outline"
             size="sm"
@@ -34,7 +34,7 @@ export default function FarmersHeader() {
             <FileDown className="mr-2 h-4 w-4" />
             Export Data
           </Button>
-        )}
+        )} */}
 
         <Button
           size="sm"
