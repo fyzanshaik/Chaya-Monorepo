@@ -14,8 +14,7 @@ function getFarmersCacheKey(query: any) {
 
 async function invalidateFarmersCache(id?: string) {
   const keys = await redis.keys('farmers:list:*');
-  if (keys.length) await redis.del(keys);
-  if (id) await redis.del(`farmers:${id}`);
+  if (keys.length) await redis.del(...keys);
 }
 
 async function farmerRoutes(fastify: FastifyInstance) {
