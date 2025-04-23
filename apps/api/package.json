@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --exec bun src/index.ts",
-    "build": "bun build src/index.ts --outdir dist",
+    "build": "bun build src/index.ts --outdir dist --target node",
     "start": "bun run src/index.ts",
     "lint": "eslint .",
     "check-types": "tsc --noEmit"
@@ -26,6 +26,7 @@
     "@fastify/jwt": "^9.0.4",
     "bcryptjs": "^2.4.3",
     "fastify": "^5.2.1",
+    "ioredis": "^5.6.1",
     "nodemon": "^3.1.9",
     "pino-pretty": "^13.0.0",
     "uploadthing": "^7.6.0"

@@ -4,75 +4,51 @@ import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlew
 import { createFarmerSchema, updateFarmerSchema, farmerQuerySchema } from '@chaya/shared';
 import { Prisma } from '@chaya/shared';
 import { generateSurveyNumber } from '../helper';
+import Redis from 'ioredis';
+
+const redis = new Redis();
+
+function getFarmersCacheKey(query: any) {
+  return `farmers:list:${JSON.stringify(query)}`;
+}
+
+async function invalidateFarmersCache(id?: string) {
+  const keys = await redis.keys('farmers:list:*');
+  if (keys.length) await redis.del(keys);
+  if (id) await redis.del(`farmers:${id}`);
+}
 
 async function farmerRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
-    try {
-      const query = farmerQuerySchema.parse(request.query);
+    const query = farmerQuerySchema.parse(request.query);
+    const cacheKey = getFarmersCacheKey(query);
+    const cached = await redis.get(cacheKey);
+    if (cached) return JSON.parse(cached);
 
-      const page = query.page || 1;
-      const limit = query.limit || 10;
-      const skip = (page - 1) * limit;
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
 
-      const where: Prisma.FarmerWhereInput = {
-        isActive: query.isActive,
-      };
+    const where: Prisma.FarmerWhereInput = {
+      isActive: query.isActive,
+    };
 
-      if (query.search) {
-        where.OR = [
-          { name: { contains: query.search, mode: 'insensitive' } },
-          { surveyNumber: { contains: query.search, mode: 'insensitive' } },
-          { aadharNumber: { contains: query.search, mode: 'insensitive' } },
-          { contactNumber: { contains: query.search, mode: 'insensitive' } },
-        ];
-      }
-
-      if (query.state) where.state = query.state;
-      if (query.district) where.district = query.district;
-      if (query.gender) where.gender = query.gender;
-
-      const [farmers, totalCount] = await Promise.all([
-        prisma.farmer.findMany({
-          where,
-          include: {
-            documents: true,
-            bankDetails: true,
-            fields: true,
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          skip,
-          take: limit,
-        }),
-        prisma.farmer.count({ where }),
-      ]);
-
-      return {
-        farmers,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-        },
-      };
-    } catch (error) {
-      console.error('Get farmers error:', error);
-      return reply.status(400).send({ error: 'Invalid query parameters' });
+    if (query.search) {
+      where.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { surveyNumber: { contains: query.search, mode: 'insensitive' } },
+        { aadharNumber: { contains: query.search, mode: 'insensitive' } },
+        { contactNumber: { contains: query.search, mode: 'insensitive' } },
+      ];
     }
-  });
 
-  fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
-    try {
-      const { id } = request.params as { id: string };
+    if (query.state) where.state = query.state;
+    if (query.district) where.district = query.district;
+    if (query.gender) where.gender = query.gender;
 
-      const farmer = await prisma.farmer.findUnique({
-        where: { id: parseInt(id) },
+    const [farmers, totalCount] = await Promise.all([
+      prisma.farmer.findMany({
+        where,
         include: {
           documents: true,
           bankDetails: true,
@@ -83,24 +59,61 @@ async function farmerRoutes(fastify: FastifyInstance) {
               name: true,
             },
           },
-          updatedBy: {
-            select: {
-              id: true,
-              name: true,
-            },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.farmer.count({ where }),
+    ]);
+
+    const result = {
+      farmers,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    };
+
+    await redis.set(cacheKey, JSON.stringify(result), 'EX', 3600);
+    return result;
+  });
+
+  fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const cacheKey = `farmers:${id}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) return { farmer: JSON.parse(cached) };
+
+    const farmer = await prisma.farmer.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        documents: true,
+        bankDetails: true,
+        fields: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
           },
         },
-      });
+        updatedBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
 
-      if (!farmer) {
-        return reply.status(404).send({ error: 'Farmer not found' });
-      }
-
-      return { farmer };
-    } catch (error) {
-      console.error('Get farmer error:', error);
-      return reply.status(500).send({ error: 'Server error' });
+    if (!farmer) {
+      return reply.status(404).send({ error: 'Farmer not found' });
     }
+
+    await redis.set(cacheKey, JSON.stringify(farmer), 'EX', 3600);
+    return { farmer };
   });
 
   fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
@@ -143,9 +156,9 @@ async function farmerRoutes(fastify: FastifyInstance) {
         },
       });
 
+      await invalidateFarmersCache();
       return { farmer: newFarmer };
     } catch (error) {
-      console.error('Create farmer error:', error);
       if ((error as any).code === 'P2002') {
         return reply.status(400).send({ error: 'Unique constraint violation' });
       }
@@ -159,7 +172,6 @@ async function farmerRoutes(fastify: FastifyInstance) {
       const { id } = request.params as { id: string };
       const updateData = updateFarmerSchema.parse(request.body);
 
-      // Check if farmer exists
       const existingFarmer = await prisma.farmer.findUnique({
         where: { id: parseInt(id) },
         include: {
@@ -173,9 +185,7 @@ async function farmerRoutes(fastify: FastifyInstance) {
         return reply.status(404).send({ error: 'Farmer not found' });
       }
 
-      // Start a transaction to update all related entities
       const updatedFarmer = await prisma.$transaction(async tx => {
-        // 1. Update farmer main data
         const farmer = await tx.farmer.update({
           where: { id: parseInt(id) },
           data: {
@@ -184,14 +194,12 @@ async function farmerRoutes(fastify: FastifyInstance) {
           },
         });
 
-        // 2. Update bank details if provided
         if (updateData.bankDetails && existingFarmer.bankDetails) {
           await tx.bankDetails.update({
             where: { farmerId: farmer.id },
             data: updateData.bankDetails,
           });
         } else if (updateData.bankDetails && !existingFarmer.bankDetails) {
-          // Check if all required fields are present
           if (
             !updateData.bankDetails.ifscCode ||
             !updateData.bankDetails.bankName ||
@@ -202,8 +210,6 @@ async function farmerRoutes(fastify: FastifyInstance) {
           ) {
             throw new Error('All bank details fields are required when creating new bank details');
           }
-
-          // Now create with all fields
           await tx.bankDetails.create({
             data: {
               ifscCode: updateData.bankDetails.ifscCode,
@@ -217,14 +223,12 @@ async function farmerRoutes(fastify: FastifyInstance) {
           });
         }
 
-        // 3. Update documents if provided
         if (updateData.documents && existingFarmer.documents) {
           await tx.farmerDocuments.update({
             where: { farmerId: farmer.id },
             data: updateData.documents,
           });
         } else if (updateData.documents && !existingFarmer.documents) {
-          // Check if all required fields are present
           if (
             !updateData.documents.profilePicUrl ||
             !updateData.documents.aadharDocUrl ||
@@ -232,7 +236,6 @@ async function farmerRoutes(fastify: FastifyInstance) {
           ) {
             throw new Error('All document URLs are required when creating new documents');
           }
-
           await tx.farmerDocuments.create({
             data: {
               profilePicUrl: updateData.documents.profilePicUrl,
@@ -243,23 +246,16 @@ async function farmerRoutes(fastify: FastifyInstance) {
           });
         }
 
-        // 4. Handle fields if provided (more complex)
         if (updateData.fields?.length) {
-          // Validate each field has all required properties
           const invalidFields = updateData.fields.filter(
             field => !field.areaHa || !field.yieldEstimate || !field.location || !field.landDocumentUrl
           );
-
           if (invalidFields.length > 0) {
             throw new Error('All field properties are required when creating new fields');
           }
-
-          // Delete existing fields
           await tx.field.deleteMany({
             where: { farmerId: farmer.id },
           });
-
-          // Now create with fields that we know have all properties
           await tx.field.createMany({
             data: updateData.fields.map(field => ({
               areaHa: field.areaHa!,
@@ -271,7 +267,6 @@ async function farmerRoutes(fastify: FastifyInstance) {
           });
         }
 
-        // Return updated farmer with all related data
         return tx.farmer.findUnique({
           where: { id: farmer.id },
           include: {
@@ -282,10 +277,9 @@ async function farmerRoutes(fastify: FastifyInstance) {
         });
       });
 
+      await invalidateFarmersCache(id);
       return { farmer: updatedFarmer };
     } catch (error) {
-      console.error('Update farmer error:', error);
-      // If it's a validation error we threw, return 400
       if (error instanceof Error && error.message.includes('required')) {
         return reply.status(400).send({ error: error.message });
       }
@@ -318,9 +312,9 @@ async function farmerRoutes(fastify: FastifyInstance) {
         },
       });
 
+      await invalidateFarmersCache(id);
       return { farmer: updatedFarmer };
     } catch (error) {
-      console.error('Toggle farmer status error:', error);
       return reply.status(500).send({ error: 'Server error' });
     }
   });
@@ -341,9 +335,9 @@ async function farmerRoutes(fastify: FastifyInstance) {
         where: { id: parseInt(id) },
       });
 
+      await invalidateFarmersCache(id);
       return { success: true };
     } catch (error) {
-      console.error('Delete farmer error:', error);
       return reply.status(500).send({ error: 'Server error' });
     }
   });
@@ -421,7 +415,6 @@ async function farmerRoutes(fastify: FastifyInstance) {
 
       return csv;
     } catch (error) {
-      console.error('Export farmers error:', error);
       return reply.status(400).send({ error: 'Invalid query parameters' });
     }
   });

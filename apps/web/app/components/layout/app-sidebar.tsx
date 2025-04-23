@@ -128,7 +128,7 @@ export function AppSidebar(props: React.HTMLAttributes<HTMLDivElement>) {
           variant="outline"
           size="icon"
           onClick={toggleCollapse}
-          className="h-8 w-8 ml-2 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+          className="h-8 w-8 ml-1 border border-gray-300 rounded-md shadow-sm hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <Menu className="h-4 w-4 text-gray-600" /> : <ChevronLeft className="h-4 w-4 text-gray-600" />}
