@@ -6,6 +6,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@works
 import { Textarea } from '@workspace/ui/components/textarea';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function BankDetailsSection() {
   const { control, setValue, setError, clearErrors } = useFormContext();
@@ -24,8 +25,9 @@ export function BankDetailsSection() {
       if (!response.ok) {
         setError('bankDetails.ifscCode', {
           type: 'manual',
-          message: 'Failed to fetch IFSC details.',
+          message: 'Failed to fetch IFSC details. Please check the code.',
         });
+        toast.error('Failed to fetch IFSC details. Please verify the code.');
         return;
       }
 
@@ -42,12 +44,14 @@ export function BankDetailsSection() {
       setValue('bankDetails.bankCode', data.BANKCODE || '', {
         shouldValidate: true,
       });
+      toast.success('IFSC details fetched successfully.');
     } catch (error) {
       console.error('Error fetching IFSC details:', error);
       setError('bankDetails.ifscCode', {
         type: 'manual',
-        message: 'Failed to fetch IFSC details.',
+        message: 'Failed to fetch IFSC details due to a network error.',
       });
+      toast.error('Network error while fetching IFSC details. Please try again later.');
     } finally {
       setLoadingIFSC(false);
     }

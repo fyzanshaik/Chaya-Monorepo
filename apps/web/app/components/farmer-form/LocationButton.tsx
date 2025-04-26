@@ -46,19 +46,19 @@ export function LocationButton({ onLocationUpdate }: LocationButtonProps) {
         };
         onLocationUpdate(locationData);
         setIsLoading(false);
-        toast.success('Location Updated');
+        toast.success('Location updated successfully');
       },
       error => {
         let errorMessage = 'Failed to get location';
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'Location permission denied';
+            errorMessage = 'Location permission denied. Please enable location access.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information unavailable';
+            errorMessage = 'Location information unavailable. Please check your device settings.';
             break;
           case error.TIMEOUT:
-            errorMessage = 'Location request timed out';
+            errorMessage = 'Location request timed out. Please try again.';
             break;
         }
         toast.error(errorMessage);

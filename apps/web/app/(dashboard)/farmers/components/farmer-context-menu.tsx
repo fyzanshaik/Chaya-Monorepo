@@ -54,9 +54,8 @@ export function FarmerContextMenu({ children, farmer, onEdit, isAdmin }: FarmerC
 
       setShowDeleteDialog(false);
     } catch (error) {
-      console.error('Error deleting farmer:', error);
       toast.error('Error', {
-        description: 'An unexpected error occurred.',
+        description: 'An unexpected error occurred while deleting the farmer.',
       });
     } finally {
       setIsDeleting(false);

@@ -1,4 +1,3 @@
-// components/farmer-form/fields-section.tsx (updated with proper LocationButton integration)
 'use client';
 
 import { useFormContext } from 'react-hook-form';
@@ -8,7 +7,6 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@works
 import { Input } from '@workspace/ui/components/input';
 import { DocumentUploader } from '../upload/document-uploader';
 import { Plus, Trash2 } from 'lucide-react';
-import { Key } from 'react';
 import { useFarmerFormStore } from '@/app/stores/farmer-form';
 import { LocationButton, LocationData } from './LocationButton';
 

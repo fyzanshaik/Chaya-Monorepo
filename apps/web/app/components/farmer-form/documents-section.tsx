@@ -15,7 +15,6 @@ export function DocumentsSection() {
           name="documents.profilePicUrl"
           render={({ field }) => (
             <FormItem>
-              {/* <FormLabel>Profile Picture</FormLabel> */}
               <FormControl>
                 <DocumentUploader
                   endpoint="profilePicture"
@@ -35,7 +34,6 @@ export function DocumentsSection() {
           name="documents.aadharDocUrl"
           render={({ field }) => (
             <FormItem>
-              {/* <FormLabel>Aadhar Document</FormLabel> */}
               <FormControl>
                 <DocumentUploader
                   endpoint="aadharDocument"
@@ -55,7 +53,6 @@ export function DocumentsSection() {
           name="documents.bankDocUrl"
           render={({ field }) => (
             <FormItem>
-              {/* <FormLabel>Bank Document</FormLabel> */}
               <FormControl>
                 <DocumentUploader
                   endpoint="bankDocument"
