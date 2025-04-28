@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const backendUrl = process.env.API_URL || 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
     const response = await fetch(`${backendUrl}/api/processing`, {
       method: 'POST',
@@ -54,12 +54,16 @@ export async function GET(request: Request) {
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '10';
 
-    const backendUrl = process.env.API_URL || 'http://localhost:5000';
+    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
     const response = await fetch(`${backendUrl}/api/processing?query=${query}&page=${page}&limit=${limit}`, {
       headers: {
         Cookie: `token=${token}`,
       },
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch processing data');
+    }
 
     const data = await response.json();
     return NextResponse.json(data);

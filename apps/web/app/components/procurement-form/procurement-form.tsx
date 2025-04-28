@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import axios from 'axios';
 import { useProcurementFormStore } from '@/app/stores/procurement-form';
 import type { FieldValues } from 'react-hook-form';
-import { useAuth } from '@/app/providers/auth-provider';
 import { toast } from 'sonner';
 
 interface ProcurementFormProps {
@@ -20,15 +19,13 @@ interface ProcurementFormProps {
 }
 
 export function ProcurementForm({ mode, open, onOpenChange, procurementId }: ProcurementFormProps) {
-  const { user } = useAuth();
   const { activeTab, setActiveTab, goToNextTab, goToPreviousTab, form, isSubmitting, setIsSubmitting } =
     useProcurementFormStore();
-
   const title = mode === 'add' ? 'Add New Procurement' : 'Edit Procurement';
 
   const handleSubmit = async (data: FieldValues) => {
     setIsSubmitting(true);
-    console.log('Submitting procurement data:', JSON.stringify(data, null, 2));
+    console.log('Submitting data:', JSON.stringify(data, null, 2));
 
     try {
       const axiosConfig = {
@@ -38,17 +35,24 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
         },
       };
 
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
       if (mode === 'add') {
         console.log('Doing a POST request to add a new procurement');
-        const response = await axios.post('http://localhost:5000/api/procurements', data, axiosConfig);
+        const response = await axios.post(`${apiBaseUrl}/api/procurements`, data, axiosConfig);
         console.log('POST response:', response.data);
         toast.success('Procurement added successfully');
       } else {
         console.log('Doing a PUT request to update procurement', procurementId);
-        const response = await axios.put(`http://localhost:5000/api/procurements/${procurementId}`, data, axiosConfig);
+        const response = await axios.put(`${apiBaseUrl}/api/procurements/${procurementId}`, data, axiosConfig);
         console.log('PUT response:', response.data);
         toast.success('Procurement updated successfully');
       }
+
+      const dataChangedEvent = new CustomEvent('procurementDataChanged');
+      document.dispatchEvent(dataChangedEvent);
+      console.log('Data changed event dispatched after successful form submission');
+
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error submitting form:', error);
@@ -70,7 +74,7 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <Tabs value={activeTab} onValueChange={setActiveTab as any} className="mt-4">
+        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)} className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
@@ -106,17 +110,23 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
                   console.log('Submit button clicked, form exists:', !!form);
                   if (form) {
                     const values = form.getValues();
+                    console.log('Current form values:', values);
 
                     const isValid = await form.trigger();
+                    console.log('Form validation result:', isValid);
+
+                    setTimeout(() => {
+                      const errors = form.formState.errors;
+                      console.log('Detailed errors:', JSON.stringify(errors, null, 2));
+                    }, 100);
 
                     if (isValid) {
                       handleSubmit(values);
                     } else {
-                      setTimeout(() => {
-                        const errors = form.formState.errors;
-                        console.log('Validation errors:', JSON.stringify(errors, null, 2));
-                      }, 100);
+                      toast.error('Form validation failed. Please check all tabs for errors.');
                     }
+                  } else {
+                    toast.error('Form data is not available. Please try again.');
                   }
                 }}
                 disabled={isSubmitting}

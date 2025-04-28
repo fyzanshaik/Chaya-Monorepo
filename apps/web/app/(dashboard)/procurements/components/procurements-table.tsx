@@ -20,7 +20,7 @@ import { ProcurementDetailsDialog } from './procurement-details-dialog';
 import { ProcurementFormDialog } from './procurement-form-dialog';
 import { bulkDeleteProcurements } from '../lib/actions';
 import { Button } from '@workspace/ui/components/button';
-import { TrashIcon } from 'lucide-react';
+import { RefreshCw, TrashIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,13 +43,12 @@ interface ProcurementsTableProps {
 export default function ProcurementsTable({ query, currentPage }: ProcurementsTableProps) {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
-  const { fetchProcurements, prefetchPages } = useProcurementsCache();
+  const { fetchProcurements, prefetchPages, refreshCurrentPage } = useProcurementsCache();
 
-  // State for procurements data
   const [procurements, setProcurements] = useState<ProcurementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // State for dialogs
   const [viewingProcurement, setViewingProcurement] = useState<ProcurementWithRelations | null>(null);
   const [editingProcurement, setEditingProcurement] = useState<ProcurementWithRelations | null>(null);
   const [showViewDialog, setShowViewDialog] = useState(false);
@@ -57,48 +56,55 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // State for row selection (admin only)
   const [rowSelection, setRowSelection] = useState({});
 
-  // State for column visibility
   const [columnVisibility, setColumnVisibility] = useState(() => {
     const initialVisibility: Record<string, boolean> = {};
-
     defaultVisibleColumns.forEach(col => {
       initialVisibility[col] = true;
     });
-
     return initialVisibility;
   });
 
-  // Fetch data with caching
-  useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        // Fetch current page
-        const data = await fetchProcurements(currentPage, query);
-        setProcurements(data);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchProcurements(currentPage, query);
+      setProcurements(data);
 
-        // Prefetch adjacent pages
-        const pagesToPrefetch = [];
-        if (currentPage > 1) pagesToPrefetch.push(currentPage - 1);
-        if (currentPage < 100) pagesToPrefetch.push(currentPage + 1); // Arbitrary upper limit
-        if (pagesToPrefetch.length > 0) {
-          prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
-        }
-      } catch (error) {
-        console.error('Error fetching procurements:', error);
-        toast.error('Failed to fetch procurement data.');
-      } finally {
-        setLoading(false);
+      const pagesToPrefetch = [];
+      if (currentPage > 1) pagesToPrefetch.push(currentPage - 1);
+      if (currentPage < 100) pagesToPrefetch.push(currentPage + 1);
+      if (pagesToPrefetch.length > 0) {
+        prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
       }
+    } catch (error) {
+      toast.error("Failed to fetch procurements' data. Please try again.");
+    } finally {
+      setLoading(false);
     }
+  };
 
+  const handleRefresh = async () => {
+    if (refreshing) return;
+
+    setRefreshing(true);
+    try {
+      const freshData = await refreshCurrentPage(currentPage, query);
+      setProcurements(freshData);
+      toast.success('Data refreshed successfully');
+      setRowSelection({});
+    } catch (error) {
+      toast.error('Failed to refresh data. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, [fetchProcurements, prefetchPages, currentPage, query]);
 
-  // Create table instance
   const table = useReactTable({
     data: procurements,
     columns,
@@ -116,27 +122,26 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  // Handle view details
   const handleViewDetails = (procurement: ProcurementWithRelations) => {
     setViewingProcurement(procurement);
     setShowViewDialog(true);
   };
 
-  // Handle edit procurement (admin only)
   const handleEditProcurement = (procurement: ProcurementWithRelations) => {
     if (isAdmin) {
       setEditingProcurement(procurement);
       setShowEditDialog(true);
+    } else {
+      toast.error('You do not have permission to edit procurements.');
     }
   };
 
-  // Handle bulk delete
   const handleBulkDelete = async () => {
     setIsDeleting(true);
     try {
       const selectedProcurementIds = Object.keys(rowSelection)
         .map(index => {
-          const idx = Number.parseInt(index);
+          const idx = parseInt(index);
           return idx >= 0 && idx < procurements.length && procurements[idx] ? procurements[idx].id : null;
         })
         .filter((id): id is number => id !== null);
@@ -150,16 +155,15 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       const result = await bulkDeleteProcurements(selectedProcurementIds);
 
       if (result.success) {
-        toast('Procurements deleted successfully.');
-        setRowSelection({});
+        toast.success('Procurements deleted successfully.');
+        await handleRefresh();
       } else {
-        toast.error('Failed to delete procurements.');
+        toast.error('Failed to delete procurements. Please try again.');
       }
 
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error('Error bulk deleting procurements:', error);
-      toast.error('Failed to delete procurements.');
+      toast.error('Failed to delete procurements. An unexpected error occurred.');
     } finally {
       setIsDeleting(false);
     }
@@ -169,13 +173,18 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
     const handleViewProcurementEvent = (e: CustomEvent<{ procurement: ProcurementWithRelations }>) => {
       handleViewDetails(e.detail.procurement);
     };
+    const handleDataChangeEvent = () => {
+      handleRefresh();
+    };
 
     document.addEventListener('viewProcurement', handleViewProcurementEvent as EventListener);
+    document.addEventListener('procurementDataChanged', handleDataChangeEvent as EventListener);
 
     return () => {
       document.removeEventListener('viewProcurement', handleViewProcurementEvent as EventListener);
+      document.removeEventListener('procurementDataChanged', handleDataChangeEvent as EventListener);
     };
-  }, []);
+  }, [currentPage, query]);
 
   const selectedCount = Object.keys(rowSelection).length;
 
@@ -207,7 +216,7 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
   return (
     <div className="mt-6 space-y-4">
       <div className="flex justify-between items-center">
-        <div>
+        <div className="flex items-center gap-2">
           {isAdmin && selectedCount > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">{selectedCount} selected</span>
@@ -217,12 +226,23 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
               </Button>
             </div>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+            className="h-8 ml-2"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
         </div>
         <ColumnFilter table={table} />
       </div>
-      <div className="rounded-md border">
-        <ScrollArea className="h-[calc(100vh-350px)]">
-          <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <ScrollArea className="h-[calc(100vh-350px)] w-full">
+          <Table className="min-w-max">
             <TableHeader className="sticky top-0 bg-secondary">
               {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id}>
@@ -246,6 +266,7 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
                     <TableRow
                       data-state={row.getIsSelected() && 'selected'}
                       onDoubleClick={() => handleViewDetails(row.original)}
+                      className="cursor-pointer hover:bg-muted/50"
                     >
                       {row.getVisibleCells().map(cell => (
                         <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
@@ -256,7 +277,7 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
               ) : (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
-                    {loading ? 'Loading...' : 'No procurements found.'}
+                    {loading || refreshing ? 'Loading...' : 'No procurements found.'}
                   </TableCell>
                 </TableRow>
               )}
@@ -265,7 +286,6 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
         </ScrollArea>
       </div>
 
-      {/* Procurement Details Dialog */}
       {viewingProcurement && (
         <ProcurementDetailsDialog
           procurement={viewingProcurement}
@@ -274,7 +294,6 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
         />
       )}
 
-      {/* Procurement Edit Dialog - Admin Only */}
       {isAdmin && editingProcurement && (
         <ProcurementFormDialog
           mode="edit"
@@ -284,13 +303,13 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
         />
       )}
 
-      {/* Bulk Delete Confirmation Dialog */}
       <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete these procurements?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete {selectedCount} procurement records.
+              This action cannot be undone. This will permanently delete {selectedCount} procurement records and all
+              associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

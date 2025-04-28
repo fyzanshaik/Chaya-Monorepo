@@ -34,6 +34,7 @@ export function DryingFormDialog({
 }) {
   const [dryingDays, setDryingDays] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<DryingFormValues>({
     resolver: zodResolver(dryingFormSchema),
@@ -49,20 +50,20 @@ export function DryingFormDialog({
   useEffect(() => {
     if (open) {
       const fetchDryingDays = async () => {
+        setLoading(true);
         try {
-          setLoading(true);
-          const response = await fetch(`/api/processing/${processingId}/drying`, {
-            credentials: 'include',
+          const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+          const response = await axios.get(`${apiBaseUrl}/api/processing/${processingId}/drying`, {
+            withCredentials: true,
           });
-          const data = await response.json();
-          setDryingDays(data.dryingDays);
+          setDryingDays(response.data.dryingDays);
         } catch (error) {
           console.error('Error fetching drying days:', error);
+          toast.error('Failed to load drying data. Please try again.');
         } finally {
           setLoading(false);
         }
       };
-
       fetchDryingDays();
     }
   }, [open, processingId]);
@@ -77,16 +78,22 @@ export function DryingFormDialog({
   }, [dryingDays, form]);
 
   const onSubmit = async (data: DryingFormValues) => {
+    setIsSubmitting(true);
     try {
-      await axios.post(`/api/processing/${processingId}/drying`, data, {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      await axios.post(`${apiBaseUrl}/api/processing/${processingId}/drying`, data, {
         withCredentials: true,
       });
       toast.success('Drying data added successfully');
+      const dataChangedEvent = new CustomEvent('processingDataChanged');
+      document.dispatchEvent(dataChangedEvent);
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error('Error adding drying data:', error);
-      toast.error('Failed to add drying data');
+      toast.error('Failed to add drying data. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -194,8 +201,8 @@ export function DryingFormDialog({
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Adding...' : 'Add Drying Data'}
+            <Button type="submit" className="w-full" disabled={loading || isSubmitting}>
+              {isSubmitting ? 'Adding...' : 'Add Drying Data'}
             </Button>
           </form>
         </Form>

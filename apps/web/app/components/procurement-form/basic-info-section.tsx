@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,11 +10,9 @@ import { Label } from '@workspace/ui/components/label';
 import { Input } from '@workspace/ui/components/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
 import { Combobox } from '@workspace/ui/components/combobox';
-import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
-// Define the schema for the basic info section
 const basicInfoSchema = z.object({
   farmerId: z.number({
     required_error: 'Farmer is required',
@@ -44,7 +42,6 @@ export function BasicInfoSection() {
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
 
-  // Initialize the form
   const methods = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
@@ -62,23 +59,22 @@ export function BasicInfoSection() {
     formState: { errors },
   } = methods;
 
-  // Set the form in the store
   useEffect(() => {
     setForm(methods);
   }, [methods, setForm]);
 
-  // Fetch farmers for the dropdown
   useEffect(() => {
     const fetchFarmers = async () => {
       setIsLoadingFarmers(true);
       try {
-        const response = await axios.get('http://localhost:5000/api/farmers', {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await axios.get(`${apiBaseUrl}/api/farmers`, {
           withCredentials: true,
         });
         setFarmers(response.data.farmers);
       } catch (error) {
         console.error('Error fetching farmers:', error);
-        toast.error('Failed to load farmers');
+        toast.error('Failed to load farmers. Please try again.');
       } finally {
         setIsLoadingFarmers(false);
       }
@@ -190,7 +186,7 @@ export function BasicInfoSection() {
                     step="0.01"
                     min="0"
                     {...field}
-                    onChange={e => field.onChange(Number.parseFloat(e.target.value))}
+                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
                   />
                 )}
               />

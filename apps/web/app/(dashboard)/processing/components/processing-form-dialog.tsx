@@ -18,24 +18,27 @@ import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import { RadioGroup, RadioGroupItem } from '@workspace/ui/components/radio-group';
 import { Label } from '@workspace/ui/components/label';
+import { useFieldArray } from 'react-hook-form';
 
 const processingFormSchema = z.object({
   processMethod: z.enum(['wet', 'dry']),
-  dateOfProcessing: z.date(),
-  doneBy: z.string().min(1, 'Required'),
+  dateOfProcessing: z.date({
+    required_error: 'Processing date is required',
+  }),
+  doneBy: z.string().min(1, 'Done by is required'),
   dryingDays: z
     .array(
       z.object({
-        day: z.number().min(1),
-        temperature: z.number().min(0),
-        humidity: z.number().min(0),
-        pH: z.number().min(0),
-        moistureQuantity: z.number().min(0),
+        day: z.number().min(1, 'Day must be at least 1'),
+        temperature: z.number().min(0, 'Temperature must be positive'),
+        humidity: z.number().min(0, 'Humidity must be positive'),
+        pH: z.number().min(0, 'pH must be positive'),
+        moistureQuantity: z.number().min(0, 'Moisture must be positive'),
       })
     )
     .optional(),
   finalAction: z.enum(['curing', 'selling']).optional(),
-  quantityAfterProcess: z.number().min(0).optional(),
+  quantityAfterProcess: z.number().min(0, 'Quantity must be positive').optional(),
   dateOfCompletion: z.date().optional(),
 });
 
@@ -52,7 +55,6 @@ export function ProcessingFormDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }) {
-  const [existingDryingDays, setExistingDryingDays] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<ProcessingFormValues>({
@@ -65,73 +67,58 @@ export function ProcessingFormDialog({
     },
   });
 
-  useEffect(() => {
-    if (open && procurementId) {
-      const fetchDryingDays = async () => {
-        try {
-          setIsLoading(true);
-          const response = await axios.get(`/api/processing/${procurementId}/drying`, { withCredentials: true });
-          setExistingDryingDays(response.data.dryingDays);
-        } catch (error) {
-          console.error('Error fetching drying days:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchDryingDays();
-    }
-  }, [open, procurementId]);
-
-  const onSubmit = async (data: ProcessingFormValues) => {
-    try {
-      const processingData = {
-        procurementId,
-        processMethod: data.processMethod,
-        dateOfProcessing: data.dateOfProcessing.toISOString(),
-        doneBy: data.doneBy,
-        dryingDays: data.dryingDays,
-        finalAction: data.finalAction,
-        quantityAfterProcess: data.quantityAfterProcess,
-        dateOfCompletion: data.dateOfCompletion?.toISOString(),
-      };
-
-      const response = await fetch('/api/processing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(processingData),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save processing data');
-      }
-
-      toast.success('Processing data saved successfully');
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error saving processing data:', error);
-      toast.error('Failed to save processing data');
-    }
-  };
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'dryingDays',
+  });
 
   const addDryingDay = () => {
     const currentDays = form.getValues('dryingDays') || [];
     const nextDay = currentDays.length > 0 ? Math.max(...currentDays.map(d => d.day)) + 1 : 1;
 
-    form.setValue('dryingDays', [
-      ...currentDays,
-      {
-        day: nextDay,
-        temperature: 0,
-        humidity: 0,
-        pH: 0,
-        moistureQuantity: 0,
-      },
-    ]);
+    append({
+      day: nextDay,
+      temperature: 0,
+      humidity: 0,
+      pH: 0,
+      moistureQuantity: 0,
+    });
+  };
+
+  const onSubmit = async (data: ProcessingFormValues) => {
+    setIsLoading(true);
+    try {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const processingData = {
+        procurementId,
+        processMethod: data.processMethod,
+        dateOfProcessing: data.dateOfProcessing.toISOString(),
+        doneBy: data.doneBy,
+        dryingDays: data.dryingDays || [],
+        finalAction: data.finalAction || null,
+        quantityAfterProcess: data.quantityAfterProcess || null,
+        dateOfCompletion: data.dateOfCompletion ? data.dateOfCompletion.toISOString() : null,
+      };
+
+      const response = await axios.post(`${apiBaseUrl}/api/processing`, processingData, {
+        withCredentials: true,
+      });
+
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error('Failed to save processing data');
+      }
+
+      toast.success('Processing data saved successfully');
+      const dataChangedEvent = new CustomEvent('processingDataChanged');
+      document.dispatchEvent(dataChangedEvent);
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving processing data:', error);
+      toast.error('Failed to save processing data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -140,7 +127,6 @@ export function ProcessingFormDialog({
         <DialogHeader>
           <DialogTitle>Processing Details</DialogTitle>
         </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -222,22 +208,11 @@ export function ProcessingFormDialog({
                 </Button>
               </div>
 
-              {form.watch('dryingDays')?.map((day, index) => (
-                <div key={index} className="mb-4 p-3 border rounded">
+              {fields.map((field, index) => (
+                <div key={field.id} className="mb-4 p-3 border rounded-md">
                   <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium">Day {day.day}</h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const days = form.getValues('dryingDays') || [];
-                        form.setValue(
-                          'dryingDays',
-                          days.filter((_, i) => i !== index)
-                        );
-                      }}
-                    >
+                    <h4 className="font-medium">Day {index + 1}</h4>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
                       Remove
                     </Button>
                   </div>

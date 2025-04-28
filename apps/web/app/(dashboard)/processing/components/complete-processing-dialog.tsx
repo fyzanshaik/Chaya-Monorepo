@@ -12,6 +12,7 @@ import { Label } from '@workspace/ui/components/label';
 import axios from 'axios';
 import { toast } from 'sonner';
 import type { ProcessingWithRelations } from '../lib/types';
+import { useState } from 'react';
 
 const completeProcessingSchema = z.object({
   action: z.enum(['sell', 'continue']),
@@ -31,6 +32,8 @@ export function CompleteProcessingDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<CompleteProcessingValues>({
     resolver: zodResolver(completeProcessingSchema),
     defaultValues: {
@@ -40,16 +43,22 @@ export function CompleteProcessingDialog({
   });
 
   const onSubmit = async (data: CompleteProcessingValues) => {
+    setIsSubmitting(true);
     try {
-      await axios.post(`/api/processing/${processing.id}/complete`, data, {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      await axios.post(`${apiBaseUrl}/api/processing/${processing.id}/complete`, data, {
         withCredentials: true,
       });
       toast.success(data.action === 'sell' ? 'Processing marked as finished' : 'Processing continued for next stage');
+      const dataChangedEvent = new CustomEvent('processingDataChanged');
+      document.dispatchEvent(dataChangedEvent);
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error('Error completing processing:', error);
-      toast.error('Failed to complete processing');
+      toast.error('Failed to complete processing. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -108,8 +117,8 @@ export function CompleteProcessingDialog({
               )}
             />
 
-            <Button type="submit" className="w-full">
-              Confirm
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Confirm'}
             </Button>
           </form>
         </Form>

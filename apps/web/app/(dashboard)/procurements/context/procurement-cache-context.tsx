@@ -1,9 +1,9 @@
 'use client';
 
-import type React from 'react';
-import { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { getProcurements, getProcurementPages } from '../lib/actions';
-import type { ProcurementWithRelations } from '../lib/types';
+import { ProcurementWithRelations } from '../lib/types';
+import { toast } from 'sonner';
 
 interface ProcurementsCacheContextType {
   procurements: Record<string, ProcurementWithRelations[]>;
@@ -12,70 +12,63 @@ interface ProcurementsCacheContextType {
   fetchTotalPages: (query: string) => Promise<number>;
   clearCache: () => void;
   prefetchPages: (startPage: number, endPage: number, query: string) => Promise<void>;
+  refreshCurrentPage: (page: number, query: string) => Promise<ProcurementWithRelations[]>;
 }
 
 const ProcurementsCacheContext = createContext<ProcurementsCacheContextType | undefined>(undefined);
 
 export function ProcurementsCacheProvider({ children }: { children: React.ReactNode }) {
-  // Cache state
   const [procurements, setProcurements] = useState<Record<string, ProcurementWithRelations[]>>({});
   const [totalPages, setTotalPages] = useState<Record<string, number>>({});
 
-  // Create a key from page and query
-  const createKey = (page: number, query: string) => `${query}:${page}`;
+  const createKey = useCallback((page: number, query: string) => `${query}:${page}`, []);
 
-  // Fetch procurements with caching
   const fetchProcurements = useCallback(
     async (page: number, query: string): Promise<ProcurementWithRelations[]> => {
       const key = createKey(page, query);
 
-      // Return cached data if available
       if (procurements[key]) {
         console.log(`Using cached data for page ${page}, query "${query}"`);
         return procurements[key];
       }
 
-      // Fetch new data
       console.log(`Fetching page ${page}, query "${query}" from server`);
-      const data = (await getProcurements({
-        page,
-        query,
-      })) as ProcurementWithRelations[];
-
-      // Update cache
-      setProcurements(prev => ({
-        ...prev,
-        [key]: data,
-      }));
-
-      return data;
+      try {
+        const data = (await getProcurements({ page, query })) as ProcurementWithRelations[];
+        setProcurements(prev => ({
+          ...prev,
+          [key]: data,
+        }));
+        return data;
+      } catch (error) {
+        toast.error('Failed to fetch procurements data from server.');
+        throw error;
+      }
     },
-    [procurements]
+    [procurements, createKey]
   );
 
-  // Fetch total pages with caching
   const fetchTotalPages = useCallback(
     async (query: string): Promise<number> => {
-      // Return cached data if available
       if (totalPages[query] !== undefined) {
         return totalPages[query];
       }
 
-      // Fetch new data
-      const pages = await getProcurementPages(query);
-
-      // Update cache
-      setTotalPages(prev => ({
-        ...prev,
-        [query]: pages,
-      }));
-
-      return pages;
+      try {
+        const pages = await getProcurementPages(query);
+        setTotalPages(prev => ({
+          ...prev,
+          [query]: pages,
+        }));
+        return pages;
+      } catch (error) {
+        toast.error('Failed to fetch pagination data.');
+        throw error;
+      }
     },
     [totalPages]
   );
 
-  // Prefetch multiple pages
   const prefetchPages = useCallback(
     async (startPage: number, endPage: number, query: string) => {
       console.log(`Prefetching pages ${startPage}-${endPage} for query "${query}"`);
@@ -83,7 +76,6 @@ export function ProcurementsCacheProvider({ children }: { children: React.ReactN
       for (let page = startPage; page <= endPage; page++) {
         const key = createKey(page, query);
 
-        // Skip if already cached
         if (procurements[key]) continue;
 
         try {
@@ -97,19 +89,44 @@ export function ProcurementsCacheProvider({ children }: { children: React.ReactN
           }));
         } catch (error) {
           console.error(`Error prefetching page ${page}:`, error);
+          toast.error(`Failed to prefetch data for page ${page}.`);
         }
       }
     },
-    [procurements]
+    [procurements, createKey]
   );
 
-  // Clear the cache
+  const refreshCurrentPage = useCallback(
+    async (page: number, query: string): Promise<ProcurementWithRelations[]> => {
+      const key = createKey(page, query);
+
+      console.log(`Force refreshing page ${page}, query "${query}" from server`);
+      try {
+        const data = (await getProcurements({
+          page,
+          query,
+        })) as ProcurementWithRelations[];
+        setProcurements(prev => ({
+          ...prev,
+          [key]: data,
+        }));
+        fetchTotalPages(query);
+        return data;
+      } catch (error) {
+        console.error(`Error refreshing page ${page}:`, error);
+        toast.error(`Failed to refresh data for page ${page}.`);
+        throw error;
+      }
+    },
+    [createKey, fetchTotalPages]
+  );
+
   const clearCache = useCallback(() => {
     setProcurements({});
     setTotalPages({});
+    toast.success('Cache cleared successfully.');
   }, []);
 
-  // Context value
   const value = {
     procurements,
     totalPages,
@@ -117,6 +134,7 @@ export function ProcurementsCacheProvider({ children }: { children: React.ReactN
     fetchTotalPages,
     clearCache,
     prefetchPages,
+    refreshCurrentPage,
   };
 
   return <ProcurementsCacheContext.Provider value={value}>{children}</ProcurementsCacheContext.Provider>;

@@ -16,6 +16,7 @@ import { cn } from '@workspace/ui/lib/utils';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useProcessingFormContext } from '@/app/providers/processing-form-provider';
 import { Button } from '@workspace/ui/components/button';
 
 const basicInfoSchema = z.object({
@@ -35,19 +36,25 @@ const basicInfoSchema = z.object({
 type BasicInfoFormValues = z.infer<typeof basicInfoSchema>;
 
 export function BasicInfoSection() {
-  const { form, setForm, procurementId } = useProcessingFormStore();
+  const { form, setForm } = useProcessingFormStore();
+  const { procurementId } = useProcessingFormContext();
   const [procurementData, setProcurementData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchProcurementData = async () => {
+      setIsLoading(true);
       try {
-        const response = await axios.get(`http://localhost:5000/api/procurements/${procurementId}`, {
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await axios.get(`${apiBaseUrl}/api/procurements/${procurementId}`, {
           withCredentials: true,
         });
         setProcurementData(response.data.procurement);
       } catch (error) {
         console.error('Error fetching procurement data:', error);
-        toast.error('Failed to load procurement details');
+        toast.error('Failed to load procurement details. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -80,6 +87,21 @@ export function BasicInfoSection() {
     setForm(methods);
   }, [methods, setForm]);
 
+  useEffect(() => {
+    if (procurementData) {
+      methods.reset({
+        lotNo: procurementData.lotNo || 1,
+        crop: procurementData.crop || '',
+        procuredForm: procurementData.procuredForm || '',
+        quantity: procurementData.quantity || 0,
+        speciality: procurementData.speciality || '',
+        processMethod: 'wet',
+        dateOfProcessing: new Date(),
+        doneBy: '',
+      });
+    }
+  }, [procurementData, methods]);
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -111,12 +133,18 @@ export function BasicInfoSection() {
 
             <div>
               <Label htmlFor="crop">Crop</Label>
-              <Input id="crop" {...register('crop')} readOnly className="bg-gray-100" />
+              <Input id="crop" {...register('crop')} readOnly className="bg-muted" disabled={isLoading} />
             </div>
 
             <div>
               <Label htmlFor="procuredForm">Procured Form</Label>
-              <Input id="procuredForm" {...register('procuredForm')} readOnly className="bg-gray-100" />
+              <Input
+                id="procuredForm"
+                {...register('procuredForm')}
+                readOnly
+                className="bg-muted"
+                disabled={isLoading}
+              />
             </div>
 
             <div>
@@ -125,13 +153,14 @@ export function BasicInfoSection() {
                 id="quantity"
                 {...register('quantity', { valueAsNumber: true })}
                 readOnly
-                className="bg-gray-100"
+                className="bg-muted"
+                disabled={isLoading}
               />
             </div>
 
             <div>
               <Label htmlFor="speciality">Speciality</Label>
-              <Input id="speciality" {...register('speciality')} readOnly className="bg-gray-100" />
+              <Input id="speciality" {...register('speciality')} readOnly className="bg-muted" disabled={isLoading} />
             </div>
 
             <div>
