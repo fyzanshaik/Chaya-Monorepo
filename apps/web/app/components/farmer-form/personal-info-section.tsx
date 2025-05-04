@@ -1,4 +1,3 @@
-// components/farmer-form/personal-info-section.tsx (updated)
 'use client';
 
 import { useFormContext } from 'react-hook-form';

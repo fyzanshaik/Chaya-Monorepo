@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import axios from 'axios';
 import { useFarmerFormStore } from '@/app/stores/farmer-form';
 import { FieldValues } from 'react-hook-form';
-import { useAuth } from '@/app/providers/auth-provider';
 import { toast } from 'sonner';
+
 interface FarmerFormProps {
   mode: 'add' | 'edit';
   open: boolean;
@@ -22,20 +22,9 @@ interface FarmerFormProps {
 }
 
 export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormProps) {
-  const { user } = useAuth();
   const { activeTab, setActiveTab, goToNextTab, goToPreviousTab, form, isSubmitting, setIsSubmitting } =
     useFarmerFormStore();
-  // console.log('Farmer form mode:', mode);
   const title = mode === 'add' ? 'Add New Farmer' : 'Edit Farmer';
-  // useEffect(() => {
-  // 	console.log('Form component mounted, form instance:', !!form);
-  // 	console.log('Form state:', form?.formState);
-
-  // 	// Check for validation errors when submit is attempted
-  // 	return () => {
-  // 		console.log('Form component unmounting');
-  // 	};
-  // }, [form]);
 
   const handleSubmit = async (data: FieldValues) => {
     setIsSubmitting(true);
@@ -49,14 +38,16 @@ export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormPro
         },
       };
 
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
       if (mode === 'add') {
         console.log('Doing a POST request to add a new farmer');
-        const response = await axios.post('http://localhost:5000/api/farmers', data, axiosConfig);
+        const response = await axios.post(`${apiBaseUrl}/api/farmers`, data, axiosConfig);
         console.log('POST response:', response.data);
         toast.success('Farmer added successfully');
       } else {
         console.log('Doing a PUT request to update farmer', farmerId);
-        const response = await axios.put(`http://localhost:5000/api/farmers/${farmerId}`, data, axiosConfig);
+        const response = await axios.put(`${apiBaseUrl}/api/farmers/${farmerId}`, data, axiosConfig);
         console.log('PUT response:', response.data);
         toast.success('Farmer updated successfully');
       }
@@ -134,14 +125,14 @@ export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormPro
                   console.log('Submit button clicked, form exists:', !!form);
                   if (form) {
                     const values = form.getValues();
-                    // console.log('Current form values:', values);
+                    console.log('Current form values:', values);
 
                     const isValid = await form.trigger();
-                    // console.log('Form validation result:', isValid);
+                    console.log('Form validation result:', isValid);
 
                     setTimeout(() => {
                       const errors = form.formState.errors;
-                      // console.log('Detailed errors:', JSON.stringify(errors, null, 2));
+                      console.log('Detailed errors:', JSON.stringify(errors, null, 2));
 
                       if (errors.farmer) console.log('Farmer field errors:', errors.farmer);
                       if (errors.bankDetails) console.log('Bank details errors:', errors.bankDetails);
@@ -150,7 +141,11 @@ export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormPro
 
                     if (isValid) {
                       handleSubmit(values);
+                    } else {
+                      toast.error('Form validation failed. Please check all tabs for errors.');
                     }
+                  } else {
+                    toast.error('Form data is not available. Please try again.');
                   }
                 }}
                 disabled={isSubmitting}

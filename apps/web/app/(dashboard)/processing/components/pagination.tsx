@@ -2,9 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@workspace/ui/components/button';
-import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeftIcon, ChevronsRightIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useProcessingCache } from '../context/processing-cache-context';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface PaginationProps {
   query: string;
@@ -27,7 +28,7 @@ export default function Pagination({ query }: PaginationProps) {
         const pages = await fetchTotalPages(query);
         setTotalPages(pages);
       } catch (error) {
-        console.error('Error fetching total pages:', error);
+        toast.error('Failed to load pagination data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -42,7 +43,17 @@ export default function Pagination({ query }: PaginationProps) {
     return `?${params.toString()}`;
   };
 
-  if (loading || totalPages <= 1) {
+  if (loading) {
+    return (
+      <div className="flex justify-center mt-8 space-x-2">
+        <div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+        <div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+        <div className="h-10 w-10 rounded-md bg-gray-200 animate-pulse"></div>
+      </div>
+    );
+  }
+
+  if (totalPages <= 1) {
     return null;
   }
 
@@ -53,7 +64,7 @@ export default function Pagination({ query }: PaginationProps) {
       </div>
       <div className="flex items-center space-x-2">
         <Button variant="outline" size="icon" onClick={() => router.push(createPageURL(1))} disabled={currentPage <= 1}>
-          <ChevronsLeftIcon className="h-4 w-4" />
+          <ChevronsLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
@@ -61,7 +72,7 @@ export default function Pagination({ query }: PaginationProps) {
           onClick={() => router.push(createPageURL(currentPage - 1))}
           disabled={currentPage <= 1}
         >
-          <ChevronLeftIcon className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
@@ -69,7 +80,7 @@ export default function Pagination({ query }: PaginationProps) {
           onClick={() => router.push(createPageURL(currentPage + 1))}
           disabled={currentPage >= totalPages}
         >
-          <ChevronRightIcon className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
@@ -77,7 +88,7 @@ export default function Pagination({ query }: PaginationProps) {
           onClick={() => router.push(createPageURL(totalPages))}
           disabled={currentPage >= totalPages}
         >
-          <ChevronsRightIcon className="h-4 w-4" />
+          <ChevronsRight className="h-4 w-4" />
         </Button>
       </div>
     </div>

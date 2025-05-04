@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 
-const API_URL = process.env.API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
 interface GetProcurementsParams {
   page?: number;
@@ -26,8 +26,9 @@ export async function getProcurements({ page = 1, query = '' }: GetProcurementsP
       params: {
         page,
         limit: 10,
-        query,
+        search: query,
       },
+      withCredentials: true,
     });
 
     return response.data.procurements;
@@ -46,20 +47,24 @@ export async function getProcurementPages(query = '') {
       throw new Error('Authentication token not found');
     }
 
-    const response = await axios.get(`${API_URL}/api/procurements/count`, {
+    const response = await axios.get(`${API_URL}/api/procurements`, {
       headers: {
         Cookie: `token=${token}`,
       },
       params: {
-        query,
+        page: 1,
+        limit: 10,
+        search: query,
       },
+      withCredentials: true,
     });
 
-    const totalCount = response.data.count;
-    return Math.ceil(totalCount / 10); // Assuming 10 items per page
+    const totalCount = response.data.pagination.totalCount;
+    const totalPages = Math.ceil(totalCount / 10);
+    return totalPages;
   } catch (error) {
     console.error('Error fetching procurement count:', error);
-    return 1; // Default to 1 page on error
+    throw error;
   }
 }
 
@@ -72,16 +77,40 @@ export async function bulkDeleteProcurements(ids: number[]) {
       throw new Error('Authentication token not found');
     }
 
-    await axios.delete(`${API_URL}/api/procurements/bulk`, {
+    const response = await axios.delete(`${API_URL}/api/procurements/bulk`, {
       headers: {
         Cookie: `token=${token}`,
       },
       data: { ids },
+      withCredentials: true,
     });
 
     return { success: true };
   } catch (error) {
     console.error('Error deleting procurements:', error);
     return { success: false };
+  }
+}
+
+export async function deleteProcurement(id: number) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    const response = await axios.delete(`${API_URL}/api/procurements/${id}`, {
+      headers: {
+        Cookie: `token=${token}`,
+      },
+      withCredentials: true,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting procurement:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

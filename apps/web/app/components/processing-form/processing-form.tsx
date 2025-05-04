@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import axios from 'axios';
 import { useProcessingFormStore } from '@/app/stores/processing-form';
 import type { FieldValues } from 'react-hook-form';
-import { useAuth } from '@/app/providers/auth-provider';
 import { toast } from 'sonner';
 import { useProcessingFormContext } from '@/app/providers/processing-form-provider';
 
@@ -20,7 +19,6 @@ interface ProcessingFormProps {
 }
 
 export function ProcessingForm({ procurementId, open, onOpenChange }: ProcessingFormProps) {
-  const { user } = useAuth();
   const { activeTab, setActiveTab, goToNextTab, goToPreviousTab, form, isSubmitting, setIsSubmitting } =
     useProcessingFormStore();
   const { procurementId: contextProcurementId } = useProcessingFormContext();
@@ -39,6 +37,8 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
         },
       };
 
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
       // First create the processing record
       const processingData = {
         procurementId: contextProcurementId,
@@ -48,13 +48,13 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
         quantity: data.quantity,
         speciality: data.speciality,
         processMethod: data.processMethod,
-        dateOfProcessing: data.dateOfProcessing,
-        dateOfCompletion: data.dateOfCompletion,
-        quantityAfterProcess: data.quantityAfterProcess,
-        doneBy: user?.name || 'Unknown',
+        dateOfProcessing: data.dateOfProcessing.toISOString(),
+        dateOfCompletion: data.dateOfCompletion ? data.dateOfCompletion.toISOString() : null,
+        quantityAfterProcess: data.quantityAfterProcess || null,
+        doneBy: data.doneBy,
       };
 
-      const processingResponse = await axios.post('http://localhost:5000/api/processing', processingData, axiosConfig);
+      const processingResponse = await axios.post(`${apiBaseUrl}/api/processing`, processingData, axiosConfig);
 
       const processingId = processingResponse.data.processing.id;
 
@@ -62,9 +62,8 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
       if (data.drying && data.drying.length > 0) {
         for (const day of data.drying) {
           await axios.post(
-            'http://localhost:5000/api/processing/drying',
+            `${apiBaseUrl}/api/processing/${processingId}/drying`,
             {
-              processingId,
               day: day.day,
               temperature: day.temperature,
               humidity: day.humidity,
@@ -77,6 +76,8 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
       }
 
       toast.success('Processing details added successfully');
+      const dataChangedEvent = new CustomEvent('processingDataChanged');
+      document.dispatchEvent(dataChangedEvent);
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error submitting form:', error);
@@ -98,7 +99,7 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <Tabs value={activeTab} onValueChange={setActiveTab as any} className="mt-4">
+        <Tabs value={activeTab} onValueChange={value => setActiveTab(value as any)} className="mt-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
             <TabsTrigger value="drying">Drying Details</TabsTrigger>
@@ -144,7 +145,10 @@ export function ProcessingForm({ procurementId, open, onOpenChange }: Processing
                         const errors = form.formState.errors;
                         console.log('Validation errors:', JSON.stringify(errors, null, 2));
                       }, 100);
+                      toast.error('Form validation failed. Please check all tabs for errors.');
                     }
+                  } else {
+                    toast.error('Form data is not available. Please try again.');
                   }
                 }}
                 disabled={isSubmitting}

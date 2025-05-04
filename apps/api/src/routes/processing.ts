@@ -199,7 +199,16 @@ async function processingRoutes(fastify: FastifyInstance) {
   fastify.post('/:id/drying', { preHandler: authenticate }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
-      const data = createDryingSchema.parse(request.body);
+      const body = request.body as any;
+      const data = {
+        processingId: Number(id),
+        day: body.day,
+        temperature: body.temperature,
+        humidity: body.humidity,
+        pH: body.pH,
+        moistureQuantity: body.moistureQuantity,
+      };
+      createDryingSchema.parse(data);
 
       const proc = await prisma.processing.findUnique({
         where: { id: Number(id) },
@@ -222,7 +231,7 @@ async function processingRoutes(fastify: FastifyInstance) {
       }
 
       const drying = await prisma.drying.create({
-        data: { ...data, processingId: Number(id) },
+        data: { ...data },
       });
       return { drying };
     } catch (error) {

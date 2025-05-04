@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { getFarmers, getFarmerPages } from '../lib/actions';
 import { FarmerWithRelations } from '../lib/types';
+import { toast } from 'sonner';
 
 interface FarmersCacheContextType {
   farmers: Record<string, FarmerWithRelations[]>;
@@ -32,14 +33,17 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
       }
 
       console.log(`Fetching page ${page}, query "${query}" from server`);
-      const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
-
-      setFarmers(prev => ({
-        ...prev,
-        [key]: data,
-      }));
-
-      return data;
+      try {
+        const data = (await getFarmers({ page, query })) as FarmerWithRelations[];
+        setFarmers(prev => ({
+          ...prev,
+          [key]: data,
+        }));
+        return data;
+      } catch (error) {
+        toast.error('Failed to fetch farmers data from server.');
+        throw error;
+      }
     },
     [farmers, createKey]
   );
@@ -50,14 +54,17 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
         return totalPages[query];
       }
 
-      const pages = await getFarmerPages(query);
-
-      setTotalPages(prev => ({
-        ...prev,
-        [query]: pages,
-      }));
-
-      return pages;
+      try {
+        const pages = await getFarmerPages(query);
+        setTotalPages(prev => ({
+          ...prev,
+          [query]: pages,
+        }));
+        return pages;
+      } catch (error) {
+        toast.error('Failed to fetch pagination data.');
+        throw error;
+      }
     },
     [totalPages]
   );
@@ -82,11 +89,13 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
           }));
         } catch (error) {
           console.error(`Error prefetching page ${page}:`, error);
+          toast.error(`Failed to prefetch data for page ${page}.`);
         }
       }
     },
     [farmers, createKey]
   );
+
   const refreshCurrentPage = useCallback(
     async (page: number, query: string): Promise<FarmerWithRelations[]> => {
       const key = createKey(page, query);
@@ -97,24 +106,25 @@ export function FarmersCacheProvider({ children }: { children: React.ReactNode }
           page,
           query,
         })) as FarmerWithRelations[];
-
         setFarmers(prev => ({
           ...prev,
           [key]: data,
         }));
         fetchTotalPages(query);
-
         return data;
       } catch (error) {
         console.error(`Error refreshing page ${page}:`, error);
+        toast.error(`Failed to refresh data for page ${page}.`);
         throw error;
       }
     },
     [createKey, fetchTotalPages]
   );
+
   const clearCache = useCallback(() => {
     setFarmers({});
     setTotalPages({});
+    toast.success('Cache cleared successfully.');
   }, []);
 
   const value = {

@@ -60,11 +60,9 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
 
   const [columnVisibility, setColumnVisibility] = useState(() => {
     const initialVisibility: Record<string, boolean> = {};
-
     defaultVisibleColumns.forEach(col => {
       initialVisibility[col] = true;
     });
-
     return initialVisibility;
   });
 
@@ -81,8 +79,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
         prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
       }
     } catch (error) {
-      console.error('Error fetching farmers:', error);
-      toast.error("Failed to fetch farmers' data.");
+      toast.error("Failed to fetch farmers' data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,8 +95,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
       toast.success('Data refreshed successfully');
       setRowSelection({});
     } catch (error) {
-      console.error('Error refreshing data:', error);
-      toast.error('Failed to refresh data');
+      toast.error('Failed to refresh data. Please try again.');
     } finally {
       setRefreshing(false);
     }
@@ -135,6 +131,8 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
     if (isAdmin) {
       setEditingFarmer(farmer);
       setShowEditDialog(true);
+    } else {
+      toast.error('You do not have permission to edit farmers.');
     }
   };
 
@@ -157,16 +155,15 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
       const result = await bulkDeleteFarmers(selectedFarmerIds);
 
       if (result.success) {
-        toast('Farmers deleted successfully.');
+        toast.success('Farmers deleted successfully.');
         await handleRefresh();
       } else {
-        toast.error('Failed to delete farmers.');
+        toast.error('Failed to delete farmers. Please try again.');
       }
 
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      console.error('Error bulk deleting farmers:', error);
-      toast.error('Failed to delete farmers.');
+      toast.error('Failed to delete farmers. An unexpected error occurred.');
     } finally {
       setIsDeleting(false);
     }
@@ -243,9 +240,9 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
         </div>
         <ColumnFilter table={table} />
       </div>
-      <div className="rounded-md border">
-        <ScrollArea className="h-[calc(100vh-350px)]">
-          <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <ScrollArea className="h-[calc(100vh-350px)] w-full">
+          <Table className="min-w-max">
             <TableHeader className="sticky top-0 bg-secondary">
               {table.getHeaderGroups().map(headerGroup => (
                 <TableRow key={headerGroup.id}>
@@ -269,6 +266,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
                     <TableRow
                       data-state={row.getIsSelected() && 'selected'}
                       onDoubleClick={() => handleViewDetails(row.original)}
+                      className="cursor-pointer hover:bg-muted/50"
                     >
                       {row.getVisibleCells().map(cell => (
                         <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>

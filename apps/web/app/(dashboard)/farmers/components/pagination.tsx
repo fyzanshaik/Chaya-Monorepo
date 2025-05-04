@@ -8,6 +8,7 @@ import { generatePagination } from '../lib/utils';
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useFarmersCache } from '../context/farmer-cache-context';
+import { toast } from 'sonner';
 
 interface PaginationProps {
   query: string;
@@ -29,7 +30,7 @@ export default function Pagination({ query }: PaginationProps) {
         const pages = await fetchTotalPages(query);
         setTotalPages(pages);
       } catch (error) {
-        console.error('Error fetching total pages:', error);
+        toast.error('Failed to load pagination data. Please try again.');
       } finally {
         setLoading(false);
       }
