@@ -2,12 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { hashPassword, verifyPassword } from '../lib/password';
 import { prisma } from '@chaya/shared';
 import { loginSchema, registerSchema } from '@chaya/shared';
-import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
+import { authenticate, verifyAdmin, type AuthenticatedRequest, type JWTPayload } from '../middlewares/auth'; // Use JWTPayload from here
+import type { FastifyRequest, FastifyReply } from 'fastify';
 
-interface JwtPayload {
-  id: number;
-  role: string;
-}
+// Interface JwtPayload (local) is removed, using JWTPayload from middlewares
 
 async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
@@ -37,7 +35,7 @@ async function authRoutes(fastify: FastifyInstance) {
         {
           id: user.id,
           role: user.role,
-        } as JwtPayload,
+        } as Omit<JWTPayload, 'iat' | 'exp'>, // Sign with core fields, iat/exp added by jwt.sign
         {
           expiresIn: '7d',
         }
@@ -56,7 +54,7 @@ async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // maxAge in milliseconds
       });
 
       return {
@@ -77,20 +75,23 @@ async function authRoutes(fastify: FastifyInstance) {
     try {
       if (request.cookies.token) {
         try {
-          const decoded = fastify.jwt.verify<JwtPayload>(request.cookies.token);
+          const decoded = fastify.jwt.verify<JWTPayload>(request.cookies.token);
 
           await prisma.user.update({
             where: { id: decoded.id },
             data: { isActive: false },
           });
         } catch (error) {
-          console.error('Token verification error:', error);
+          // Token might be invalid or expired, clear cookie anyway
+          console.warn('Token verification error on logout:', error);
         }
       }
 
       reply.clearCookie('token', {
         path: '/',
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
       });
 
       return { success: true };
@@ -100,7 +101,8 @@ async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post('/register', { preHandler: verifyAdmin }, async (request, reply) => {
+  fastify.post('/register', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    // const authRequest = request as AuthenticatedRequest; // Not needed here directly as verifyAdmin handles user existence
     try {
       const userData = registerSchema.parse(request.body);
 
@@ -137,16 +139,30 @@ async function authRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.get('/me', { preHandler: authenticate }, async (request, reply) => {
+  fastify.get('/me', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const authRequest = request as AuthenticatedRequest;
     try {
-      const authRequest = request as AuthenticatedRequest;
-      // console.log('Auth request: ', authRequest.user);
       const user = await prisma.user.findUnique({
         where: { id: authRequest.user.id },
+        select: {
+          // Select only necessary fields
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isEnabled: true, // Good to check isEnabled on /me as well
+        },
       });
 
-      if (!user) {
-        return reply.status(404).send({ error: 'User not found' });
+      if (!user || !user.isEnabled) {
+        // If user somehow got disabled after token issuance but before expiry
+        reply.clearCookie('token', {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+        });
+        return reply.status(401).send({ error: 'User not found or disabled' });
       }
 
       return {

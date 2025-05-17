@@ -22,7 +22,33 @@ export function generateBatchCode(crop: string, date: Date, lotNo: number): stri
   const dateCode = date.toISOString().split('T')[0].replace(/-/g, '');
   const lotCode = lotNo.toString();
 
-  const batchCode = `${cropCode}${dateCode}${lotCode}`.padEnd(11, '0');
+  const base = `${cropCode}${dateCode}${lotCode}`;
+  const batchCode = base.padEnd(11, '0');
 
   return batchCode;
+}
+
+export async function generateProcessingBatchCode(
+  crop: string,
+  lotNo: number,
+  dateOfProcessing: Date
+): Promise<string> {
+  const cropCode = crop.slice(0, 3).toUpperCase();
+  const dateCode = dateOfProcessing.toISOString().split('T')[0].replace(/-/g, '');
+  const lotStr = lotNo.toString();
+
+  let isUnique = false;
+  let uniqueSuffix = '';
+  let processingBatchCode = '';
+
+  while (!isUnique) {
+    uniqueSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+    processingBatchCode = `PBC-${cropCode}-${lotStr}-${dateCode}-${uniqueSuffix}`;
+
+    const exists = await prisma.processingBatch.findUnique({
+      where: { batchCode: processingBatchCode },
+    });
+    if (!exists) isUnique = true;
+  }
+  return processingBatchCode;
 }

@@ -25,7 +25,7 @@ export default function Search({ placeholder }: SearchProps) {
     }
 
     params.set('page', '1'); // Reset to first page on search
-    router.push(`?${params.toString()}`);
+    // router.push(`?${params.toString()}`);
   }, [debouncedSearchTerm, router, searchParams]);
 
   return (

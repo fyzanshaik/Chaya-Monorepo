@@ -1,12 +1,14 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '@chaya/shared';
-import { authenticate } from '../middlewares/auth';
-import { createProcurementSchema } from '@chaya/shared';
+import { authenticate, verifyAdmin } from '../middlewares/auth';
+import { createProcurementSchema, updateProcurementSchema, procurementQuerySchema } from '@chaya/shared';
 import { generateBatchCode } from '../helper';
 import { Prisma } from '@prisma/client';
+import { format } from 'date-fns';
 
 async function procurementRoutes(fastify: FastifyInstance) {
-  fastify.post('/', { preHandler: authenticate }, async (request, reply) => {
+  fastify.post('/', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    // const authRequest = request as AuthenticatedRequest; // User ID not directly needed for creating procurement in this model
     try {
       const { farmerId, crop, procuredForm, speciality, quantity, date, time, lotNo, procuredBy, vehicleNo } =
         createProcurementSchema.parse(request.body);
@@ -16,14 +18,22 @@ async function procurementRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ error: 'Invalid date or time combination' });
       }
 
-      const batchCode = generateBatchCode(crop, date, lotNo);
+      const batchCode = generateBatchCode(crop, date, lotNo); // This is the procurement's own batch code
 
       const existingBatch = await prisma.procurement.findUnique({
         where: { batchCode },
       });
 
       if (existingBatch) {
-        return reply.status(400).send({ error: 'Batch code already exists' });
+        return reply
+          .status(400)
+          .send({ error: 'Procurement batch code already exists. Adjust lot or date if duplicate.' });
+      }
+
+      // Ensure farmer exists
+      const farmerExists = await prisma.farmer.findUnique({ where: { id: farmerId } });
+      if (!farmerExists) {
+        return reply.status(404).send({ error: 'Farmer not found.' });
       }
 
       const procurement = await prisma.procurement.create({
@@ -43,47 +53,52 @@ async function procurementRoutes(fastify: FastifyInstance) {
       });
 
       return { procurement };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.issues) {
+        return reply.status(400).send({ error: 'Invalid request data', details: error.issues });
+      }
       console.error('Create procurement error:', error);
-      return reply.status(400).send({ error: 'Invalid request data' });
+      return reply.status(500).send({ error: 'Server error creating procurement' });
     }
   });
 
-  fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
+  // GET list
+  fastify.get('/', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const {
-        search: rawSearch = '',
-        page: rawPage = '1',
-        limit: rawLimit = '10',
-      } = request.query as Record<string, string>;
-
-      const search = rawSearch;
-      const page = parseInt(rawPage, 10) || 1;
-      const limit = parseInt(rawLimit, 10) || 10;
+        page,
+        limit,
+        search,
+        farmerId,
+        crop,
+        lotNo: queryLotNo,
+        isBatched,
+      } = procurementQuerySchema.parse(request.query);
       const skip = (page - 1) * limit;
+      const where: Prisma.ProcurementWhereInput = {};
 
-      const where: Prisma.ProcurementWhereInput = search
-        ? {
-            OR: [
-              { batchCode: { contains: search, mode: 'insensitive' as Prisma.QueryMode } },
-              { crop: { contains: search, mode: 'insensitive' as Prisma.QueryMode } },
-              { procuredBy: { contains: search, mode: 'insensitive' as Prisma.QueryMode } },
-            ],
-          }
-        : {};
+      if (search) {
+        where.OR = [
+          { batchCode: { contains: search, mode: 'insensitive' } },
+          { crop: { contains: search, mode: 'insensitive' } },
+          { procuredBy: { contains: search, mode: 'insensitive' } },
+          { farmer: { name: { contains: search, mode: 'insensitive' } } },
+        ];
+      }
+      if (farmerId) where.farmerId = farmerId;
+      if (crop) where.crop = { contains: crop, mode: 'insensitive' };
+      if (queryLotNo) where.lotNo = queryLotNo;
+
+      if (typeof isBatched === 'boolean') {
+        where.processingBatchId = isBatched ? { not: null } : { equals: null };
+      }
 
       const [procurements, totalCount] = await Promise.all([
         prisma.procurement.findMany({
           where,
           include: {
-            farmer: {
-              select: {
-                name: true,
-                village: true,
-                panchayath: true,
-                mandal: true,
-              },
-            },
+            farmer: { select: { id: true, name: true, village: true, panchayath: true, mandal: true } },
+            processingBatch: { select: { id: true, batchCode: true } },
           },
           orderBy: { createdAt: 'desc' },
           skip,
@@ -94,41 +109,62 @@ async function procurementRoutes(fastify: FastifyInstance) {
 
       return {
         procurements,
-        pagination: {
-          page,
-          limit,
-          totalCount,
-          totalPages: Math.ceil(totalCount / limit),
-        },
+        pagination: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
       };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.issues) {
+        return reply.status(400).send({ error: 'Invalid query parameters', details: error.issues });
+      }
       console.error('Get procurements error:', error);
-      return reply.status(500).send({ error: 'Server error' });
+      return reply.status(500).send({ error: 'Server error fetching procurements' });
     }
   });
 
-  fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
+  // GET /api/procurements/unbatched
+  fastify.get('/unbatched', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { crop, lotNo } = request.query as { crop?: string; lotNo?: string };
+
+      if (!crop || !lotNo) {
+        return reply.status(400).send({ error: 'Crop and LotNo are required query parameters.' });
+      }
+      const parsedLotNo = parseInt(lotNo, 10);
+      if (isNaN(parsedLotNo)) {
+        return reply.status(400).send({ error: 'Invalid LotNo format.' });
+      }
+
+      const unbatchedProcurements = await prisma.procurement.findMany({
+        where: {
+          crop: { equals: crop, mode: 'insensitive' },
+          lotNo: parsedLotNo,
+          processingBatchId: null,
+        },
+        include: { farmer: { select: { name: true, village: true } } },
+        orderBy: { date: 'asc' },
+      });
+      return { procurements: unbatchedProcurements };
+    } catch (error) {
+      console.error('Error fetching unbatched procurements:', error);
+      return reply.status(500).send({ error: 'Failed to fetch unbatched procurements' });
+    }
+  });
+
+  // GET /:id
+  fastify.get('/:id', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
+      const procurementId = parseInt(id);
+      if (isNaN(procurementId)) return reply.status(400).send({ error: 'Invalid ID format.' });
 
       const procurement = await prisma.procurement.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: procurementId },
         include: {
-          farmer: {
-            select: {
-              name: true,
-              village: true,
-              panchayath: true,
-              mandal: true,
-            },
-          },
+          farmer: { select: { name: true, village: true, panchayath: true, mandal: true } },
+          processingBatch: { select: { id: true, batchCode: true } },
         },
       });
 
-      if (!procurement) {
-        return reply.status(404).send({ error: 'Procurement not found' });
-      }
-
+      if (!procurement) return reply.status(404).send({ error: 'Procurement not found' });
       return { procurement };
     } catch (error) {
       console.error('Get procurement error:', error);
@@ -136,63 +172,73 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.put('/:id', { preHandler: authenticate }, async (request, reply) => {
+  // PUT /:id
+  fastify.put('/:id', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    // const adminUser = (request as AuthenticatedRequest).user;
     try {
       const { id } = request.params as { id: string };
-      const data = createProcurementSchema.parse(request.body);
+      const procurementId = parseInt(id);
+      if (isNaN(procurementId)) return reply.status(400).send({ error: 'Invalid ID format.' });
 
-      const procurement = await prisma.procurement.findUnique({
-        where: { id: parseInt(id) },
-      });
+      const data = updateProcurementSchema.parse({ ...(request.body as object), id: procurementId });
 
-      if (!procurement) {
-        return reply.status(404).send({ error: 'Procurement not found' });
+      const existingProcurement = await prisma.procurement.findUnique({ where: { id: procurementId } });
+      if (!existingProcurement) return reply.status(404).send({ error: 'Procurement not found' });
+      if (existingProcurement.processingBatchId) {
+        return reply.status(400).send({ error: 'Cannot edit procurement already assigned to a processing batch.' });
       }
 
-      const combinedDateTime = new Date(`${data.date.toISOString().split('T')[0]}T${data.time}`);
+      let combinedDateTime;
+      const newDate = data.date ? data.date : existingProcurement.date;
+      const newTimeStr = data.time ? data.time : format(existingProcurement.time, 'HH:mm:ss');
+
+      combinedDateTime = new Date(`${format(newDate, 'yyyy-MM-dd')}T${newTimeStr}`);
+
       if (isNaN(combinedDateTime.getTime())) {
-        return reply.status(400).send({ error: 'Invalid date or time combination' });
+        return reply.status(400).send({ error: 'Invalid date or time combination resulted' });
       }
 
       const updatedProcurement = await prisma.procurement.update({
-        where: { id: parseInt(id) },
+        where: { id: procurementId },
         data: {
           farmerId: data.farmerId,
           crop: data.crop,
           procuredForm: data.procuredForm,
           speciality: data.speciality,
           quantity: data.quantity,
-          date: data.date,
+          date: data.date, // if undefined, prisma ignores it in update
           time: combinedDateTime,
           lotNo: data.lotNo,
           procuredBy: data.procuredBy,
           vehicleNo: data.vehicleNo,
         },
       });
-
+      // TODO: Invalidate relevant caches
       return { procurement: updatedProcurement };
-    } catch (error) {
+    } catch (error: any) {
+      if (error.issues) return reply.status(400).send({ error: 'Invalid request data', details: error.issues });
       console.error('Update procurement error:', error);
-      return reply.status(400).send({ error: 'Invalid request data' });
+      return reply.status(500).send({ error: 'Server error updating procurement' });
     }
   });
 
-  fastify.delete('/:id', { preHandler: authenticate }, async (request, reply) => {
+  // DELETE /:id
+  fastify.delete('/:id', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
+      const procurementId = parseInt(id);
+      if (isNaN(procurementId)) return reply.status(400).send({ error: 'Invalid ID format.' });
 
-      const procurement = await prisma.procurement.findUnique({
-        where: { id: parseInt(id) },
-      });
-
-      if (!procurement) {
-        return reply.status(404).send({ error: 'Procurement not found' });
+      const procurement = await prisma.procurement.findUnique({ where: { id: procurementId } });
+      if (!procurement) return reply.status(404).send({ error: 'Procurement not found' });
+      if (procurement.processingBatchId) {
+        return reply.status(400).send({
+          error: 'Cannot delete procurement already assigned to a processing batch. Remove from batch first.',
+        });
       }
 
-      await prisma.procurement.delete({
-        where: { id: parseInt(id) },
-      });
-
+      await prisma.procurement.delete({ where: { id: procurementId } });
+      // TODO: Invalidate relevant caches
       return { success: true };
     } catch (error) {
       console.error('Delete procurement error:', error);
@@ -200,22 +246,33 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.delete('/bulk', { preHandler: authenticate }, async (request, reply) => {
+  // DELETE /bulk
+  fastify.delete('/bulk', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { ids } = request.body as { ids: number[] };
-
+      const { ids } = request.body as { ids?: number[] };
       if (!Array.isArray(ids) || ids.length === 0) {
         return reply.status(400).send({ error: 'Invalid or empty list of IDs' });
       }
+      const validIds = ids.filter(id => typeof id === 'number' && !isNaN(id));
+      if (validIds.length !== ids.length) {
+        return reply.status(400).send({ error: 'All IDs must be numbers.' });
+      }
 
-      await prisma.procurement.deleteMany({
-        where: { id: { in: ids } },
+      const batchedProcurements = await prisma.procurement.count({
+        where: { id: { in: validIds }, processingBatchId: { not: null } },
       });
+      if (batchedProcurements > 0) {
+        return reply
+          .status(400)
+          .send({ error: 'One or more selected procurements are part of a batch and cannot be deleted.' });
+      }
 
-      return { success: true };
+      const { count } = await prisma.procurement.deleteMany({ where: { id: { in: validIds } } });
+      // TODO: Invalidate relevant caches
+      return { success: true, message: `${count} procurements deleted.` };
     } catch (error) {
       console.error('Bulk delete procurements error:', error);
-      return reply.status(500).send({ error: 'Server error' });
+      return reply.status(500).send({ error: 'Server error during bulk delete' });
     }
   });
 }

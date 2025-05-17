@@ -8,13 +8,14 @@ import userRoutes from './routes/users';
 import farmerRoutes from './routes/farmer';
 import fieldRoutes from './routes/fields';
 import procurementRoutes from './routes/procurement';
-import processingRoutes from './routes/processing';
-
+import processingBatchRoutes from './routes/processingBatch';
+import processingStageRoutes from './routes/processingStage';
+import salesRoutes from './routes/sales';
 import helloWorldRoutes from './routes/helloWorld';
+
 const fastify = Fastify({
   logger: {
     level: 'debug',
-
     transport: {
       target: 'pino-pretty',
       options: {
@@ -48,9 +49,12 @@ async function registerRoutes() {
   fastify.register(userRoutes, { prefix: '/api/users' });
   fastify.register(farmerRoutes, { prefix: '/api/farmers' });
   fastify.register(fieldRoutes, { prefix: '/api/fields' });
-  fastify.register(helloWorldRoutes, { prefix: '/api' });
   fastify.register(procurementRoutes, { prefix: '/api/procurements' });
-  fastify.register(processingRoutes, { prefix: '/api/processing' });
+  fastify.register(processingBatchRoutes, { prefix: '/api/processing-batches' });
+  fastify.register(processingStageRoutes, { prefix: '/api/processing-stages' });
+  fastify.register(salesRoutes, { prefix: '/api/sales' });
+
+  fastify.register(helloWorldRoutes, { prefix: '/api' });
 }
 
 async function start() {

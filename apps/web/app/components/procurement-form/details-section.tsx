@@ -10,13 +10,12 @@ import { Label } from '@workspace/ui/components/label';
 import { Button } from '@workspace/ui/components/button';
 import { Input } from '@workspace/ui/components/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Calendar } from '@workspace/ui/components/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover';
 import { CalendarIcon, Clock } from 'lucide-react';
 import { cn } from '@workspace/ui/lib/utils';
 
-// Define the schema for the details section
 const detailsSchema = z.object({
   date: z.date({
     required_error: 'Date is required',
@@ -39,7 +38,6 @@ type DetailsFormValues = z.infer<typeof detailsSchema>;
 export function DetailsSection() {
   const { form, setForm, initialData } = useProcurementFormStore();
 
-  // Initialize the form
   const methods = useForm<DetailsFormValues>({
     resolver: zodResolver(detailsSchema),
     defaultValues: {
@@ -55,6 +53,7 @@ export function DetailsSection() {
     register,
     control,
     formState: { errors },
+    setValue,
   } = methods;
 
   const watchedValues = useWatch({
@@ -64,10 +63,19 @@ export function DetailsSection() {
   useEffect(() => {
     if (form) {
       Object.keys(watchedValues).forEach(key => {
-        form.setValue(key as any, watchedValues[key as keyof DetailsFormValues]);
+        form.setValue(key as any, watchedValues[key as keyof DetailsFormValues], {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
       });
     }
   }, [form, watchedValues]);
+
+  useEffect(() => {
+    if (methods && !form) {
+      setForm(methods as any);
+    }
+  }, [methods, form, setForm]);
 
   return (
     <Card>
@@ -113,9 +121,15 @@ export function DetailsSection() {
                       type="time"
                       step="1"
                       className="flex-1"
-                      value={field.value.substring(0, 8)}
+                      value={field.value ? field.value.substring(0, 8) : '00:00:00'}
                       onChange={e => {
-                        const timeValue = e.target.value + ':00';
+                        let timeValue = e.target.value;
+                        if (timeValue.match(/^\d{2}:\d{2}$/)) {
+                          timeValue += ':00';
+                        } else if (timeValue.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                        } else {
+                          timeValue = '00:00:00';
+                        }
                         field.onChange(timeValue);
                       }}
                     />
