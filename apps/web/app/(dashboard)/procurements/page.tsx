@@ -24,7 +24,7 @@ export default async function ProcurementsPage({ searchParams }: PageProps) {
         <ProcurementsHeader />
 
         <div className="flex items-center justify-between gap-2">
-          <Search placeholder="Enter batch code, crop, farmer name" />
+          <Search placeholder="Enter Proc. No., crop, farmer name" />
         </div>
 
         <Suspense key={query + currentPage.toString()} fallback={<Loading />}>

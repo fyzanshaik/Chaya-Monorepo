@@ -2,13 +2,12 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '@chaya/shared';
 import { authenticate, verifyAdmin } from '../middlewares/auth';
 import { createProcurementSchema, updateProcurementSchema, procurementQuerySchema } from '@chaya/shared';
-import { generateBatchCode } from '../helper';
+import { generateProcurementNumber } from '../helper';
 import { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
 
 async function procurementRoutes(fastify: FastifyInstance) {
   fastify.post('/', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    // const authRequest = request as AuthenticatedRequest; // User ID not directly needed for creating procurement in this model
     try {
       const { farmerId, crop, procuredForm, speciality, quantity, date, time, lotNo, procuredBy, vehicleNo } =
         createProcurementSchema.parse(request.body);
@@ -18,19 +17,18 @@ async function procurementRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ error: 'Invalid date or time combination' });
       }
 
-      const batchCode = generateBatchCode(crop, date, lotNo); // This is the procurement's own batch code
+      const procurementNumber = generateProcurementNumber(crop, date, lotNo);
 
-      const existingBatch = await prisma.procurement.findUnique({
-        where: { batchCode },
+      const existingProcurement = await prisma.procurement.findUnique({
+        where: { procurementNumber },
       });
 
-      if (existingBatch) {
-        return reply
-          .status(400)
-          .send({ error: 'Procurement batch code already exists. Adjust lot or date if duplicate.' });
+      if (existingProcurement) {
+        return reply.status(400).send({
+          error: 'Procurement number already exists. This might indicate a duplicate entry or a hash collision (rare).',
+        });
       }
 
-      // Ensure farmer exists
       const farmerExists = await prisma.farmer.findUnique({ where: { id: farmerId } });
       if (!farmerExists) {
         return reply.status(404).send({ error: 'Farmer not found.' });
@@ -43,7 +41,7 @@ async function procurementRoutes(fastify: FastifyInstance) {
           procuredForm,
           speciality,
           quantity,
-          batchCode,
+          procurementNumber,
           date,
           time: combinedDateTime,
           lotNo,
@@ -62,7 +60,6 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // GET list
   fastify.get('/', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const {
@@ -79,7 +76,7 @@ async function procurementRoutes(fastify: FastifyInstance) {
 
       if (search) {
         where.OR = [
-          { batchCode: { contains: search, mode: 'insensitive' } },
+          { procurementNumber: { contains: search, mode: 'insensitive' } },
           { crop: { contains: search, mode: 'insensitive' } },
           { procuredBy: { contains: search, mode: 'insensitive' } },
           { farmer: { name: { contains: search, mode: 'insensitive' } } },
@@ -120,36 +117,47 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // GET /api/procurements/unbatched
   fastify.get('/unbatched', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { crop, lotNo } = request.query as { crop?: string; lotNo?: string };
+      const { crop, lotNo } = request.query as { crop?: string; lotNo?: string }; // Removed procuredForm as it's not used here
 
-      if (!crop || !lotNo) {
-        return reply.status(400).send({ error: 'Crop and LotNo are required query parameters.' });
+      const whereClause: Prisma.ProcurementWhereInput = {
+        processingBatchId: null,
+      };
+
+      if (crop) {
+        whereClause.crop = { equals: crop, mode: 'insensitive' };
       }
-      const parsedLotNo = parseInt(lotNo, 10);
-      if (isNaN(parsedLotNo)) {
-        return reply.status(400).send({ error: 'Invalid LotNo format.' });
+      if (lotNo) {
+        const parsedLotNo = parseInt(lotNo, 10);
+        if (!isNaN(parsedLotNo)) {
+          whereClause.lotNo = parsedLotNo;
+        }
       }
 
       const unbatchedProcurements = await prisma.procurement.findMany({
-        where: {
-          crop: { equals: crop, mode: 'insensitive' },
-          lotNo: parsedLotNo,
-          processingBatchId: null,
-        },
+        where: whereClause,
         include: { farmer: { select: { name: true, village: true } } },
-        orderBy: { date: 'asc' },
+        orderBy: [
+          { date: 'asc' },
+          { id: 'asc' },
+        ],
+        take: 500,
       });
       return { procurements: unbatchedProcurements };
     } catch (error) {
       console.error('Error fetching unbatched procurements:', error);
+      // Log the actual Prisma error if it's a Prisma error
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError ||
+        error instanceof Prisma.PrismaClientValidationError
+      ) {
+        console.error('Prisma Error Meta:', (error as any).meta);
+      }
       return reply.status(500).send({ error: 'Failed to fetch unbatched procurements' });
     }
   });
 
-  // GET /:id
   fastify.get('/:id', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -172,9 +180,7 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // PUT /:id
   fastify.put('/:id', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    // const adminUser = (request as AuthenticatedRequest).user;
     try {
       const { id } = request.params as { id: string };
       const procurementId = parseInt(id);
@@ -206,14 +212,13 @@ async function procurementRoutes(fastify: FastifyInstance) {
           procuredForm: data.procuredForm,
           speciality: data.speciality,
           quantity: data.quantity,
-          date: data.date, // if undefined, prisma ignores it in update
+          date: data.date,
           time: combinedDateTime,
           lotNo: data.lotNo,
           procuredBy: data.procuredBy,
           vehicleNo: data.vehicleNo,
         },
       });
-      // TODO: Invalidate relevant caches
       return { procurement: updatedProcurement };
     } catch (error: any) {
       if (error.issues) return reply.status(400).send({ error: 'Invalid request data', details: error.issues });
@@ -222,7 +227,6 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // DELETE /:id
   fastify.delete('/:id', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = request.params as { id: string };
@@ -238,7 +242,6 @@ async function procurementRoutes(fastify: FastifyInstance) {
       }
 
       await prisma.procurement.delete({ where: { id: procurementId } });
-      // TODO: Invalidate relevant caches
       return { success: true };
     } catch (error) {
       console.error('Delete procurement error:', error);
@@ -246,7 +249,6 @@ async function procurementRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // DELETE /bulk
   fastify.delete('/bulk', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const { ids } = request.body as { ids?: number[] };
@@ -268,7 +270,6 @@ async function procurementRoutes(fastify: FastifyInstance) {
       }
 
       const { count } = await prisma.procurement.deleteMany({ where: { id: { in: validIds } } });
-      // TODO: Invalidate relevant caches
       return { success: true, message: `${count} procurements deleted.` };
     } catch (error) {
       console.error('Bulk delete procurements error:', error);

@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `token=${token}`, // Forward the auth cookie
+        Cookie: `token=${token}`,
       },
       body: JSON.stringify(body),
     });
@@ -35,6 +35,9 @@ export async function POST(request: Request) {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error in Next.js POST /api/processing-batches route:', error);
+    if (error instanceof Response) {
+      return error;
+    }
     return new NextResponse(JSON.stringify({ error: 'Internal server error in Next.js API' }), { status: 500 });
   }
 }
@@ -49,7 +52,6 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    // query, page, limit, status are passed through
 
     const response = await fetch(`${BACKEND_URL}/api/processing-batches?${searchParams.toString()}`, {
       method: 'GET',
@@ -70,6 +72,9 @@ export async function GET(request: Request) {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error in Next.js GET /api/processing-batches route:', error);
+    if (error instanceof Response) {
+      return error;
+    }
     return new NextResponse(JSON.stringify({ error: 'Internal server error in Next.js API' }), { status: 500 });
   }
 }

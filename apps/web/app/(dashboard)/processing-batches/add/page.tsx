@@ -12,28 +12,36 @@ import { ReviewAndSubmitStep } from './components/review-submit-step';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import type { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form'; // Import types for error messages
 
 export default function AddProcessingBatchPage() {
   const router = useRouter();
   const {
     activeStep,
     goToNextStep,
-    goToPreviousStep,
-    selectedCrop,
-    selectedLotNo,
+    goToPreviousTab,
+    setInitialCriteria,
+    initialCrop, // Use initial for criteria step
+    initialLotNo, // Use initial for criteria step
     selectedProcurementIds,
     firstStageDetails,
     isSubmitting,
     setIsSubmitting,
     resetForm,
+    form: currentStepForm,
+    lockedCrop, // Use locked values for submission and later steps
+    lockedLotNo,
+    lockedProcuredForm,
   } = useProcessingBatchFormStore();
 
   useEffect(() => {
-    return () => {};
+    return () => {
+      // resetForm(); // Consider if this is desired on unmount
+    };
   }, [resetForm]);
 
   const steps = [
-    { id: 'selectCriteria', title: 'Select Crop & Lot', progress: 25 },
+    { id: 'selectCriteria', title: 'Select Criteria', progress: 25 },
     { id: 'selectProcurements', title: 'Select Procurements', progress: 50 },
     { id: 'firstStageDetails', title: 'First Stage Details (P1)', progress: 75 },
     { id: 'review', title: 'Review & Submit', progress: 100 },
@@ -41,24 +49,53 @@ export default function AddProcessingBatchPage() {
 
   const currentStepConfig = steps.find(s => s.id === activeStep);
 
+  const getFirstErrorMessage = (errors: Partial<Readonly<FieldErrorsImpl<any>>>): string | undefined => {
+    if (errors.crop && typeof errors.crop.message === 'string') return errors.crop.message;
+    if (errors.lotNo && typeof errors.lotNo.message === 'string') return errors.lotNo.message;
+    // Check for schema level refine error (which might not have a specific field path if path is ["_error"] or just one path is given in refine)
+    const refineErrorKey = Object.keys(errors).find(
+      key => errors[key] && typeof errors[key]?.message === 'string' && !errors[key]?.ref
+    );
+    if (refineErrorKey && errors[refineErrorKey] && typeof errors[refineErrorKey]?.message === 'string') {
+      return errors[refineErrorKey]?.message as string;
+    }
+    return undefined;
+  };
+
   const handleNext = async () => {
-    if (activeStep === 'selectCriteria' && (!selectedCrop || !selectedLotNo)) {
-      toast.error('Please select a crop and enter a lot number.');
-      return;
+    if (activeStep === 'selectCriteria') {
+      if (currentStepForm) {
+        const isValid = await currentStepForm.trigger();
+        if (!isValid) {
+          const firstError = getFirstErrorMessage(currentStepForm.formState.errors);
+          toast.error(firstError || 'Please provide valid criteria (at least Crop or Lot No).'); // Updated message
+          return;
+        }
+        const criteriaValues = currentStepForm.getValues();
+        // criteriaValues.crop and criteriaValues.lotNo can be null/undefined here
+        setInitialCriteria({
+          crop: criteriaValues.crop || null,
+          lotNo: typeof criteriaValues.lotNo === 'number' ? criteriaValues.lotNo : null,
+        });
+      } else {
+        // This case should ideally not be hit if setForm works correctly
+        setInitialCriteria({ crop: null, lotNo: null });
+      }
     }
     if (activeStep === 'selectProcurements' && selectedProcurementIds.length === 0) {
-      toast.error('Please select at least one procurement.');
+      toast.error('Please select at least one procurement to form the batch.');
       return;
     }
 
-    const form = useProcessingBatchFormStore.getState().form;
-    if (activeStep === 'firstStageDetails' && form) {
-      const isValid = await form.trigger();
+    if (activeStep === 'firstStageDetails' && currentStepForm) {
+      const isValid = await currentStepForm.trigger();
       if (!isValid) {
-        toast.error('Please fill in all required P1 details.');
+        toast.error(
+          getFirstErrorMessage(currentStepForm.formState.errors) || 'Please fill in all required P1 details.'
+        );
         return;
       }
-      useProcessingBatchFormStore.getState().setFirstStageDetails(form.getValues());
+      useProcessingBatchFormStore.getState().setFirstStageDetails(currentStepForm.getValues());
     }
     goToNextStep();
   };
@@ -74,7 +111,9 @@ export default function AddProcessingBatchPage() {
       } else if (typeof p1Date === 'string') {
         try {
           p1DateString = new Date(p1Date).toISOString();
-        } catch (e) {}
+        } catch (e) {
+          /* will be caught below */
+        }
       }
 
       if (!p1DateString) {
@@ -92,17 +131,17 @@ export default function AddProcessingBatchPage() {
         setIsSubmitting(false);
         return;
       }
-
-      const lotNumber = typeof selectedLotNo === 'string' ? parseInt(selectedLotNo, 10) : selectedLotNo;
-      if (lotNumber === null || isNaN(lotNumber) || lotNumber <= 0) {
-        toast.error('Lot number is invalid.');
+      if (!lockedCrop || typeof lockedLotNo !== 'number' || !lockedProcuredForm) {
+        toast.error(
+          'Batch criteria (Crop, Lot No, Procured Form) are not fully determined. Please select procurements.'
+        );
         setIsSubmitting(false);
         return;
       }
 
       const payload = {
-        crop: selectedCrop,
-        lotNo: lotNumber,
+        crop: lockedCrop,
+        lotNo: lockedLotNo, // Already ensured it's a number in previous step's logic if it came from form
         procurementIds: selectedProcurementIds,
         firstStageDetails: {
           processMethod: firstStageDetails.processMethod,
@@ -124,28 +163,34 @@ export default function AddProcessingBatchPage() {
       }
     } catch (error: any) {
       console.error('Error creating processing batch:', error);
-      toast.error(`Error: ${error.response?.data?.error || error.message || 'Something went wrong'}`);
+      const errorMsg =
+        error.response?.data?.details?.[0]?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Something went wrong';
+      toast.error(`Error: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handlePrevious = () => {
+    goToPreviousTab();
+  };
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Add New Processing Batch</h1>
-
       <Progress value={currentStepConfig?.progress || 0} className="w-full" />
       <p className="text-sm text-muted-foreground">Step: {currentStepConfig?.title}</p>
-
       <div className="mt-6">
         {activeStep === 'selectCriteria' && <SelectCriteriaStep />}
         {activeStep === 'selectProcurements' && <SelectProcurementsStep />}
         {activeStep === 'firstStageDetails' && <FirstStageDetailsStep />}
         {activeStep === 'review' && <ReviewAndSubmitStep />}
       </div>
-
       <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={goToPreviousStep} disabled={activeStep === 'selectCriteria' || isSubmitting}>
+        <Button variant="outline" onClick={handlePrevious} disabled={activeStep === 'selectCriteria' || isSubmitting}>
           Previous
         </Button>
         {activeStep !== 'review' ? (

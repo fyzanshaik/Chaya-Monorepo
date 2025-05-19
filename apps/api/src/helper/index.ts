@@ -1,4 +1,5 @@
 import { prisma } from '@chaya/shared';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function generateSurveyNumber(): Promise<string> {
   let isUnique = false;
@@ -13,19 +14,19 @@ export async function generateSurveyNumber(): Promise<string> {
     });
     if (!exists) isUnique = true;
   }
-
   return surveyNumber;
 }
 
-export function generateBatchCode(crop: string, date: Date, lotNo: number): string {
+export function generateProcurementNumber(crop: string, date: Date, lotNo: number): string {
   const cropCode = crop.slice(0, 3).toUpperCase();
   const dateCode = date.toISOString().split('T')[0].replace(/-/g, '');
   const lotCode = lotNo.toString();
 
-  const base = `${cropCode}${dateCode}${lotCode}`;
-  const batchCode = base.padEnd(11, '0');
+  const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+  const base = `${cropCode}${dateCode}${lotCode}${randomSuffix}`;
+  const procurementNum = base.padEnd(14, '0');
 
-  return batchCode;
+  return procurementNum;
 }
 
 export async function generateProcessingBatchCode(
@@ -42,7 +43,7 @@ export async function generateProcessingBatchCode(
   let processingBatchCode = '';
 
   while (!isUnique) {
-    uniqueSuffix = Math.random().toString(36).substring(2, 7).toUpperCase();
+    uniqueSuffix = uuidv4().substring(0, 8).toUpperCase();
     processingBatchCode = `PBC-${cropCode}-${lotStr}-${dateCode}-${uniqueSuffix}`;
 
     const exists = await prisma.processingBatch.findUnique({

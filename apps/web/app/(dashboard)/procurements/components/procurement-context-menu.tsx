@@ -48,7 +48,7 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
 
       if (result.success) {
         toast.success('Procurement deleted', {
-          description: `${procurement.batchCode} has been successfully deleted.`,
+          description: `Proc. No. ${procurement.procurementNumber} has been successfully deleted.`,
         });
 
         const dataChangedEvent = new CustomEvent('procurementDataChanged');
@@ -103,7 +103,7 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this procurement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the procurement record and all associated data.
+              {`This action cannot be undone. This will permanently delete procurement ${procurement.procurementNumber}.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

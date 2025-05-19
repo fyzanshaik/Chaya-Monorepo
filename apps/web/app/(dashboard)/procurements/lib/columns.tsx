@@ -5,7 +5,15 @@ import { Checkbox } from '@workspace/ui/components/checkbox';
 import type { ProcurementWithRelations } from './types';
 import { format } from 'date-fns';
 
-export const defaultVisibleColumns = ['select', 'batchCode', 'crop', 'farmerName', 'quantity', 'date', 'procuredBy'];
+export const defaultVisibleColumns = [
+  'select',
+  'procurementNumber',
+  'crop',
+  'farmerName',
+  'quantity',
+  'date',
+  'procuredBy',
+];
 
 export const columns: ColumnDef<ProcurementWithRelations>[] = [
   {
@@ -28,9 +36,9 @@ export const columns: ColumnDef<ProcurementWithRelations>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'batchCode',
-    header: 'Batch Code',
-    cell: ({ row }) => <div className="font-medium">{row.getValue('batchCode')}</div>,
+    accessorKey: 'procurementNumber',
+    header: 'Proc. Number',
+    cell: ({ row }) => <div className="font-medium">{row.getValue('procurementNumber')}</div>,
   },
   {
     accessorKey: 'crop',

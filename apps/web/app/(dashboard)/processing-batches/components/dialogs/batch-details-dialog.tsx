@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@workspace/ui/components/dialog';
-import type { ProcessingBatchWithDetails } from '../../lib/types';
+import type { ProcessingBatchWithDetails, ExtendedProcessingStageStatus } from '../../lib/types';
 import { useProcessingBatchCache } from '../../context/processing-batch-cache-context';
 import { Separator } from '@workspace/ui/components/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
@@ -28,9 +28,29 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
         .then(data => setBatch(data))
         .finally(() => setIsLoading(false));
     } else if (!open) {
-      setBatch(null); // Clear data when dialog closes
+      setBatch(null);
     }
   }, [open, batchId, getBatchDetails]);
+
+  const getStatusBadgeVariant = (
+    status: ExtendedProcessingStageStatus | undefined
+  ): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    if (!status) return 'outline';
+    switch (status) {
+      case 'IN_PROGRESS':
+        return 'secondary';
+      case 'FINISHED':
+        return 'default';
+      case 'CANCELLED':
+        return 'destructive';
+      case 'SOLD_OUT':
+        return 'default';
+      case 'NO_STAGES':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
 
   if (isLoading || !batch) {
     return (
@@ -45,18 +65,42 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
     );
   }
 
+  const displayedStatus = batch.latestStageSummary?.status || 'NO_STAGES';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Batch Details: {batch.batchCode}</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="flex items-center">
             Crop: {batch.crop} | Lot No: {batch.lotNo} | Created By: {batch.createdBy.name} on{' '}
             {format(new Date(batch.createdAt), 'PP')}
+            <span className="mx-2">|</span>
+            Status:
+            <Badge variant={getStatusBadgeVariant(displayedStatus)} className="ml-1">
+              {displayedStatus.toString().replace(/_/g, ' ')}
+            </Badge>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Key Figures</h3>
+            <Separator />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 text-sm p-2 border rounded-md">
+              <div>
+                <span className="font-medium">Initial Batch Qty:</span> {batch.initialBatchQuantity.toFixed(2)} kg
+              </div>
+              <div>
+                <span className="font-medium">Total Sold:</span> {batch.totalQuantitySoldFromBatch.toFixed(2)} kg
+              </div>
+              <div>
+                <span className="font-medium text-green-600">Net Remaining:</span>{' '}
+                <span className="font-bold">{batch.netAvailableQuantity.toFixed(2)} kg</span>
+              </div>
+            </div>
+          </div>
+
           <div>
             <h3 className="text-lg font-semibold mb-2">Procurements Included ({batch.procurements.length})</h3>
             <Separator />
@@ -64,7 +108,7 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Proc. Code</TableHead>
+                    <TableHead>Proc. No.</TableHead>
                     <TableHead>Farmer</TableHead>
                     <TableHead>Village</TableHead>
                     <TableHead>Qty (kg)</TableHead>
@@ -73,7 +117,7 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
                 <TableBody>
                   {batch.procurements.map(p => (
                     <TableRow key={p.id}>
-                      <TableCell>{p.batchCode}</TableCell>
+                      <TableCell>{p.procurementNumber}</TableCell>
                       <TableCell>{p.farmer.name}</TableCell>
                       <TableCell>{p.farmer.village || 'N/A'}</TableCell>
                       <TableCell className="text-right">{p.quantity.toFixed(2)}</TableCell>
@@ -82,9 +126,6 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
                 </TableBody>
               </Table>
             </ScrollArea>
-            <p className="text-sm font-medium mt-1">
-              Total Initial Quantity: {batch.initialBatchQuantity.toFixed(2)} kg
-            </p>
           </div>
 
           <div>
@@ -95,7 +136,9 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-semibold">
                     Stage P{stage.processingCount}{' '}
-                    <Badge variant={stage.status === 'FINISHED' ? 'default' : 'secondary'}>{stage.status}</Badge>
+                    <Badge variant={getStatusBadgeVariant(stage.status as ExtendedProcessingStageStatus)}>
+                      {stage.status.replace('_', ' ')}
+                    </Badge>
                   </h4>
                   <span className="text-xs text-muted-foreground">
                     Method: {stage.processMethod.toUpperCase()} | By: {stage.doneBy}
@@ -140,8 +183,14 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
                     </ScrollArea>
                   </div>
                 )}
+                {stage.dryingEntries.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">No drying entries for this stage.</p>
+                )}
               </div>
             ))}
+            {batch.processingStages.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-2">No processing stages recorded yet.</p>
+            )}
           </div>
 
           <div>
@@ -171,9 +220,6 @@ export function BatchDetailsDialog({ batchId, open, onOpenChange }: BatchDetails
             ) : (
               <p className="text-sm text-muted-foreground mt-2">No sales recorded for this batch yet.</p>
             )}
-            <p className="text-sm font-medium mt-1">
-              Total Sold from Batch: {batch.totalQuantitySoldFromBatch.toFixed(2)} kg
-            </p>
           </div>
         </div>
       </DialogContent>

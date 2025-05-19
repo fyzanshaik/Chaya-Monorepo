@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form'; // Added useWatch
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useProcurementFormStore } from '@/app/stores/procurement-form';
@@ -18,7 +18,7 @@ const basicInfoSchema = z.object({
     required_error: 'Farmer is required',
   }),
   crop: z.string().min(1, 'Crop is required'),
-  procuredForm: z.string().min(1, 'Procured form is required'),
+  procuredForm: z.string().min(1, 'Procured form is required'), // Validation still happens here
   speciality: z.string().min(1, 'Speciality is required'),
   quantity: z
     .number({
@@ -37,31 +37,54 @@ interface Farmer {
   mandal: string;
 }
 
+const CROP_OPTIONS = ['Turmeric', 'Coffee', 'Ginger', 'Pepper'] as const;
+type CropType = (typeof CROP_OPTIONS)[number];
+
+const PROCURED_FORMS_BY_CROP: Record<CropType, string[]> = {
+  Turmeric: ['Fresh Finger', 'Fresh Bulb', 'Dried Finger', 'Dried Bulb'],
+  Coffee: ['Fruit', 'Dry Cherry', 'Parchment'],
+  Ginger: ['Fresh', 'Dried'],
+  Pepper: ['Green Pepper', 'Black Pepper'],
+};
+
 export function BasicInfoSection() {
-  const { form, setForm, initialData } = useProcurementFormStore();
+  const { form, setForm, initialData } = useProcurementFormStore(); // form here refers to the Zustand store's form ref
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
 
   const methods = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
-      farmerId: initialData?.farmerId || 0,
+      farmerId: initialData?.farmerId || undefined, // Use undefined for Combobox placeholder
       crop: initialData?.crop || '',
       procuredForm: initialData?.procuredForm || '',
       speciality: initialData?.speciality || '',
-      quantity: initialData?.quantity || 0,
+      quantity: initialData?.quantity || undefined,
     },
   });
 
   const {
-    register,
     control,
     formState: { errors },
+    setValue, // To reset procuredForm when crop changes
   } = methods;
 
+  const watchedCrop = useWatch({ control: methods.control, name: 'crop' });
+
   useEffect(() => {
-    setForm(methods);
+    // This effect sets the react-hook-form instance into the Zustand store
+    // It's important this 'form' in Zustand is correctly typed and used by other parts
+    if (setForm && methods) {
+      // Check if setForm and methods are defined
+      setForm(methods as any); // Casting as any if types mismatch, ensure types align
+    }
   }, [methods, setForm]);
+
+  useEffect(() => {
+    if (watchedCrop) {
+      setValue('procuredForm', ''); // Reset procured form when crop changes
+    }
+  }, [watchedCrop, setValue]);
 
   useEffect(() => {
     const fetchFarmers = async () => {
@@ -69,6 +92,7 @@ export function BasicInfoSection() {
       try {
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
         const response = await axios.get(`${apiBaseUrl}/api/farmers`, {
+          params: { limit: 1000, isActive: true }, // Fetch more farmers, ensure they are active
           withCredentials: true,
         });
         setFarmers(response.data.farmers);
@@ -79,9 +103,10 @@ export function BasicInfoSection() {
         setIsLoadingFarmers(false);
       }
     };
-
     fetchFarmers();
   }, []);
+
+  const currentProcuredForms = watchedCrop ? PROCURED_FORMS_BY_CROP[watchedCrop as CropType] || [] : [];
 
   return (
     <Card>
@@ -100,7 +125,7 @@ export function BasicInfoSection() {
                       value: farmer.id.toString(),
                     }))}
                     value={field.value ? field.value.toString() : ''}
-                    onChange={val => field.onChange(parseInt(val))}
+                    onChange={val => field.onChange(val ? parseInt(val) : undefined)}
                     placeholder="Select a farmer"
                     isLoading={isLoadingFarmers}
                   />
@@ -120,11 +145,11 @@ export function BasicInfoSection() {
                       <SelectValue placeholder="Select crop" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Rice">Rice</SelectItem>
-                      <SelectItem value="Wheat">Wheat</SelectItem>
-                      <SelectItem value="Maize">Maize</SelectItem>
-                      <SelectItem value="Soybean">Soybean</SelectItem>
-                      <SelectItem value="Cotton">Cotton</SelectItem>
+                      {CROP_OPTIONS.map(cropName => (
+                        <SelectItem key={cropName} value={cropName}>
+                          {cropName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -138,14 +163,20 @@ export function BasicInfoSection() {
                 control={control}
                 name="procuredForm"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value} // Use value for controlled component
+                    disabled={!watchedCrop || currentProcuredForms.length === 0}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select form" />
+                      <SelectValue placeholder="Select form (after choosing crop)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Raw">Raw</SelectItem>
-                      <SelectItem value="Processed">Processed</SelectItem>
-                      <SelectItem value="Semi-processed">Semi-processed</SelectItem>
+                      {currentProcuredForms.map(formName => (
+                        <SelectItem key={formName} value={formName}>
+                          {formName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -186,7 +217,8 @@ export function BasicInfoSection() {
                     step="0.01"
                     min="0"
                     {...field}
-                    onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                    value={field.value === undefined ? '' : field.value} // Handle undefined for placeholder
+                    onChange={e => field.onChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                   />
                 )}
               />

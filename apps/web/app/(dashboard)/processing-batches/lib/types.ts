@@ -1,25 +1,32 @@
-import type { ProcessingBatch, Procurement, ProcessingStage, Drying, Sale, User } from '@chaya/shared';
+import type {
+  ProcessingBatch,
+  Procurement,
+  ProcessingStage,
+  Drying,
+  Sale,
+  User,
+  ProcessingStageStatus as PrismaProcessingStageStatus,
+} from '@chaya/shared';
 
-// For list view, summarizing the latest stage and overall availability
-export interface ProcessingBatchWithSummary extends ProcessingBatch {
+export type ExtendedProcessingStageStatus = PrismaProcessingStageStatus | 'SOLD_OUT' | 'NO_STAGES';
+
+export interface ProcessingBatchWithSummary
+  extends Omit<ProcessingBatch, 'processingStages' | 'procurements' | 'sales'> {
   latestStageSummary: {
     id: number;
     processingCount: number;
-    status: ProcessingStage['status'];
+    status: ExtendedProcessingStageStatus;
     processMethod: string;
     dateOfProcessing: Date;
     doneBy: string;
     initialQuantity: number;
-    quantityAfterProcess: number | null; // Yield of this specific stage
-    lastDryingQuantity: number | null; // if IN_PROGRESS and has drying data
+    quantityAfterProcess: number | null;
+    lastDryingQuantity: number | null;
   } | null;
   totalQuantitySoldFromBatch: number;
-  currentStageDisplayQuantity: number; // Qty this stage currently represents (e.g., from last drying or yield if finished)
-  netAvailableFromBatch: number; // currentStageDisplayQuantity - totalQuantitySoldFromBatch
-  procurements: Pick<Procurement, 'id' | 'batchCode' | 'quantity'>[]; // For basic listing if needed
+  netAvailableQuantity: number;
 }
 
-// For detailed view of a single batch
 export interface ProcessingStageWithDrying extends ProcessingStage {
   dryingEntries: Drying[];
 }
@@ -28,9 +35,21 @@ export interface SaleWithStageInfo extends Sale {
 }
 
 export interface ProcessingBatchWithDetails extends ProcessingBatch {
-  procurements: (Procurement & { farmer: Pick<User, 'name'> & { village?: string } })[]; // Assuming farmer name is needed for procurements list in detail
+  procurements: (Procurement & { farmer: Pick<User, 'name'> & { village?: string } })[];
   processingStages: ProcessingStageWithDrying[];
   sales: SaleWithStageInfo[];
   createdBy: Pick<User, 'id' | 'name'>;
   totalQuantitySoldFromBatch: number;
+  netAvailableQuantity: number;
+  latestStageSummary?: {
+    id: number;
+    processingCount: number;
+    status: ExtendedProcessingStageStatus;
+    processMethod: string;
+    dateOfProcessing: Date;
+    doneBy: string;
+    initialQuantity: number;
+    quantityAfterProcess: number | null;
+    lastDryingQuantity: number | null;
+  } | null;
 }

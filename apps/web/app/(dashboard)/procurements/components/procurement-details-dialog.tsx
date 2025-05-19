@@ -25,8 +25,8 @@ export function ProcurementDetailsDialog({ procurement, open, onOpenChange }: Pr
               <h3 className="text-lg font-semibold">Batch Information</h3>
               <Separator className="my-2" />
               <div className="grid grid-cols-2 gap-2">
-                <div className="text-sm font-medium">Batch Code:</div>
-                <div className="text-sm">{procurement.batchCode}</div>
+                <div className="text-sm font-medium">Procurement No.:</div>
+                <div className="text-sm">{procurement.procurementNumber}</div>
                 <div className="text-sm font-medium">Crop:</div>
                 <div className="text-sm">{procurement.crop}</div>
                 <div className="text-sm font-medium">Procured Form:</div>
@@ -51,7 +51,7 @@ export function ProcurementDetailsDialog({ procurement, open, onOpenChange }: Pr
                 <div className="text-sm font-medium">Procured By:</div>
                 <div className="text-sm">{procurement.procuredBy}</div>
                 <div className="text-sm font-medium">Vehicle Number:</div>
-                <div className="text-sm">{procurement.vehicleNo}</div>
+                <div className="text-sm">{procurement.vehicleNo || 'N/A'}</div>
               </div>
             </div>
           </div>
