@@ -11,28 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@workspace/ui/components/form';
 import { useEffect } from 'react';
 
-const CROP_OPTIONS = [
-  'Turmeric',
-  'Coffee',
-  'Ginger',
-  'Pepper',
-  'Wheat',
-  'Rice',
-  'Maize',
-  'Soybean',
-  'Cotton',
-  'Tea',
-  'Spices',
-] as const;
+const CROP_OPTIONS = ['Turmeric', 'Coffee', 'Ginger', 'Pepper'] as const;
 
 const criteriaSchema = z
   .object({
     crop: z.string().optional().nullable(),
-    lotNo: z.coerce.number().int().min(1, 'Lot number must be a positive integer').optional().nullable(),
+    lotNo: z.coerce
+      .number()
+      .int()
+      .min(1, 'Lot number must be a positive integer')
+      .max(3, 'Only 1, 2, 3 Lot Numbers are available')
+      .optional()
+      .nullable(),
   })
   .refine(data => !!data.crop || (typeof data.lotNo === 'number' && !isNaN(data.lotNo)), {
     message: 'Either Crop or Lot Number (or both) must be provided.',
-    path: ['crop'], // Error will be attached to 'crop' field if this refine fails
+    path: ['crop'],
   });
 
 type CriteriaFormValues = z.infer<typeof criteriaSchema>;
@@ -123,7 +117,7 @@ export function SelectCriteriaStep() {
                       value={field.value === null || field.value === undefined ? '' : String(field.value)}
                       onChange={e => {
                         const val = e.target.value;
-                        field.onChange(val === '' ? null : isNaN(parseInt(val, 10)) ? null : parseInt(val, 10));
+                        field.onChange(val === '' ? null : isNaN(parseInt(val, 4)) ? null : parseInt(val, 4));
                       }}
                     />
                   </FormControl>

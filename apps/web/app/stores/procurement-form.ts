@@ -20,7 +20,7 @@ const detailsSchemaForStore = z.object({
     .number({ required_error: 'Lot number is required', invalid_type_error: 'Lot number must be a number' })
     .int()
     .min(1)
-    .max(999, 'Lot number too high'),
+    .max(3, 'Only 1, 2, 3 Lot Numbers are allowed'),
   procuredBy: z.string().min(1, 'Procured by is required'),
   vehicleNo: z.string().min(1, 'Vehicle number is required').optional(),
 });

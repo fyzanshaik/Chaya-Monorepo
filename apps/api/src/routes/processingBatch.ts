@@ -220,6 +220,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
 
   fastify.get('/:batchId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { batchId } = request.params as { batchId: string };
+    console.log(batchId);
     const id = parseInt(batchId);
     if (isNaN(id)) return reply.status(400).send({ error: 'Invalid Batch ID' });
 
