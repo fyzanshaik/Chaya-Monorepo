@@ -9,10 +9,10 @@ export const defaultVisibleBatchColumns = [
   'batchCode',
   'crop',
   'lotNo',
-  'latestStageStatus',
+  'latestStageStatus', // Changed from latestStage.status to this
   'latestStageCount',
   'netAvailableQuantity',
-  'totalQuantitySoldFromBatch',
+  // 'totalQuantitySoldFromBatch', // Often this is less relevant in summary than net from stage
   'createdAt',
 ];
 
@@ -39,13 +39,13 @@ export const batchColumns: ColumnDef<ProcessingBatchWithSummary>[] = [
       row.original.latestStageSummary ? `P${row.original.latestStageSummary.processingCount}` : 'N/A',
   },
   {
-    accessorKey: 'latestStageStatus',
+    accessorKey: 'latestStageStatus', // This now comes directly from summary
     header: 'Current Status',
     cell: ({ row }) => {
       const status: ExtendedProcessingStageStatus | undefined = row.original.latestStageSummary?.status;
       if (!status) return <Badge variant="outline">No Stages</Badge>;
 
-      let displayStatus = status.toString().replace('_', ' ');
+      let displayStatus = status.toString().replace(/_/g, ' ');
       let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
 
       switch (status) {
@@ -54,35 +54,33 @@ export const batchColumns: ColumnDef<ProcessingBatchWithSummary>[] = [
           displayStatus = 'In Progress';
           break;
         case 'FINISHED':
-          variant = 'default';
+          variant = 'default'; // Assuming green/blue for default is "good"
+          break;
+        case 'SOLD_OUT':
+          variant = 'default'; // Visually similar to finished, or choose another like outline with specific text
+          displayStatus = 'Sold Out';
           break;
         case 'CANCELLED':
           variant = 'destructive';
           break;
-        case 'SOLD_OUT':
-          variant = 'default';
-          displayStatus = 'Sold Out';
-          break;
-        case 'NO_STAGES':
-          variant = 'outline';
-          displayStatus = 'No Stages';
-          break;
+        case 'NO_STAGES': // Should be covered by !status check already
         default:
           variant = 'outline';
+          break;
       }
       return <Badge variant={variant}>{displayStatus}</Badge>;
     },
   },
   {
-    accessorKey: 'netAvailableQuantity',
-    header: 'Remaining Qty (kg)',
+    accessorKey: 'netAvailableQuantity', // This is now "Net Available from Latest Stage"
+    header: 'Avail. from Stage (kg)', // Renamed header for clarity
     cell: ({ row }) => <div className="text-right">{row.original.netAvailableQuantity.toFixed(2)}</div>,
   },
-  {
-    accessorKey: 'totalQuantitySoldFromBatch',
-    header: 'Total Sold (kg)',
-    cell: ({ row }) => <div className="text-right">{row.original.totalQuantitySoldFromBatch.toFixed(2)}</div>,
-  },
+  // { // This can be added back if needed, but might clutter the summary view
+  //   accessorKey: 'totalQuantitySoldFromBatch',
+  //   header: 'Total Batch Sold (kg)',
+  //   cell: ({ row }) => <div className="text-right">{row.original.totalQuantitySoldFromBatch.toFixed(2)}</div>,
+  // },
   {
     accessorKey: 'initialBatchQuantity',
     header: 'Initial Batch (kg)',

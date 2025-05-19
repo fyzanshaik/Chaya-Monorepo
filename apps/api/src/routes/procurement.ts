@@ -138,10 +138,7 @@ async function procurementRoutes(fastify: FastifyInstance) {
       const unbatchedProcurements = await prisma.procurement.findMany({
         where: whereClause,
         include: { farmer: { select: { name: true, village: true } } },
-        orderBy: [
-          { date: 'asc' },
-          { id: 'asc' },
-        ],
+        orderBy: [{ date: 'asc' }, { id: 'asc' }],
         take: 500,
       });
       return { procurements: unbatchedProcurements };

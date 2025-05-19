@@ -10,8 +10,8 @@ import {
   SortingState,
   getSortedRowModel,
 } from '@tanstack/react-table';
-import { batchColumns } from '../lib/columns-batch';
-import type { ProcessingBatchWithSummary, ProcessingStageWithDrying } from '../lib/types';
+import { batchColumns, defaultVisibleBatchColumns } from '../lib/columns-batch'; // Ensure defaultVisibleBatchColumns is imported
+import type { ProcessingBatchWithSummary } from '../lib/types'; // Removed ProcessingStageWithDrying as it's not directly used here
 import { useProcessingBatchCache } from '../context/processing-batch-cache-context';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
@@ -20,7 +20,7 @@ import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { toast } from 'sonner';
 import { RefreshCw, Eye, Wind, CheckSquare, ShoppingCart, Layers, Trash2, ArrowUpDown } from 'lucide-react';
 import { useAuth } from '@/app/providers/auth-provider';
-import { ColumnFilter } from '@/app/(dashboard)/procurements/components/column-filter'; // Reusable
+import { ColumnFilter } from './column-filter'; // Adjusted path potentially from proc. to here
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import axios from 'axios'; // For delete operations if not using server actions
+import axios from 'axios';
 
 // Import Dialogs
 import { BatchDetailsDialog } from './dialogs/batch-details-dialog';
@@ -54,9 +54,16 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
   const [records, setRecords] = useState<ProcessingBatchWithSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'createdAt', desc: true }]); // Default sort
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'createdAt', desc: true }]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState({});
+
+  const [columnVisibility, setColumnVisibility] = useState(() => {
+    const initialVisibility: Record<string, boolean> = {};
+    defaultVisibleBatchColumns.forEach(colId => {
+      initialVisibility[colId] = true;
+    });
+    return initialVisibility;
+  });
 
   const [selectedBatchForAction, setSelectedBatchForAction] = useState<ProcessingBatchWithSummary | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
@@ -89,8 +96,9 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
       const freshData = await refreshCurrentPageSummary(currentPage, query, statusFilter);
       setRecords(freshData);
       toast.success('Data refreshed successfully');
-      // Clear specific detail cache if a modified batch was in it
-      if (selectedBatchForAction) clearBatchDetailCache(selectedBatchForAction.id);
+      if (selectedBatchForAction) {
+        clearBatchDetailCache(selectedBatchForAction.id); // Invalidate detail cache if an action modified it
+      }
     } catch (error) {
       toast.error('Failed to refresh data.');
     } finally {
@@ -126,7 +134,7 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    manualPagination: true, // Since pagination is handled by URL params & cache context
+    manualPagination: true,
   });
 
   const openDialog = (
@@ -144,7 +152,7 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
       await axios.delete(`/api/processing-batches/${selectedBatchForAction.id}`, { withCredentials: true });
       toast.success(`Batch ${selectedBatchForAction.batchCode} deleted.`);
       setShowDeleteBatchDialog(false);
-      handleRefresh(); // Refresh list
+      handleRefresh();
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to delete batch.');
     } finally {
@@ -152,21 +160,8 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
     }
   };
 
-  // Calculate available for sale from the specific stage's yield (quantityAfterProcess)
-  // This needs the full batch details to accurately determine prior sales *from that specific stage*.
-  // For simplicity in table actions, we pass what the LATEST stage could offer.
-  // A more precise calculation needs the detail dialog logic.
-  const getAvailableForSaleFromLatestFinishedStage = (batch: ProcessingBatchWithSummary): number => {
-    if (batch.latestStageSummary?.status === 'FINISHED') {
-      // This is a simplification. Backend sales check is more robust.
-      // This `quantityAfterProcess` is the *yield of that stage*. Sales reduce the overall batch quantity.
-      return batch.latestStageSummary.quantityAfterProcess || 0;
-    }
-    return 0;
-  };
-
   if (loading && records.length === 0) {
-    return <div className="p-4 text-center">Loading processing batches...</div>; // Simplified loading state
+    return <div className="p-4 text-center">Loading processing batches...</div>;
   }
 
   return (
@@ -179,8 +174,6 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
         <ColumnFilter table={table} />
       </div>
       <ScrollArea className="rounded-md border h-[calc(100vh-350px)] w-full">
-        {' '}
-        {/* Adjust height as needed */}
         <Table>
           <TableHeader className="sticky top-0 bg-secondary z-10">
             {table.getHeaderGroups().map(headerGroup => (
@@ -198,87 +191,90 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
                     )}
                   </TableHead>
                 ))}
-                <TableHead className="sticky right-0 bg-secondary z-10">Actions</TableHead>
+                <TableHead className="sticky right-0 bg-secondary z-10 text-center">Actions</TableHead>
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                  {row.getVisibleCells().map(cell => (
-                    <TableCell key={cell.id} className="whitespace-nowrap">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                  <TableCell className="sticky right-0 bg-background z-0 flex items-center gap-1 py-1.5">
-                    {' '}
-                    {/* bg-background for row scroll */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDialog(setShowDetailsDialog, row.original)}
-                      title="View Details"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {row.original.latestStageSummary?.status === 'IN_PROGRESS' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openDialog(setShowAddDryingDialog, row.original)}
-                          title="Add Drying Data"
-                        >
-                          <Wind className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openDialog(setShowFinalizeStageDialog, row.original)}
-                          title="Finalize Stage"
-                        >
-                          <CheckSquare className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                    {row.original.latestStageSummary?.status === 'FINISHED' && (
-                      <>
-                        {(row.original.latestStageSummary.quantityAfterProcess || 0) >
-                          0 /* Can only start next stage if there is yield */ && (
+              table.getRowModel().rows.map(row => {
+                const batchSummary = row.original;
+                const latestStage = batchSummary.latestStageSummary;
+                const canPerformStageActions =
+                  latestStage && latestStage.status !== 'SOLD_OUT' && latestStage.status !== 'CANCELLED';
+
+                return (
+                  <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                    {row.getVisibleCells().map(cell => (
+                      <TableCell key={cell.id} className="whitespace-nowrap">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                    <TableCell className="sticky right-0 bg-background z-0 flex items-center justify-center gap-1 py-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDialog(setShowDetailsDialog, batchSummary)}
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      {canPerformStageActions && latestStage.status === 'IN_PROGRESS' && (
+                        <>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openDialog(setShowStartNextStageDialog, row.original)}
+                            onClick={() => openDialog(setShowAddDryingDialog, batchSummary)}
+                            title="Add Drying Data"
+                          >
+                            <Wind className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDialog(setShowFinalizeStageDialog, batchSummary)}
+                            title="Finalize Stage"
+                          >
+                            <CheckSquare className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {canPerformStageActions && latestStage.status === 'FINISHED' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDialog(setShowStartNextStageDialog, batchSummary)}
                             title="Start Next Stage"
+                            disabled={batchSummary.netAvailableQuantity <= 0} // Net available from THIS stage
                           >
                             <Layers className="h-4 w-4" />
                           </Button>
-                        )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openDialog(setShowRecordSaleDialog, batchSummary)}
+                            title="Record Sale"
+                            disabled={batchSummary.netAvailableQuantity <= 0} // Net available from THIS stage
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      {isAdmin && (
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
-                          onClick={() => openDialog(setShowRecordSaleDialog, row.original)}
-                          title="Record Sale"
-                          disabled={getAvailableForSaleFromLatestFinishedStage(row.original) <= 0}
+                          onClick={() => openDialog(setShowDeleteBatchDialog, batchSummary)}
+                          title="Delete Batch"
                         >
-                          <ShoppingCart className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
-                      </>
-                    )}
-                    {isAdmin && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => openDialog(setShowDeleteBatchDialog, row.original)}
-                        title="Delete Batch"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={batchColumns.length + 1} className="h-24 text-center">
@@ -290,7 +286,6 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
         </Table>
       </ScrollArea>
 
-      {/* Dialogs */}
       {selectedBatchForAction && (
         <>
           <BatchDetailsDialog
@@ -328,7 +323,7 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
                 batchCode={selectedBatchForAction.batchCode}
                 previousStageId={selectedBatchForAction.latestStageSummary.id}
                 previousProcessingCount={selectedBatchForAction.latestStageSummary.processingCount}
-                previousStageYield={selectedBatchForAction.latestStageSummary.quantityAfterProcess || 0}
+                previousStageYield={selectedBatchForAction.netAvailableQuantity} // Use the net from summary for this stage
                 open={showStartNextStageDialog}
                 onOpenChange={setShowStartNextStageDialog}
                 onSuccess={handleRefresh}
@@ -339,9 +334,15 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
             selectedBatchForAction.latestStageSummary.status === 'FINISHED' && (
               <RecordSaleDialog
                 processingBatchId={selectedBatchForAction.id}
-                processingStage={selectedBatchForAction.latestStageSummary as any} // Casting needed if types don't fully align for dialog props
+                // Pass the stage details accurately; netAvailableQuantity from summary is stage-specific here
+                processingStage={{
+                  id: selectedBatchForAction.latestStageSummary.id,
+                  processingCount: selectedBatchForAction.latestStageSummary.processingCount,
+                  quantityAfterProcess: selectedBatchForAction.latestStageSummary.quantityAfterProcess,
+                  status: selectedBatchForAction.latestStageSummary.status,
+                }}
                 batchCode={selectedBatchForAction.batchCode}
-                availableForSaleFromStage={getAvailableForSaleFromLatestFinishedStage(selectedBatchForAction)}
+                availableForSaleFromStage={selectedBatchForAction.netAvailableQuantity} // This is net available FROM THIS STAGE
                 open={showRecordSaleDialog}
                 onOpenChange={setShowRecordSaleDialog}
                 onSuccess={handleRefresh}

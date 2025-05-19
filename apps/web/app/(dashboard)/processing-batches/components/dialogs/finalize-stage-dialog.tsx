@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { type FinalizeProcessingStageInput as BackendFinalizeProcessingStageInputType } from '@chaya/shared';
+import {
+  type FinalizeProcessingStageInput as BackendFinalizeProcessingStageInputType,
+  type Drying,
+} from '@chaya/shared';
 
 import {
   Dialog,
@@ -60,6 +63,7 @@ export function FinalizeStageDialog({
   onSuccess,
 }: FinalizeStageDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingDrying, setIsLoadingDrying] = useState(false);
 
   const form = useForm<FinalizeStageFormValues>({
     resolver: zodResolver(finalizeStageFormSchema),
@@ -70,13 +74,35 @@ export function FinalizeStageDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      form.reset({
-        dateOfCompletion: new Date(),
-        quantityAfterProcess: undefined,
-      });
+    if (open && processingStageId) {
+      setIsLoadingDrying(true);
+      axios
+        .get<{ dryingEntries: Drying[] }>(`/api/processing-stages/${processingStageId}/drying`, {
+          withCredentials: true,
+        })
+        .then(response => {
+          const dryingEntries = response.data.dryingEntries;
+          const latestDryingEntry = dryingEntries?.sort((a, b) => b.day - a.day)[0];
+          const autoFillQuantity = latestDryingEntry?.currentQuantity ?? currentInitialQuantity;
+
+          form.reset({
+            dateOfCompletion: new Date(),
+            quantityAfterProcess: parseFloat(autoFillQuantity.toFixed(2)) || undefined,
+          });
+        })
+        .catch(err => {
+          toast.error('Could not load latest drying quantity for autofill.');
+          console.error('Error fetching drying entries for autofill:', err);
+          form.reset({
+            dateOfCompletion: new Date(),
+            quantityAfterProcess: parseFloat(currentInitialQuantity.toFixed(2)) || undefined,
+          });
+        })
+        .finally(() => {
+          setIsLoadingDrying(false);
+        });
     }
-  }, [open, form]);
+  }, [open, processingStageId, form, currentInitialQuantity]);
 
   const onSubmit = async (data: FinalizeStageFormValues) => {
     setIsSubmitting(true);
@@ -105,8 +131,8 @@ export function FinalizeStageDialog({
             Finalize Stage P{processingCount} for Batch {batchCode}
           </DialogTitle>
           <DialogDescription>
-            Enter the completion details for this processing stage. Initial quantity for this stage was{' '}
-            {currentInitialQuantity.toFixed(2)}kg.
+            Enter the completion details. Initial quantity for this stage was {currentInitialQuantity.toFixed(2)}kg.
+            {isLoadingDrying && ' Fetching latest drying quantity...'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -144,17 +170,28 @@ export function FinalizeStageDialog({
                 <FormItem>
                   <FormLabel>Quantity After Process (kg)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Enter final yield for this stage" {...field} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter final yield for this stage"
+                      {...field}
+                      disabled={isLoadingDrying}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting || isLoadingDrying}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isLoadingDrying}>
                 {isSubmitting ? 'Finalizing...' : 'Finalize Stage'}
               </Button>
             </DialogFooter>

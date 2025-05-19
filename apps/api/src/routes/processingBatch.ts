@@ -2,12 +2,11 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { prisma, Prisma, ProcessingStageStatus as PrismaProcessingStageStatus } from '@chaya/shared';
 import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
 import { createProcessingBatchSchema, processingBatchQuerySchema } from '@chaya/shared';
-import { generateProcessingBatchCode } from '../helper'; // Ensure this uses the global prisma, not 'tx'
+import { generateProcessingBatchCode } from '../helper';
 import Redis from 'ioredis';
 
 const redis = new Redis();
 
-// ... (invalidateProcessingCache and ExtendedProcessingStageStatus type) ...
 async function invalidateProcessingCache(batchId?: number | string) {
   const keysToDelete: string[] = [];
   const listKeys = await redis.keys('processing-batches:list:*');
@@ -49,8 +48,6 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         return reply.status(400).send({ error: 'Total quantity for the batch must be positive.' });
       }
 
-      // 1. Generate the batch code *before* starting the transaction.
-      // The dateOfProcessing from firstStageDetails is a string, convert to Date for the helper.
       const dateForBatchCode = new Date(firstStageDetails.dateOfProcessing);
       if (isNaN(dateForBatchCode.getTime())) {
         return reply.status(400).send({ error: 'Invalid dateOfProcessing for batch code generation.' });
@@ -61,7 +58,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         async tx => {
           const newBatch = await tx.processingBatch.create({
             data: {
-              batchCode: uniqueProcessingBatchCode, // Use the pre-generated code
+              batchCode: uniqueProcessingBatchCode,
               crop,
               lotNo,
               initialBatchQuantity,
@@ -70,10 +67,8 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
             },
           });
 
-          // firstStageDetails.dateOfProcessing is a string from Zod, convert to Date for Prisma
           const p1DateOfProcessing = new Date(firstStageDetails.dateOfProcessing);
           if (isNaN(p1DateOfProcessing.getTime())) {
-            // This should ideally be caught by Zod schema validation if it's strict on format
             throw new Error('Invalid dateOfProcessing for P1 stage.');
           }
 
@@ -90,20 +85,19 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
             },
           });
 
-          // Reload the batch with its first stage for the response, using the transaction client 'tx'
           return tx.processingBatch.findUnique({
             where: { id: newBatch.id },
             include: { processingStages: { orderBy: { processingCount: 'asc' }, take: 1 } },
           });
         },
         {
-          maxWait: 10000, // Optional: Increase maxWait if needed (milliseconds)
-          timeout: 10000, // Optional: Increase timeout if needed (milliseconds)
+          maxWait: 10000,
+          timeout: 10000,
         }
-      ); // End of transaction
+      );
 
       await invalidateProcessingCache();
-      return reply.status(201).send({ batch: result }); // Send the result of the transaction
+      return reply.status(201).send({ batch: result });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2028') {
         console.error('Transaction timeout error:', error);
@@ -115,11 +109,9 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // ... (GET list and GET by ID routes remain the same as previously corrected) ...
   fastify.get('/', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const query = processingBatchQuerySchema.parse(request.query);
     const cacheKey = `processing-batches:list:${JSON.stringify(query)}`;
-
     try {
       const cached = await redis.get(cacheKey);
       if (cached) return JSON.parse(cached);
@@ -128,7 +120,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
       const limit = query.limit || 10;
       const skip = (page - 1) * limit;
 
-      const where: Prisma.ProcessingBatchWhereInput = {};
+      let where: Prisma.ProcessingBatchWhereInput = {};
       if (query.search) {
         where.OR = [
           { batchCode: { contains: query.search, mode: 'insensitive' } },
@@ -136,111 +128,88 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         ];
       }
 
-      const queryStatus = query.status as ExtendedProcessingStageStatus | undefined;
-      const applySoldOutFilterLogic = queryStatus === 'SOLD_OUT';
-
-      if (
-        queryStatus &&
-        !applySoldOutFilterLogic &&
-        Object.values(PrismaProcessingStageStatus).includes(queryStatus as PrismaProcessingStageStatus)
-      ) {
-        const batchesWithLatestStageStatus = await prisma.processingBatch.findMany({
-          where,
-          select: {
-            id: true,
-            processingStages: {
-              orderBy: { processingCount: 'desc' },
-              take: 1,
-              select: { status: true },
-            },
-          },
-        });
-        const batchIdsFilteredByStatus = batchesWithLatestStageStatus
-          .filter(b => b.processingStages.length > 0 && b.processingStages[0].status === queryStatus)
-          .map(b => b.id);
-
-        if (batchIdsFilteredByStatus.length === 0) {
-          return { processingBatches: [], pagination: { page, limit, totalCount: 0, totalPages: 0 } };
-        }
-        if (where.id && typeof where.id === 'object' && !Array.isArray(where.id)) {
-          (where.id as Prisma.IntFilter).in = batchIdsFilteredByStatus;
-        } else {
-          where.id = { in: batchIdsFilteredByStatus };
-        }
-      }
-
-      const allCandidateBatches = await prisma.processingBatch.findMany({
-        where,
+      // Fetch all candidate batches based on simple filters first
+      const allCandidateBatchesFromDb = await prisma.processingBatch.findMany({
+        where, // Apply initial where like search
         include: {
-          procurements: { select: { id: true, procurementNumber: true, quantity: true } },
           processingStages: {
             orderBy: { processingCount: 'desc' },
-            take: 1,
-            include: { dryingEntries: { orderBy: { day: 'desc' }, take: 1 } },
+            include: {
+              dryingEntries: { orderBy: { day: 'desc' }, take: 1 },
+              sales: { select: { quantitySold: true } }, // Eager load sales for each stage
+            },
           },
-          sales: { select: { quantitySold: true } },
+          sales: { select: { quantitySold: true } }, // Overall sales for the batch
         },
         orderBy: { createdAt: 'desc' },
+        // No skip/take here yet, apply after status filtering
       });
 
-      const transformedAndPossiblyFilteredBatches = allCandidateBatches
-        .map(batch => {
-          const latestStage = batch.processingStages[0];
-          let currentPotentialOutput: number = batch.initialBatchQuantity;
-          let stageStatusForSummary: ExtendedProcessingStageStatus = 'NO_STAGES';
+      const transformedBatches = allCandidateBatchesFromDb.map(batch => {
+        const latestStage = batch.processingStages[0]; // Already sorted desc
+        let netAvailableFromLatestStage: number = 0;
+        let statusForLatestStage: ExtendedProcessingStageStatus = 'NO_STAGES';
 
-          if (latestStage) {
-            stageStatusForSummary = latestStage.status;
-            if (latestStage.status === 'IN_PROGRESS') {
-              currentPotentialOutput = latestStage.dryingEntries[0]?.currentQuantity ?? latestStage.initialQuantity;
-            } else if (latestStage.status === 'FINISHED') {
-              currentPotentialOutput = latestStage.quantityAfterProcess ?? 0;
-            } else if (latestStage.status === 'CANCELLED') {
-              currentPotentialOutput = 0;
+        if (latestStage) {
+          statusForLatestStage = latestStage.status; // Initial status
+
+          if (latestStage.status === PrismaProcessingStageStatus.IN_PROGRESS) {
+            netAvailableFromLatestStage = latestStage.dryingEntries[0]?.currentQuantity ?? latestStage.initialQuantity;
+          } else if (latestStage.status === PrismaProcessingStageStatus.FINISHED) {
+            const soldFromThisStage = latestStage.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
+            netAvailableFromLatestStage = (latestStage.quantityAfterProcess ?? 0) - soldFromThisStage;
+            if (netAvailableFromLatestStage <= 0) {
+              statusForLatestStage = 'SOLD_OUT';
             }
+          } else if (latestStage.status === PrismaProcessingStageStatus.CANCELLED) {
+            netAvailableFromLatestStage = 0;
           }
+        } else {
+          // If NO_STAGES, technically nothing processed is available from a stage.
+          // initialBatchQuantity is raw.
+          netAvailableFromLatestStage = 0;
+        }
 
-          const totalQuantitySoldFromBatch = batch.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
-          const netAvailableQuantity = Math.max(0, currentPotentialOutput - totalQuantitySoldFromBatch);
+        const totalQuantitySoldFromBatchOverall = batch.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
 
-          if (stageStatusForSummary === 'FINISHED' && netAvailableQuantity <= 0) {
-            stageStatusForSummary = 'SOLD_OUT';
-          }
+        return {
+          id: batch.id,
+          batchCode: batch.batchCode,
+          crop: batch.crop,
+          lotNo: batch.lotNo,
+          initialBatchQuantity: batch.initialBatchQuantity,
+          createdAt: batch.createdAt,
+          latestStageSummary: latestStage
+            ? {
+                id: latestStage.id,
+                processingCount: latestStage.processingCount,
+                status: statusForLatestStage, // Use the derived status
+                processMethod: latestStage.processMethod,
+                dateOfProcessing: latestStage.dateOfProcessing,
+                doneBy: latestStage.doneBy,
+                initialQuantity: latestStage.initialQuantity,
+                quantityAfterProcess: latestStage.quantityAfterProcess, // This is the stage's yield
+                lastDryingQuantity: latestStage.dryingEntries[0]?.currentQuantity ?? null,
+              }
+            : null,
+          totalQuantitySoldFromBatch: totalQuantitySoldFromBatchOverall,
+          netAvailableQuantity: netAvailableFromLatestStage, // This is key: net from the LATEST stage
+        };
+      });
 
-          return {
-            ...batch,
-            latestStageSummary: latestStage
-              ? {
-                  id: latestStage.id,
-                  processingCount: latestStage.processingCount,
-                  status: stageStatusForSummary,
-                  processMethod: latestStage.processMethod,
-                  dateOfProcessing: latestStage.dateOfProcessing,
-                  doneBy: latestStage.doneBy,
-                  initialQuantity: latestStage.initialQuantity,
-                  quantityAfterProcess: latestStage.quantityAfterProcess,
-                  lastDryingQuantity: latestStage.dryingEntries[0]?.currentQuantity ?? null,
-                }
-              : null,
-            totalQuantitySoldFromBatch,
-            netAvailableQuantity,
-          };
-        })
-        .filter(b => {
-          if (applySoldOutFilterLogic) {
-            return b.latestStageSummary?.status === 'SOLD_OUT';
-          }
-          return true;
-        });
+      // Now filter by query.status if it exists
+      const statusFilteredBatches = query.status
+        ? transformedBatches.filter(b => b.latestStageSummary?.status === query.status)
+        : transformedBatches;
 
-      const finalTotalCount = transformedAndPossiblyFilteredBatches.length;
-      const paginatedBatches = transformedAndPossiblyFilteredBatches.slice(skip, skip + limit);
+      const finalTotalCount = statusFilteredBatches.length;
+      const paginatedBatches = statusFilteredBatches.slice(skip, skip + limit);
 
       const result = {
         processingBatches: paginatedBatches,
         pagination: { page, limit, totalCount: finalTotalCount, totalPages: Math.ceil(finalTotalCount / limit) },
       };
-      await redis.set(cacheKey, JSON.stringify(result), 'EX', 3600);
+      await redis.set(cacheKey, JSON.stringify(result), 'EX', 3600); // Cache for 1 hour
       return result;
     } catch (error: any) {
       if (error.issues) return reply.status(400).send({ error: 'Invalid query parameters', details: error.issues });
@@ -258,68 +227,74 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
     try {
       const cached = await redis.get(cacheKey);
       if (cached) {
-        const parsedCached = JSON.parse(cached);
-        const latestStageForCached = parsedCached.processingStages
-          ?.slice()
-          .sort((a: any, b: any) => b.processingCount - a.processingCount)[0];
-        let currentPotentialOutputCached: number = parsedCached.initialBatchQuantity;
-        let effectiveStatusCached: ExtendedProcessingStageStatus = latestStageForCached
-          ? latestStageForCached.status
-          : 'NO_STAGES';
+        try {
+          const parsedCached = JSON.parse(cached);
+          // Recalculate latestStageSummary.status for cache, as sales might have happened
+          const latestStageForCached = parsedCached.processingStages
+            ?.slice()
+            .sort((a: any, b: any) => b.processingCount - a.processingCount)[0];
+          let effectiveStatusCached: ExtendedProcessingStageStatus = latestStageForCached
+            ? latestStageForCached.status
+            : 'NO_STAGES';
+          let netAvailableFromLatestStageCached = 0;
 
-        if (latestStageForCached) {
-          if (latestStageForCached.status === 'IN_PROGRESS') {
-            currentPotentialOutputCached =
-              latestStageForCached.dryingEntries?.slice().sort((a: any, b: any) => b.day - a.day)[0]?.currentQuantity ??
-              latestStageForCached.initialQuantity;
-          } else if (latestStageForCached.status === 'FINISHED') {
-            currentPotentialOutputCached = latestStageForCached.quantityAfterProcess || 0;
-          } else if (latestStageForCached.status === 'CANCELLED') {
-            currentPotentialOutputCached = 0;
-          }
-        }
-        const totalSoldCached = parsedCached.sales?.reduce((sum: number, sale: any) => sum + sale.quantitySold, 0) || 0;
-        const netAvailableCached = Math.max(0, currentPotentialOutputCached - totalSoldCached);
-
-        if (latestStageForCached && latestStageForCached.status === 'FINISHED' && netAvailableCached <= 0) {
-          effectiveStatusCached = 'SOLD_OUT';
-        }
-        parsedCached.netAvailableQuantity = netAvailableCached;
-
-        // Ensure latestStageSummary exists and update its status
-        if (latestStageForCached) {
-          parsedCached.latestStageSummary = {
-            ...(parsedCached.latestStageSummary || {
-              // Create if not exists from old cache
-              id: latestStageForCached.id,
-              processingCount: latestStageForCached.processingCount,
-              processMethod: latestStageForCached.processMethod,
-              dateOfProcessing: latestStageForCached.dateOfProcessing,
-              doneBy: latestStageForCached.doneBy,
-              initialQuantity: latestStageForCached.initialQuantity,
-              quantityAfterProcess: latestStageForCached.quantityAfterProcess,
-              lastDryingQuantity:
+          if (latestStageForCached) {
+            if (latestStageForCached.status === PrismaProcessingStageStatus.IN_PROGRESS) {
+              netAvailableFromLatestStageCached =
                 latestStageForCached.dryingEntries?.slice().sort((a: any, b: any) => b.day - a.day)[0]
-                  ?.currentQuantity ?? null,
-            }),
-            status: effectiveStatusCached,
-          };
-        } else if (parsedCached.latestStageSummary) {
-          parsedCached.latestStageSummary.status = effectiveStatusCached;
+                  ?.currentQuantity ?? latestStageForCached.initialQuantity;
+            } else if (latestStageForCached.status === PrismaProcessingStageStatus.FINISHED) {
+              const salesFromThisStageCached =
+                latestStageForCached.sales?.reduce((sum: number, sale: any) => sum + sale.quantitySold, 0) || 0;
+              netAvailableFromLatestStageCached =
+                (latestStageForCached.quantityAfterProcess || 0) - salesFromThisStageCached;
+              if (netAvailableFromLatestStageCached <= 0) effectiveStatusCached = 'SOLD_OUT';
+            } else if (latestStageForCached.status === PrismaProcessingStageStatus.CANCELLED) {
+              netAvailableFromLatestStageCached = 0;
+            }
+            parsedCached.netAvailableQuantity = netAvailableFromLatestStageCached; // Overall "available" is what's from latest stage
+            if (parsedCached.latestStageSummary) {
+              parsedCached.latestStageSummary.status = effectiveStatusCached;
+            } else if (latestStageForCached) {
+              // Reconstruct if old cache didn't have latestStageSummary
+              parsedCached.latestStageSummary = {
+                id: latestStageForCached.id,
+                processingCount: latestStageForCached.processingCount,
+                status: effectiveStatusCached,
+                processMethod: latestStageForCached.processMethod,
+                dateOfProcessing: latestStageForCached.dateOfProcessing,
+                doneBy: latestStageForCached.doneBy,
+                initialQuantity: latestStageForCached.initialQuantity,
+                quantityAfterProcess: latestStageForCached.quantityAfterProcess,
+                lastDryingQuantity:
+                  latestStageForCached.dryingEntries?.slice().sort((a: any, b: any) => b.day - a.day)[0]
+                    ?.currentQuantity ?? null,
+              };
+            }
+          } else {
+            parsedCached.netAvailableQuantity = 0; // No stages, so 0 available from stages
+          }
+          // totalQuantitySoldFromBatch is fine as is (sum of all sales from batch)
+          return parsedCached;
+        } catch (e) {
+          console.warn('Error parsing or re-evaluating cache for batch detail, fetching fresh.', e);
+          // Fall through to fetch fresh if cache is malformed or re-evaluation fails
         }
-
-        return parsedCached;
       }
 
-      const batch = await prisma.processingBatch.findUnique({
+      const batchFromDb = await prisma.processingBatch.findUnique({
         where: { id },
         include: {
           procurements: { include: { farmer: { select: { name: true, village: true } } } },
           processingStages: {
-            include: { dryingEntries: { orderBy: { day: 'asc' } } },
+            include: {
+              dryingEntries: { orderBy: { day: 'asc' } },
+              sales: { select: { id: true, quantitySold: true, dateOfSale: true } }, // Eager load sales for each stage
+            },
             orderBy: { processingCount: 'asc' },
           },
           sales: {
+            // Overall sales for the batch
             orderBy: { dateOfSale: 'desc' },
             include: { processingStage: { select: { processingCount: true } } },
           },
@@ -327,50 +302,52 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         },
       });
 
-      if (!batch) return reply.status(404).send({ error: 'Processing batch not found' });
+      if (!batchFromDb) return reply.status(404).send({ error: 'Processing batch not found' });
 
-      const totalQuantitySoldFromBatch = batch.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
+      // Sort stages in descending order of processingCount to easily get the latest
+      const sortedStages = [...batchFromDb.processingStages].sort((a, b) => b.processingCount - a.processingCount);
+      const latestStageData = sortedStages[0];
 
-      const latestStage = batch.processingStages?.slice().sort((a, b) => b.processingCount - a.processingCount)[0];
-      let currentPotentialOutput: number = batch.initialBatchQuantity;
-      let effectiveStatus: ExtendedProcessingStageStatus = latestStage ? latestStage.status : 'NO_STAGES';
+      let netAvailableFromLatestStageQty: number = 0;
+      let effectiveStatusForLatestStage: ExtendedProcessingStageStatus = 'NO_STAGES';
+      let latestStageSummaryData = null;
 
-      if (latestStage) {
-        if (latestStage.status === 'IN_PROGRESS') {
-          currentPotentialOutput =
-            latestStage.dryingEntries?.slice().sort((a, b) => b.day - a.day)[0]?.currentQuantity ??
-            latestStage.initialQuantity;
-        } else if (latestStage.status === 'FINISHED') {
-          currentPotentialOutput = latestStage.quantityAfterProcess ?? 0;
-        } else if (latestStage.status === 'CANCELLED') {
-          currentPotentialOutput = 0;
-        }
-      }
-      const netAvailableQuantity = Math.max(0, currentPotentialOutput - totalQuantitySoldFromBatch);
-
-      if (latestStage && latestStage.status === 'FINISHED' && netAvailableQuantity <= 0) {
-        effectiveStatus = 'SOLD_OUT';
-      }
-
-      const latestStageSummaryData = latestStage
-        ? {
-            id: latestStage.id,
-            processingCount: latestStage.processingCount,
-            status: effectiveStatus,
-            processMethod: latestStage.processMethod,
-            dateOfProcessing: latestStage.dateOfProcessing,
-            doneBy: latestStage.doneBy,
-            initialQuantity: latestStage.initialQuantity,
-            quantityAfterProcess: latestStage.quantityAfterProcess,
-            lastDryingQuantity:
-              latestStage.dryingEntries?.slice().sort((a, b) => b.day - a.day)[0]?.currentQuantity ?? null,
+      if (latestStageData) {
+        effectiveStatusForLatestStage = latestStageData.status;
+        if (latestStageData.status === PrismaProcessingStageStatus.IN_PROGRESS) {
+          const latestDrying = latestStageData.dryingEntries.sort((a, b) => b.day - a.day)[0];
+          netAvailableFromLatestStageQty = latestDrying?.currentQuantity ?? latestStageData.initialQuantity;
+        } else if (latestStageData.status === PrismaProcessingStageStatus.FINISHED) {
+          const salesFromThisStage = latestStageData.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
+          netAvailableFromLatestStageQty = (latestStageData.quantityAfterProcess ?? 0) - salesFromThisStage;
+          if (netAvailableFromLatestStageQty <= 0) {
+            effectiveStatusForLatestStage = 'SOLD_OUT';
           }
-        : null;
+        } else if (latestStageData.status === PrismaProcessingStageStatus.CANCELLED) {
+          netAvailableFromLatestStageQty = 0;
+        }
+
+        latestStageSummaryData = {
+          id: latestStageData.id,
+          processingCount: latestStageData.processingCount,
+          status: effectiveStatusForLatestStage,
+          processMethod: latestStageData.processMethod,
+          dateOfProcessing: latestStageData.dateOfProcessing,
+          doneBy: latestStageData.doneBy,
+          initialQuantity: latestStageData.initialQuantity,
+          quantityAfterProcess: latestStageData.quantityAfterProcess,
+          lastDryingQuantity: latestStageData.dryingEntries.sort((a, b) => b.day - a.day)[0]?.currentQuantity ?? null,
+        };
+      } else {
+        netAvailableFromLatestStageQty = 0; // No stages, nothing available from stages
+      }
+
+      const totalQuantitySoldFromBatchOverall = batchFromDb.sales.reduce((sum, sale) => sum + sale.quantitySold, 0);
 
       const batchWithDetails = {
-        ...batch,
-        totalQuantitySoldFromBatch,
-        netAvailableQuantity,
+        ...batchFromDb,
+        totalQuantitySoldFromBatch: totalQuantitySoldFromBatchOverall,
+        netAvailableQuantity: netAvailableFromLatestStageQty, // Key change: This reflects what's available from latest stage
         latestStageSummary: latestStageSummaryData,
       };
 
@@ -404,13 +381,14 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
     } catch (error) {
       console.error(`Error deleting batch ${id}:`, error);
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        return reply.status(404).send({ error: 'Processing batch not found.' });
+        // This might occur if the batch was already deleted by another request.
+        return reply.status(404).send({ error: 'Processing batch not found or already deleted.' });
       }
       return reply.status(500).send({ error: 'Server error deleting batch.' });
     }
   });
 
-  return fastify; // Ensure fastify instance is returned
+  return fastify;
 }
 
 export default processingBatchRoutes;
