@@ -69,7 +69,13 @@ export const farmerQuerySchema = z.object({
   state: z.string().optional(),
   district: z.string().optional(),
   gender: z.enum(['MALE', 'FEMALE', 'OTHER']).optional(),
-  isActive: z.boolean().optional().default(true),
+  isActive: z.preprocess(val => {
+    if (typeof val === 'string') {
+      if (val.toLowerCase() === 'true') return true;
+      if (val.toLowerCase() === 'false') return false;
+    }
+    return val;
+  }, z.boolean().optional().default(true)),
 });
 
 export type FarmerInput = z.infer<typeof farmerSchema>;

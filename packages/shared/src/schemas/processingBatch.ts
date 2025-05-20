@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ProcessingStageStatus } from '@prisma/client';
 
 export const createProcessingBatchFirstStageSchema = z.object({
   processMethod: z.enum(['wet', 'dry'], { required_error: 'Process method is required' }),
@@ -17,10 +18,17 @@ export const createProcessingBatchSchema = z.object({
 });
 export type CreateProcessingBatchInput = z.infer<typeof createProcessingBatchSchema>;
 
+const queryStatusEnumValues: [string, ...string[]] = [
+  ProcessingStageStatus.IN_PROGRESS,
+  ProcessingStageStatus.FINISHED,
+  ProcessingStageStatus.CANCELLED,
+  'SOLD_OUT',
+];
+
 export const processingBatchQuerySchema = z.object({
   page: z.string().transform(Number).default('1'),
   limit: z.string().transform(Number).default('10'),
   search: z.string().optional(),
-  status: z.enum(['IN_PROGRESS', 'FINISHED', 'CANCELLED']).optional(),
+  status: z.enum(queryStatusEnumValues).optional(),
 });
 export type ProcessingBatchQuery = z.infer<typeof processingBatchQuerySchema>;

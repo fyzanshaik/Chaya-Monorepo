@@ -1,12 +1,18 @@
 {
   "name": "@workspace/eslint-config",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
+  "license": "PROPRIETARY",
+  "type": "module",
+  "main": "./base.js",
   "exports": {
+    ".": "./base.js",
     "./base": "./base.js",
-    "./next-js": "./next.js",
+    "./next": "./next.js",
     "./react-internal": "./react-internal.js"
+  },
+  "scripts": {
+    "lint": "echo 'No lint script for eslint-config package itself'"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^15.1.7",

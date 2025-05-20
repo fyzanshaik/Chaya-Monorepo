@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = "postgresql://chayadb_owner:npg_tL9O7cgEKGaJ@ep-delicate-dream-a5pwfo3o-pooler.us-east-2.aws.neon.tech/chayadb?sslmode=require"
   url      = env("DATABASE_URL")
 }
 
@@ -29,7 +28,7 @@ enum Role {
 enum ProcessingStageStatus {
   IN_PROGRESS
   FINISHED
-  CANCELLED // Added for completeness
+  CANCELLED
 }
 
 model Ping {
@@ -85,7 +84,7 @@ model Farmer {
   updatedBy          User              @relation("UpdatedByUser", fields: [updatedById], references: [id])
   fields             Field[]
   procurements       Procurement[]
-  processingBatches  ProcessingBatch[] @relation("FarmerToProcessingBatch") // If a batch can be tied to a primary farmer
+  processingBatches  ProcessingBatch[] @relation("FarmerToProcessingBatch")
 
   @@map("farmers")
 }
@@ -140,38 +139,36 @@ model Procurement {
   procuredForm       String
   speciality         String
   quantity           Float
-  batchCode          String     @unique // Original procurement batch code
+  procurementNumber  String     @unique
   date               DateTime
-  time               DateTime // Combined date and time of procurement
+  time               DateTime
   lotNo              Int
   procuredBy         String
-  vehicleNo          String? // Made optional as per some frontend indications
+  vehicleNo          String?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
   farmer             Farmer     @relation(fields: [farmerId], references: [id], onDelete: Cascade)
   processingBatchId  Int?
-  processingBatch    ProcessingBatch? @relation(fields: [processingBatchId], references: [id], onDelete: SetNull) // Procurements are part of a processing batch
+  processingBatch    ProcessingBatch? @relation(fields: [processingBatchId], references: [id], onDelete: SetNull)
 
   @@map("procurements")
 }
 
 model ProcessingBatch {
   id                    Int               @id @default(autoincrement())
-  batchCode             String            @unique // e.g., PBC-CROP-LOT-YYYYMMDD-UNIQUEID
+  batchCode             String            @unique // Processing Batch Code
   crop                  String
   lotNo                 Int
   initialBatchQuantity  Float // Sum of quantities from procurements
   createdById           Int
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
-  procurements          Procurement[]     // Procurements included in this batch
+  procurements          Procurement[]
   processingStages      ProcessingStage[] @relation("BatchToStages")
   sales                 Sale[]            @relation("BatchToSales")
   createdBy             User              @relation("BatchCreatedByUser", fields: [createdById], references: [id])
-  // Optionally, if a batch is associated with a primary farmer for reporting
   farmerId              Int?
   farmer                Farmer?           @relation("FarmerToProcessingBatch", fields: [farmerId], references: [id])
-
 
   @@map("processing_batches")
 }
@@ -182,17 +179,17 @@ model ProcessingStage {
   processingCount       Int                   @default(1) // P1, P2, etc.
   processMethod         String                // "wet", "dry"
   initialQuantity       Float                 // Quantity at the start of this stage
-  quantityAfterProcess  Float?                // Quantity at the end of this stage (final yield of this stage)
+  quantityAfterProcess  Float?                // Quantity at the end of this stage
   dateOfProcessing      DateTime              // Start date of this stage
   dateOfCompletion      DateTime?             // End date of this stage
-  doneBy                String                // Person/team responsible
+  doneBy                String
   status                ProcessingStageStatus @default(IN_PROGRESS)
   createdById           Int
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
   processingBatch       ProcessingBatch       @relation("BatchToStages", fields: [processingBatchId], references: [id], onDelete: Cascade)
   dryingEntries         Drying[]
-  sales                 Sale[]                @relation("StageToSales") // Sales made from the output of this specific stage
+  sales                 Sale[]                @relation("StageToSales")
   createdBy             User                  @relation("StageCreatedByUser", fields: [createdById], references: [id])
 
   @@map("processing_stages")
@@ -201,11 +198,11 @@ model ProcessingStage {
 model Drying {
   id                  Int             @id @default(autoincrement())
   processingStageId   Int
-  day                 Int             // Drying day number for this stage
-  temperature         Float           // Celsius
-  humidity            Float           // Percentage
+  day                 Int
+  temperature         Float
+  humidity            Float
   pH                  Float
-  moisturePercentage  Float           // Moisture content percentage
+  moisturePercentage  Float
   currentQuantity     Float           // Weight of crop after this day's drying
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
@@ -217,14 +214,14 @@ model Drying {
 model Sale {
   id                  Int             @id @default(autoincrement())
   processingBatchId   Int
-  processingStageId   Int             // The specific stage whose output was sold
+  processingStageId   Int
   quantitySold        Float
   dateOfSale          DateTime
   createdById         Int
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   processingBatch     ProcessingBatch @relation("BatchToSales", fields: [processingBatchId], references: [id], onDelete: Cascade)
-  processingStage     ProcessingStage @relation("StageToSales", fields: [processingStageId], references: [id], onDelete:Restrict) // Don't cascade delete stage if sales exist
+  processingStage     ProcessingStage @relation("StageToSales", fields: [processingStageId], references: [id], onDelete:Restrict)
   createdBy           User            @relation("SaleCreatedByUser", fields: [createdById], references: [id])
 
   @@map("sales")

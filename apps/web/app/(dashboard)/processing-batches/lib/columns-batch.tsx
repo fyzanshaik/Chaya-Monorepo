@@ -1,44 +1,22 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import type { ProcessingBatchWithSummary } from './types'; // Ensure this type is correctly defined
+import type { ProcessingBatchWithSummary, ExtendedProcessingStageStatus } from './types';
 import { Badge } from '@workspace/ui/components/badge';
 import { format } from 'date-fns';
-import { Checkbox } from '@workspace/ui/components/checkbox'; // If selection is needed for bulk actions
 
 export const defaultVisibleBatchColumns = [
-  // 'select', // if bulk actions are planned
   'batchCode',
   'crop',
   'lotNo',
-  'latestStageStatus',
+  'latestStageStatus', // Changed from latestStage.status to this
   'latestStageCount',
-  'netAvailableFromBatch',
-  'totalQuantitySoldFromBatch',
+  'netAvailableQuantity',
+  // 'totalQuantitySoldFromBatch', // Often this is less relevant in summary than net from stage
   'createdAt',
 ];
 
 export const batchColumns: ColumnDef<ProcessingBatchWithSummary>[] = [
-  // Example selection column if needed for bulk delete (admin only)
-  // {
-  //   id: 'select',
-  //   header: ({ table }) => (
-  //     <Checkbox
-  //       checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-  //       onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
-  //       aria-label="Select all"
-  //     />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <Checkbox
-  //       checked={row.getIsSelected()}
-  //       onCheckedChange={value => row.toggleSelected(!!value)}
-  //       aria-label="Select row"
-  //     />
-  //   ),
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
   {
     accessorKey: 'batchCode',
     header: 'Batch Code',
@@ -61,39 +39,48 @@ export const batchColumns: ColumnDef<ProcessingBatchWithSummary>[] = [
       row.original.latestStageSummary ? `P${row.original.latestStageSummary.processingCount}` : 'N/A',
   },
   {
-    accessorKey: 'latestStageStatus',
+    accessorKey: 'latestStageStatus', // This now comes directly from summary
     header: 'Current Status',
     cell: ({ row }) => {
-      const status = row.original.latestStageSummary?.status;
+      const status: ExtendedProcessingStageStatus | undefined = row.original.latestStageSummary?.status;
       if (!status) return <Badge variant="outline">No Stages</Badge>;
 
-      const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-        IN_PROGRESS: 'secondary',
-        FINISHED: 'default',
-        CANCELLED: 'destructive',
-      };
-      return <Badge variant={variantMap[status] || 'outline'}>{status.replace('_', ' ')}</Badge>;
+      let displayStatus = status.toString().replace(/_/g, ' ');
+      let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'outline';
+
+      switch (status) {
+        case 'IN_PROGRESS':
+          variant = 'secondary';
+          displayStatus = 'In Progress';
+          break;
+        case 'FINISHED':
+          variant = 'default'; // Assuming green/blue for default is "good"
+          break;
+        case 'SOLD_OUT':
+          variant = 'default'; // Visually similar to finished, or choose another like outline with specific text
+          displayStatus = 'Sold Out';
+          break;
+        case 'CANCELLED':
+          variant = 'destructive';
+          break;
+        case 'NO_STAGES': // Should be covered by !status check already
+        default:
+          variant = 'outline';
+          break;
+      }
+      return <Badge variant={variant}>{displayStatus}</Badge>;
     },
   },
   {
-    accessorKey: 'netAvailableFromBatch',
-    header: 'Net Available (kg)',
-    cell: ({ row }) => <div className="text-right">{row.original.netAvailableFromBatch.toFixed(2)}</div>,
+    accessorKey: 'netAvailableQuantity', // This is now "Net Available from Latest Stage"
+    header: 'Avail. from Stage (kg)', // Renamed header for clarity
+    cell: ({ row }) => <div className="text-right">{row.original.netAvailableQuantity.toFixed(2)}</div>,
   },
-  {
-    accessorKey: 'currentStageDisplayQuantity',
-    header: 'Current Stage Qty (kg)',
-    cell: ({ row }) => <div className="text-right">{row.original.currentStageDisplayQuantity.toFixed(2)}</div>,
-  },
-  {
-    accessorKey: 'totalQuantitySoldFromBatch',
-    header: 'Total Sold (kg)',
-    cell: ({ row }) => {
-      const totalSold = row.original.totalQuantitySoldFromBatch;
-      const displayValue = (typeof totalSold === 'number' ? totalSold : 0).toFixed(2);
-      return <div className="text-right">{displayValue}</div>;
-    },
-  },
+  // { // This can be added back if needed, but might clutter the summary view
+  //   accessorKey: 'totalQuantitySoldFromBatch',
+  //   header: 'Total Batch Sold (kg)',
+  //   cell: ({ row }) => <div className="text-right">{row.original.totalQuantitySoldFromBatch.toFixed(2)}</div>,
+  // },
   {
     accessorKey: 'initialBatchQuantity',
     header: 'Initial Batch (kg)',

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ProcessingBatchWithSummary, ProcessingBatchWithDetails } from '../lib/types';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { getProcessingBatchDetailsById, getProcessingBatchesList } from '../lib/actions';
 
 interface ProcessingBatchCacheContextType {
   processingBatchesSummary: Record<string, ProcessingBatchWithSummary[]>;
@@ -42,21 +42,17 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         return processingBatchesSummary[key];
       }
       try {
-        const params = new URLSearchParams({ page: page.toString(), limit: '10', search: query });
-        if (statusFilter) params.set('status', statusFilter);
-
-        const response = await axios.get(`/api/processing-batches?${params.toString()}`, { withCredentials: true });
-        const data = response.data;
+        const data = await getProcessingBatchesList({ page, limit: 10, search: query, statusFilter });
 
         setProcessingBatchesSummary(prev => ({ ...prev, [key]: data.processingBatches }));
         setTotalPages(prev => ({ ...prev, [`${query}:${statusFilter}`]: data.pagination.totalPages }));
         return data.processingBatches;
-      } catch (error) {
-        toast.error('Failed to fetch processing batches summary.');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to fetch processing batches summary.');
         throw error;
       }
     },
-    [processingBatchesSummary]
+    [processingBatchesSummary, createListKey, setProcessingBatchesSummary, setTotalPages]
   );
 
   const fetchTotalPages = useCallback(
@@ -66,40 +62,33 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         return totalPages[key];
       }
       try {
-        const params = new URLSearchParams({ page: '1', limit: '10', search: query });
-        if (statusFilter) params.set('status', statusFilter);
-
-        const response = await axios.get(`/api/processing-batches?${params.toString()}`, { withCredentials: true });
-        const pages = response.data.pagination.totalPages;
+        const data = await getProcessingBatchesList({ page: 1, limit: 10, search: query, statusFilter });
+        const pages = data.pagination.totalPages;
         setTotalPages(prev => ({ ...prev, [key]: pages }));
         return pages;
-      } catch (error) {
-        toast.error('Failed to fetch pagination data.');
-        return 1; // Default to 1 page on error
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to fetch pagination data.');
+        return 1;
       }
     },
-    [totalPages]
+    [totalPages, setTotalPages]
   );
 
   const refreshCurrentPageSummary = useCallback(
     async (page: number, query: string, statusFilter: string): Promise<ProcessingBatchWithSummary[]> => {
       const key = createListKey(page, query, statusFilter);
       try {
-        const params = new URLSearchParams({ page: page.toString(), limit: '10', search: query });
-        if (statusFilter) params.set('status', statusFilter);
-
-        const response = await axios.get(`/api/processing-batches?${params.toString()}`, { withCredentials: true });
-        const data = response.data;
+        const data = await getProcessingBatchesList({ page, limit: 10, search: query, statusFilter });
 
         setProcessingBatchesSummary(prev => ({ ...prev, [key]: data.processingBatches }));
-        setTotalPages(prev => ({ ...prev, [`${query}:${statusFilter}`]: data.pagination.totalPages })); // refresh total pages too
+        setTotalPages(prev => ({ ...prev, [`${query}:${statusFilter}`]: data.pagination.totalPages }));
         return data.processingBatches;
-      } catch (error) {
-        toast.error(`Failed to refresh batches data for page ${page}.`);
+      } catch (error: any) {
+        toast.error(error.message || `Failed to refresh batches data for page ${page}.`);
         throw error;
       }
     },
-    []
+    [createListKey, setProcessingBatchesSummary, setTotalPages]
   );
 
   const getBatchDetails = useCallback(
@@ -108,33 +97,34 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         return batchDetailsCache[batchId];
       }
       try {
-        const response = await axios.get<ProcessingBatchWithDetails>(`/api/processing-batches/${batchId}`, {
-          withCredentials: true,
-        });
-        setBatchDetailsCache(prev => ({ ...prev, [batchId]: response.data }));
-        return response.data;
-      } catch (error) {
-        toast.error(`Failed to fetch details for batch ID ${batchId}.`);
+        const batchData = await getProcessingBatchDetailsById(batchId);
+        setBatchDetailsCache(prev => ({ ...prev, [batchId]: batchData }));
+        return batchData;
+      } catch (error: any) {
+        toast.error(error.message || `Failed to fetch details for batch ID ${batchId}.`);
         return null;
       }
     },
-    [batchDetailsCache]
+    [batchDetailsCache, setBatchDetailsCache]
   );
 
-  const clearBatchDetailCache = useCallback((batchId: number) => {
-    setBatchDetailsCache(prev => {
-      const newState = { ...prev };
-      delete newState[batchId];
-      return newState;
-    });
-  }, []);
+  const clearBatchDetailCache = useCallback(
+    (batchId: number) => {
+      setBatchDetailsCache(prev => {
+        const newState = { ...prev };
+        delete newState[batchId];
+        return newState;
+      });
+    },
+    [setBatchDetailsCache]
+  );
 
   const clearCache = useCallback(() => {
     setProcessingBatchesSummary({});
     setTotalPages({});
     setBatchDetailsCache({});
     toast.info('Processing batches cache cleared.');
-  }, []);
+  }, [setProcessingBatchesSummary, setTotalPages, setBatchDetailsCache]);
 
   return (
     <ProcessingBatchCacheContext.Provider

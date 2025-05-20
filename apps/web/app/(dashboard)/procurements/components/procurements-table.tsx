@@ -12,7 +12,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { columns, defaultVisibleColumns } from '../lib/columns';
 import { ColumnFilter } from './column-filter';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { useAuth } from '@/app/providers/auth-provider';
 import { ProcurementContextMenu } from './procurement-context-menu';
@@ -66,7 +66,7 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
     return initialVisibility;
   });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchProcurements(currentPage, query);
@@ -78,14 +78,14 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       if (pagesToPrefetch.length > 0) {
         prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
       }
-    } catch (error) {
-      toast.error("Failed to fetch procurements' data. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch procurements' data. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchProcurements, prefetchPages, currentPage, query]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (refreshing) return;
 
     setRefreshing(true);
@@ -94,16 +94,16 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       setProcurements(freshData);
       toast.success('Data refreshed successfully');
       setRowSelection({});
-    } catch (error) {
-      toast.error('Failed to refresh data. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to refresh data. Please try again.');
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [refreshing, currentPage, query, refreshCurrentPage]);
 
   useEffect(() => {
     loadData();
-  }, [fetchProcurements, prefetchPages, currentPage, query]);
+  }, [loadData]);
 
   const table = useReactTable({
     data: procurements,
@@ -158,12 +158,12 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
         toast.success('Procurements deleted successfully.');
         await handleRefresh();
       } else {
-        toast.error('Failed to delete procurements. Please try again.');
+        toast.error(result.error || 'Failed to delete procurements. Please try again.');
       }
 
       setShowBulkDeleteDialog(false);
-    } catch (error) {
-      toast.error('Failed to delete procurements. An unexpected error occurred.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete procurements. An unexpected error occurred.');
     } finally {
       setIsDeleting(false);
     }
@@ -184,7 +184,7 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       document.removeEventListener('viewProcurement', handleViewProcurementEvent as EventListener);
       document.removeEventListener('procurementDataChanged', handleDataChangeEvent as EventListener);
     };
-  }, [currentPage, query]);
+  }, [handleRefresh]);
 
   const selectedCount = Object.keys(rowSelection).length;
 

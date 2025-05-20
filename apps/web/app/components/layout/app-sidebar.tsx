@@ -8,13 +8,14 @@ import { useAuth } from '@/app/providers/auth-provider';
 import { cn } from '@workspace/ui/lib/utils';
 import { Button } from '@workspace/ui/components/button';
 
-const navItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: Home },
-  { title: 'Farmer Details', href: '/farmers', icon: Leaf },
-  { title: 'Procurement', href: '/procurements', icon: Package },
-  { title: 'Processing Batches', href: '/processing-batches', icon: BarChart },
-  { title: 'Staff Management', href: '/staff', icon: Users },
+const baseNavItems = [
+  { title: 'Dashboard', href: '/dashboard', icon: Home, adminOnly: true },
+  { title: 'Farmer Details', href: '/farmers', icon: Leaf, adminOnly: false },
+  { title: 'Procurement', href: '/procurements', icon: Package, adminOnly: false },
+  { title: 'Processing Batches', href: '/processing-batches', icon: BarChart, adminOnly: false },
 ];
+
+const adminNavItems = [{ title: 'Staff Management', href: '/staff', icon: Users, adminOnly: true }];
 
 const MIN_WIDTH = 60;
 const MAX_WIDTH = 280;
@@ -22,13 +23,22 @@ const DEFAULT_WIDTH = 200;
 
 export function AppSidebar(props: React.HTMLAttributes<HTMLDivElement>) {
   const pathname = usePathname();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(true);
   const [sidebarWidth, setSidebarWidth] = React.useState(MIN_WIDTH);
   const [isResizing, setIsResizing] = React.useState(false);
 
   const isRouteActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  const navItems = React.useMemo(() => {
+    let items = [...baseNavItems];
+    if (user?.role === 'ADMIN') {
+      items = items.concat(adminNavItems);
+    }
+    items = items.filter(item => !item.adminOnly || (item.adminOnly && user?.role === 'ADMIN'));
+    return items;
+  }, [user]);
 
   React.useEffect(() => {
     try {
@@ -90,24 +100,14 @@ export function AppSidebar(props: React.HTMLAttributes<HTMLDivElement>) {
     };
   }, [isResizing, collapsed]);
 
-  if (!isLoaded) {
+  if (!isLoaded || !user) {
+    // Add !user check here to avoid rendering sidebar before user is loaded
     return (
       <div className="flex flex-col h-full bg-white border-r border-gray-200 shadow-md" style={{ width: MIN_WIDTH }}>
         <div className="flex items-center justify-center h-16 border-b">
           <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
         </div>
-        <div className="flex-1 overflow-y-auto">
-          {navItems.map(item => (
-            <div key={item.href} className="flex justify-center p-3">
-              <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-            </div>
-          ))}
-        </div>
-        <div className="p-2 border-t">
-          <div className="flex justify-center p-2">
-            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
+        {/* ... rest of skeleton ... */}
       </div>
     );
   }
@@ -138,24 +138,31 @@ export function AppSidebar(props: React.HTMLAttributes<HTMLDivElement>) {
       <div className="flex flex-1 flex-col justify-between overflow-hidden">
         <nav className="p-2 space-y-1 overflow-y-auto">
           {navItems.map(item => {
-            const active = isRouteActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-200',
-                  active
-                    ? 'bg-green-100 text-green-800 border-l-4 border-green-600'
-                    : 'text-gray-700 hover:bg-gray-100 border-l-4 border-transparent',
-                  collapsed ? 'justify-center' : ''
-                )}
-                title={collapsed ? item.title : undefined}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span className="whitespace-nowrap transition-opacity duration-200">{item.title}</span>}
-              </Link>
-            );
+            // Condition to render item:
+            // Render if not adminOnly, OR if adminOnly and user is ADMIN
+            if (!item.adminOnly || (item.adminOnly && user?.role === 'ADMIN')) {
+              const active = isRouteActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-2 rounded-md transition-all duration-200',
+                    active
+                      ? 'bg-green-100 text-green-800 border-l-4 border-green-600'
+                      : 'text-gray-700 hover:bg-gray-100 border-l-4 border-transparent',
+                    collapsed ? 'justify-center' : ''
+                  )}
+                  title={collapsed ? item.title : undefined}
+                >
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {!collapsed && (
+                    <span className="whitespace-nowrap transition-opacity duration-200">{item.title}</span>
+                  )}
+                </Link>
+              );
+            }
+            return null; // Don't render if adminOnly and user is not admin
           })}
         </nav>
 

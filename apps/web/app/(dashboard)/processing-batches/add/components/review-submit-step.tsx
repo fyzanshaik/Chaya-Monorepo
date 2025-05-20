@@ -5,10 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@work
 import { Separator } from '@workspace/ui/components/separator';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
+import type { Procurement } from '@chaya/shared';
+
+interface ProcurementWithFarmerForReview extends Procurement {
+  farmer?: { name?: string };
+}
 
 export function ReviewAndSubmitStep() {
-  const { selectedCrop, selectedLotNo, availableProcurements, selectedProcurementIds, firstStageDetails } =
-    useProcessingBatchFormStore();
+  const {
+    lockedCrop, // Use locked values for review
+    lockedLotNo,
+    lockedProcuredForm,
+    availableProcurements,
+    selectedProcurementIds,
+    firstStageDetails,
+  } = useProcessingBatchFormStore();
 
   const selectedProcsDetails = useMemo(() => {
     return availableProcurements.filter(p => selectedProcurementIds.includes(p.id));
@@ -28,13 +39,15 @@ export function ReviewAndSubmitStep() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold">Batch Criteria</h3>
+          <h3 className="text-lg font-semibold">Batch Criteria (Locked)</h3>
           <Separator className="my-2" />
           <div className="grid grid-cols-2 gap-2">
             <p className="font-medium">Crop:</p>
-            <p>{selectedCrop}</p>
+            <p>{lockedCrop || 'Not Set'}</p>
             <p className="font-medium">Lot Number:</p>
-            <p>{selectedLotNo}</p>
+            <p>{lockedLotNo || 'Not Set'}</p>
+            <p className="font-medium">Procured Form:</p>
+            <p>{lockedProcuredForm || 'Not Set'}</p>
           </div>
         </div>
 
@@ -45,8 +58,8 @@ export function ReviewAndSubmitStep() {
             <ul className="list-disc list-inside space-y-1 text-sm max-h-40 overflow-y-auto">
               {selectedProcsDetails.map(p => (
                 <li key={p.id}>
-                  ID: {p.id} (Code: {p.batchCode}) - {p.quantity}kg - Farmer: {(p as any).farmer?.name || 'N/A'} - Date:{' '}
-                  {format(new Date(p.date), 'dd/MM/yyyy')}
+                  Proc. No: {p.procurementNumber} - {p.quantity}kg - Farmer:{' '}
+                  {(p as ProcurementWithFarmerForReview).farmer?.name || 'N/A'}
                 </li>
               ))}
             </ul>

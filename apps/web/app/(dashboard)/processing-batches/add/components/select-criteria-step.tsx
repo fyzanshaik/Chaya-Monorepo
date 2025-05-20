@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useProcessingBatchFormStore } from '@/app/stores/processing-batch-form';
@@ -11,74 +11,80 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@workspace/ui/components/form';
 import { useEffect } from 'react';
 
-// Assuming a list of possible crops. This could be fetched or be a static list.
-const CROP_OPTIONS = ['Rice', 'Wheat', 'Maize', 'Soybean', 'Cotton', 'Coffee', 'Tea', 'Spices']; // Example
+const CROP_OPTIONS = ['Turmeric', 'Coffee', 'Ginger', 'Pepper'] as const;
 
-const criteriaSchema = z.object({
-  crop: z.string().min(1, 'Crop is required'),
-  lotNo: z.coerce.number().int().min(1, 'Lot number must be a positive integer'),
-});
+const criteriaSchema = z
+  .object({
+    crop: z.string().optional().nullable(),
+    lotNo: z.coerce
+      .number()
+      .int()
+      .min(1, 'Lot number must be a positive integer')
+      .max(3, 'Only 1, 2, 3 Lot Numbers are available')
+      .optional()
+      .nullable(),
+  })
+  .refine(data => !!data.crop || (typeof data.lotNo === 'number' && !isNaN(data.lotNo)), {
+    message: 'Either Crop or Lot Number (or both) must be provided.',
+    path: ['crop'],
+  });
 
 type CriteriaFormValues = z.infer<typeof criteriaSchema>;
 
 export function SelectCriteriaStep() {
-  const { selectedCrop, selectedLotNo, setCriteria, form: zustandForm, setForm } = useProcessingBatchFormStore();
+  const { initialCrop, initialLotNo, setForm } = useProcessingBatchFormStore();
 
   const form = useForm<CriteriaFormValues>({
     resolver: zodResolver(criteriaSchema),
     defaultValues: {
-      crop: selectedCrop || '',
-      lotNo: selectedLotNo || undefined,
+      crop: initialCrop || null,
+      lotNo: initialLotNo || null,
     },
   });
 
   useEffect(() => {
-    if (zustandForm !== form) {
-      setForm(form as any); // Store RHF instance in Zustand
+    if (setForm) {
+      setForm(form as any);
     }
-    // Sync zustand with form values if they change externally
-    form.reset({
-      crop: selectedCrop || '',
-      lotNo: selectedLotNo || undefined,
-    });
-  }, [selectedCrop, selectedLotNo, form, zustandForm, setForm]);
-
-  const onSubmit = (data: CriteriaFormValues) => {
-    // This function might not be directly called if validation happens on "Next" click in parent
-    setCriteria(data.crop, data.lotNo);
-  };
-
-  // Update zustand store on field change to keep it in sync for parent "Next" button
-  const handleValueChange = () => {
-    const values = form.getValues();
-    if (values.crop && values.lotNo !== undefined && values.lotNo !== null && !isNaN(values.lotNo)) {
-      if (values.crop !== selectedCrop || values.lotNo !== selectedLotNo) {
-        setCriteria(values.crop, values.lotNo);
+    return () => {
+      if (setForm) {
+        setForm(null);
       }
-    }
-  };
+    };
+  }, [form, setForm]);
+
+  useEffect(() => {
+    form.reset({
+      crop: initialCrop || null,
+      lotNo: initialLotNo || null,
+    });
+  }, [initialCrop, initialLotNo, form]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Step 1: Select Crop and Lot Number</CardTitle>
-        <CardDescription>Specify the crop and lot number to find unbatched procurements.</CardDescription>
+        <CardTitle>Step 1: Select Initial Criteria (Optional)</CardTitle>
+        <CardDescription>
+          Specify Crop and/or Lot Number to pre-filter procurements. If both are left blank, you'll define criteria
+          based on your first procurement choice in the next step. To pre-filter, at least one field must be entered.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onChange={handleValueChange} className="space-y-6">
-            {' '}
-            {/* Use onChange for immediate zustand update */}
+          <form className="space-y-6">
             <FormField
               control={form.control}
               name="crop"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="crop">Crop Name</Label>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Label htmlFor="crop">Crop Name (Optional)</Label>
+                  <Select
+                    onValueChange={value => field.onChange(value === 'NONE_SELECTED_VALUE' ? null : value)}
+                    value={field.value || undefined} // Pass undefined for placeholder
+                  >
                     <FormControl>
                       <SelectTrigger id="crop">
-                        <SelectValue placeholder="Select a crop" />
+                        <SelectValue placeholder="Select a crop (optional)" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -90,6 +96,10 @@ export function SelectCriteriaStep() {
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                  {/* The refine error (if path is "crop") will show via FormMessage if crop field itself also has an error.
+                      If only refine fails, FormMessage for crop might not show it if crop field input is valid on its own.
+                      The parent page's toast error for this step is a more reliable way to show the refine error.
+                  */}
                 </FormItem>
               )}
             />
@@ -98,15 +108,37 @@ export function SelectCriteriaStep() {
               name="lotNo"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="lotNo">Lot Number</Label>
+                  <Label htmlFor="lotNo">Lot Number (Optional)</Label>
                   <FormControl>
-                    <Input id="lotNo" type="number" placeholder="Enter lot number" {...field} />
+                    <Input
+                      id="lotNo"
+                      type="number"
+                      placeholder="Enter lot number (optional)"
+                      value={field.value === null || field.value === undefined ? '' : String(field.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        field.onChange(val === '' ? null : isNaN(parseInt(val, 4)) ? null : parseInt(val, 4));
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {/* Form submission is handled by the parent component's "Next" button */}
+            {/* Displaying the refine error specifically if it's attached to form.formState.errors.crop 
+                and there's no other message from the field's own validators.
+                This logic can be tricky. The toast in the parent is often clearer for overall step validation.
+            */}
+            {form.formState.errors.crop &&
+              form.formState.errors.crop.type === 'manual' && ( // refine errors often appear as 'manual'
+                <p className="text-sm text-red-500 mt-1">{form.formState.errors.crop.message}</p>
+              )}
+            {/* Or more generally, if the refine error is the *only* error for crop: */}
+            {form.formState.errors.crop &&
+              Object.keys(form.formState.errors.crop).length === 1 &&
+              form.formState.errors.crop.message && (
+                <p className="text-sm text-red-500 mt-1">{form.formState.errors.crop.message}</p>
+              )}
           </form>
         </Form>
       </CardContent>

@@ -21,7 +21,7 @@ import {
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProcurementWithRelations } from '../lib/types';
-import { deleteProcurement } from '../lib/actions';
+import { deleteProcurementAction } from '../lib/actions';
 
 interface ProcurementContextMenuProps {
   children: React.ReactNode;
@@ -44,11 +44,11 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const result = await deleteProcurement(procurement.id);
+      const result = await deleteProcurementAction(procurement.id);
 
       if (result.success) {
         toast.success('Procurement deleted', {
-          description: `${procurement.batchCode} has been successfully deleted.`,
+          description: `Proc. No. ${procurement.procurementNumber} has been successfully deleted.`,
         });
 
         const dataChangedEvent = new CustomEvent('procurementDataChanged');
@@ -60,9 +60,9 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
       }
 
       setShowDeleteDialog(false);
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Error', {
-        description: 'An unexpected error occurred while deleting the procurement.',
+        description: error.message || 'An unexpected error occurred while deleting the procurement.',
       });
     } finally {
       setIsDeleting(false);
@@ -103,7 +103,7 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this procurement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the procurement record and all associated data.
+              {`This action cannot be undone. This will permanently delete procurement ${procurement.procurementNumber}.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

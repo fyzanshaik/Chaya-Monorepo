@@ -23,7 +23,7 @@ import { CalendarIcon } from 'lucide-react';
 import { cn } from '@workspace/ui/lib/utils';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { finalizeProcessingStageAction, getDryingEntriesForStage } from '../../lib/actions';
 
 const finalizeStageFormSchema = z.object({
   dateOfCompletion: z.date({
@@ -60,6 +60,7 @@ export function FinalizeStageDialog({
   onSuccess,
 }: FinalizeStageDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingDrying, setIsLoadingDrying] = useState(false);
 
   const form = useForm<FinalizeStageFormValues>({
     resolver: zodResolver(finalizeStageFormSchema),
@@ -70,13 +71,31 @@ export function FinalizeStageDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      form.reset({
-        dateOfCompletion: new Date(),
-        quantityAfterProcess: undefined,
-      });
+    if (open && processingStageId) {
+      setIsLoadingDrying(true);
+      getDryingEntriesForStage(processingStageId)
+        .then(dryingEntries => {
+          const latestDryingEntry = dryingEntries?.sort((a, b) => b.day - a.day)[0];
+          const autoFillQuantity = latestDryingEntry?.currentQuantity ?? currentInitialQuantity;
+
+          form.reset({
+            dateOfCompletion: new Date(),
+            quantityAfterProcess: parseFloat(autoFillQuantity.toFixed(2)) || undefined,
+          });
+        })
+        .catch(err => {
+          toast.error(err.message || 'Could not load latest drying quantity for autofill.');
+          console.error('Error fetching drying entries for autofill:', err);
+          form.reset({
+            dateOfCompletion: new Date(),
+            quantityAfterProcess: parseFloat(currentInitialQuantity.toFixed(2)) || undefined,
+          });
+        })
+        .finally(() => {
+          setIsLoadingDrying(false);
+        });
     }
-  }, [open, form]);
+  }, [open, processingStageId, form, currentInitialQuantity]);
 
   const onSubmit = async (data: FinalizeStageFormValues) => {
     setIsSubmitting(true);
@@ -85,13 +104,14 @@ export function FinalizeStageDialog({
         dateOfCompletion: data.dateOfCompletion,
         quantityAfterProcess: data.quantityAfterProcess,
       };
-      await axios.put(`/api/processing-stages/${processingStageId}/finalize`, payload, { withCredentials: true });
+      await finalizeProcessingStageAction(processingStageId, payload);
       toast.success(`Stage P${processingCount} for Batch ${batchCode} finalized successfully.`);
+      document.dispatchEvent(new CustomEvent('processingBatchDataChanged'));
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error finalizing stage:', error);
-      toast.error(`Error: ${error.response?.data?.error || 'Failed to finalize stage'}`);
+      toast.error(`Error: ${error.message || 'Failed to finalize stage'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -105,8 +125,8 @@ export function FinalizeStageDialog({
             Finalize Stage P{processingCount} for Batch {batchCode}
           </DialogTitle>
           <DialogDescription>
-            Enter the completion details for this processing stage. Initial quantity for this stage was{' '}
-            {currentInitialQuantity.toFixed(2)}kg.
+            Enter the completion details. Initial quantity for this stage was {currentInitialQuantity.toFixed(2)}kg.
+            {isLoadingDrying && ' Fetching latest drying quantity...'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -144,17 +164,28 @@ export function FinalizeStageDialog({
                 <FormItem>
                   <FormLabel>Quantity After Process (kg)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Enter final yield for this stage" {...field} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="Enter final yield for this stage"
+                      {...field}
+                      disabled={isLoadingDrying}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting || isLoadingDrying}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isLoadingDrying}>
                 {isSubmitting ? 'Finalizing...' : 'Finalize Stage'}
               </Button>
             </DialogFooter>

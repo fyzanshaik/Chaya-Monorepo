@@ -110,9 +110,9 @@ export function StartNextStageDialog({
             Start Next Stage (P{nextProcessingCount}) for Batch {batchCode}
           </DialogTitle>
           <DialogDescription>
-            P{previousProcessingCount} finished with {previousStageYield.toFixed(2)}kg. Enter details for P
-            {nextProcessingCount}. Initial quantity for P{nextProcessingCount} will be {previousStageYield.toFixed(2)}
-            kg.
+            Stage P{previousProcessingCount} finished with a yield of {previousStageYield.toFixed(2)}kg. The new stage P
+            {nextProcessingCount} will start with the quantity remaining after any sales from P{previousProcessingCount}
+            .
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

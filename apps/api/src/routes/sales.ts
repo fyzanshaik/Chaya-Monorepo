@@ -7,7 +7,6 @@ import Redis from 'ioredis';
 const redis = new Redis();
 
 async function invalidateSalesCache(batchId?: number | string) {
-  // Simplified: primarily batch detail and list affected
   const keysToDelete: string[] = [];
   const listKeys = await redis.keys('processing-batches:list:*');
   if (listKeys.length) keysToDelete.push(...listKeys);
@@ -20,7 +19,8 @@ async function salesRoutes(fastify: FastifyInstance) {
     const authUser = (request as AuthenticatedRequest).user;
     try {
       const userId = authUser.id;
-      const { processingBatchId, processingStageId, quantitySold, dateOfSale } = createSaleSchema.parse(request.body);
+      const parsedSaleData = createSaleSchema.parse(request.body);
+      const { processingBatchId, processingStageId, quantitySold, dateOfSale } = parsedSaleData;
 
       const stage = await prisma.processingStage.findUnique({
         where: { id: processingStageId },
@@ -49,7 +49,13 @@ async function salesRoutes(fastify: FastifyInstance) {
       }
 
       const newSale = await prisma.sale.create({
-        data: { processingBatchId, processingStageId, quantitySold, dateOfSale, createdById: userId },
+        data: {
+          processingBatchId,
+          processingStageId,
+          quantitySold,
+          dateOfSale,
+          createdById: userId,
+        },
       });
 
       await invalidateSalesCache(processingBatchId);
@@ -61,6 +67,7 @@ async function salesRoutes(fastify: FastifyInstance) {
     }
   });
 
+  // GET route remains the same
   fastify.get('/', { preHandler: [verifyAdmin] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { processingBatchId, processingStageId } = request.query as {
       processingBatchId?: string;

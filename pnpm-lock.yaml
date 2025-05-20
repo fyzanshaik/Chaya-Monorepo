@@ -72,6 +72,9 @@ importers:
       uploadthing:
         specifier: ^7.6.0
         version: 7.6.0(fastify@5.3.0)(tailwindcss@4.1.4)
+      uuid:
+        specifier: ^11.1.0
+        version: 11.1.0
     devDependencies:
       '@types/bcryptjs':
         specifier: ^2.4.6
@@ -173,6 +176,12 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
+      eslint:
+        specifier: ^9.20.1
+        version: 9.24.0(jiti@2.4.2)
+      eslint-plugin-prettier:
+        specifier: ^5.2.6
+        version: 5.2.6(eslint-config-prettier@9.1.0(eslint@9.24.0(jiti@2.4.2)))(eslint@9.24.0(jiti@2.4.2))(prettier@3.5.3)
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -240,12 +249,18 @@ importers:
       '@types/bcrypt':
         specifier: ^5.0.2
         version: 5.0.2
+      eslint:
+        specifier: ^9.20.1
+        version: 9.24.0(jiti@2.4.2)
       prisma:
         specifier: ^6.6.0
         version: 6.6.0(typescript@5.8.3)
       typescript:
         specifier: ^5.3.3
         version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.1
+        version: 8.30.1(eslint@9.24.0(jiti@2.4.2))(typescript@5.8.3)
 
   packages/typescript-config: {}
 
@@ -375,12 +390,24 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      eslint:
+        specifier: ^9.20.1
+        version: 9.24.0(jiti@2.4.2)
+      eslint-plugin-react:
+        specifier: ^7.37.4
+        version: 7.37.5(eslint@9.24.0(jiti@2.4.2))
+      eslint-plugin-react-hooks:
+        specifier: ^5.1.0
+        version: 5.2.0(eslint@9.24.0(jiti@2.4.2))
       tailwindcss:
         specifier: ^4.0.8
         version: 4.1.4
       typescript:
         specifier: ^5.7.3
         version: 5.8.3
+      typescript-eslint:
+        specifier: ^8.24.1
+        version: 8.30.1(eslint@9.24.0(jiti@2.4.2))(typescript@5.8.3)
 
 packages:
 
@@ -4020,6 +4047,10 @@ packages:
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
+
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
 
   uzip@0.20201231.0:
     resolution: {integrity: sha512-OZeJfZP+R0z9D6TmBgLq2LHzSSptGMGDGigGiEe0pr8UBe/7fdflgHlHBNDASTXB5jnFuxHpNaJywSg8YFeGng==}
@@ -7999,6 +8030,8 @@ snapshots:
       '@types/react': 19.1.2
 
   util-deprecate@1.0.2: {}
+
+  uuid@11.1.0: {}
 
   uzip@0.20201231.0: {}
 

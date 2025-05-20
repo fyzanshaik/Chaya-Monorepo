@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Cookie: `token=${token}`, // Forward the auth cookie
+        Cookie: `token=${token}`,
       },
       body: JSON.stringify(body),
     });
@@ -35,41 +35,9 @@ export async function POST(request: Request) {
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     console.error('Error in Next.js POST /api/processing-batches route:', error);
-    return new NextResponse(JSON.stringify({ error: 'Internal server error in Next.js API' }), { status: 500 });
-  }
-}
-
-export async function GET(request: Request) {
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
-
-    if (!token) {
-      return new NextResponse(JSON.stringify({ error: 'Authentication required' }), { status: 401 });
+    if (error instanceof Response) {
+      return error;
     }
-
-    const { searchParams } = new URL(request.url);
-    // query, page, limit, status are passed through
-
-    const response = await fetch(`${BACKEND_URL}/api/processing-batches?${searchParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        Cookie: `token=${token}`,
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return new NextResponse(
-        JSON.stringify({ error: data.error || 'Failed to fetch processing batches from backend' }),
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json(data, { status: response.status });
-  } catch (error) {
-    console.error('Error in Next.js GET /api/processing-batches route:', error);
     return new NextResponse(JSON.stringify({ error: 'Internal server error in Next.js API' }), { status: 500 });
   }
 }
