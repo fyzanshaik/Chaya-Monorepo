@@ -10,7 +10,8 @@
     "run-b": "next build && next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "pnpm --filter @chaya/shared db:generate"
   },
   "dependencies": {
     "@chaya/shared": "workspace:*",
