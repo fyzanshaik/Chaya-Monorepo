@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:backend": "turbo build --filter='!web'",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "server": "pnpm --filter web start & pnpm --filter api start",
