@@ -3,7 +3,7 @@ import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Button } from '@workspace/ui/components/button';
 import { formatDate } from './utils';
 import { Farmer } from '@chaya/shared';
-import { Eye, FileUser } from 'lucide-react';
+import { FileUser } from 'lucide-react';
 
 export const columns: ColumnDef<Farmer>[] = [
   {

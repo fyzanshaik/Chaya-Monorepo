@@ -44,7 +44,7 @@ export function SelectCriteriaStep() {
 
   useEffect(() => {
     if (setForm) {
-      setForm(form as any);
+      setForm(form);
     }
     return () => {
       if (setForm) {
@@ -65,8 +65,8 @@ export function SelectCriteriaStep() {
       <CardHeader>
         <CardTitle>Step 1: Select Initial Criteria (Optional)</CardTitle>
         <CardDescription>
-          Specify Crop and/or Lot Number to pre-filter procurements. If both are left blank, you'll define criteria
-          based on your first procurement choice in the next step. To pre-filter, at least one field must be entered.
+          Specify Crop and/or Lot Number to pre-filter procurements. If both are left blank, youll define criteria based
+          on your first procurement choice in the next step. To pre-filter, at least one field must be entered.
         </CardDescription>
       </CardHeader>
       <CardContent>

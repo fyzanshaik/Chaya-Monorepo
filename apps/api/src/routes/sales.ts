@@ -1,17 +1,14 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { prisma, Prisma } from '@chaya/shared';
+import { prisma, Prisma, createSaleSchema } from '@chaya/shared';
 import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
-import { createSaleSchema } from '@chaya/shared';
-import Redis from 'ioredis';
-
-const redis = new Redis();
+import redisClient from '../lib/upstash-redis';
 
 async function invalidateSalesCache(batchId?: number | string) {
   const keysToDelete: string[] = [];
-  const listKeys = await redis.keys('processing-batches:list:*');
+  const listKeys = await redisClient.keys('processing-batches:list:*');
   if (listKeys.length) keysToDelete.push(...listKeys);
   if (batchId) keysToDelete.push(`processing-batch:${batchId}`);
-  if (keysToDelete.length) await redis.del(...keysToDelete);
+  if (keysToDelete.length) await redisClient.del(...keysToDelete);
 }
 
 async function salesRoutes(fastify: FastifyInstance) {
@@ -39,8 +36,8 @@ async function salesRoutes(fastify: FastifyInstance) {
         _sum: { quantitySold: true },
         where: { processingStageId: stage.id },
       });
-      const alreadySoldFromStage = salesFromThisStage._sum.quantitySold || 0;
-      const availableFromStage = (stage.quantityAfterProcess || 0) - alreadySoldFromStage;
+      const alreadySoldFromStage = salesFromThisStage._sum.quantitySold ?? 0;
+      const availableFromStage = (stage.quantityAfterProcess ?? 0) - alreadySoldFromStage;
 
       if (availableFromStage < quantitySold) {
         return reply.status(400).send({

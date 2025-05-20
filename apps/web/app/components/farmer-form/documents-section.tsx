@@ -1,7 +1,7 @@
 'use client';
 
 import { useFormContext } from 'react-hook-form';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@workspace/ui/components/form';
+import { FormControl, FormField, FormItem, FormMessage } from '@workspace/ui/components/form';
 import { DocumentUploader } from '../upload/document-uploader';
 
 export function DocumentsSection() {

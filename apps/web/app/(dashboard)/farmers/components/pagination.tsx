@@ -30,7 +30,9 @@ export default function Pagination({ query }: PaginationProps) {
         const pages = await fetchTotalPages(query);
         setTotalPages(pages);
       } catch (error) {
-        toast.error('Failed to load pagination data. Please try again.');
+        toast.error('Failed to load pagination data. Please try again.', {
+          description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        });
       } finally {
         setLoading(false);
       }

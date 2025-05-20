@@ -60,9 +60,11 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
       }
 
       setShowDeleteDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred while deleting the procurement.';
       toast.error('Error', {
-        description: error.message || 'An unexpected error occurred while deleting the procurement.',
+        description: errorMessage,
       });
     } finally {
       setIsDeleting(false);

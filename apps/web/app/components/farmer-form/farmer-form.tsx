@@ -57,14 +57,17 @@ export function FarmerForm({ mode, open, onOpenChange, farmerId }: FarmerFormPro
       console.log('Data changed event dispatched after successful form submission');
 
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting form:', error);
-      console.error('Error response:', error.response?.data);
-
-      if (error.response?.status === 401) {
-        toast.error('Your session has expired. Please log in again.');
+      if (axios.isAxiosError(error)) {
+        console.error('Error response:', error.response?.data);
+        if (error.response?.status === 401) {
+          toast.error('Your session has expired. Please log in again.');
+        } else {
+          toast.error(`Error: ${error.response?.data?.error || error.message || 'Something went wrong'}`);
+        }
       } else {
-        toast.error(`Error: ${error.response?.data?.error || error.message || 'Something went wrong'}`);
+        toast.error('Something went wrong');
       }
     } finally {
       setIsSubmitting(false);

@@ -94,6 +94,9 @@ export function DocumentUploader({ endpoint, value, onChange, label }: DocumentU
 
         return processedFiles;
       } catch (error) {
+        if (error instanceof Error) {
+          throw error;
+        }
         throw new Error('File processing failed');
       }
     },

@@ -1,20 +1,16 @@
 'use client';
 
 import { Button } from '@workspace/ui/components/button';
-import { FileDown, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import { FarmerFormDialog } from './farmer-form-dialog';
 import { useAuth } from '@/app/providers/auth-provider';
 
 export default function FarmersHeader() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  useAuth();
+  //const isAdmin = user?.role === 'ADMIN';
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-
-  const handleExport = () => {
-    console.log('Export data clicked');
-  };
 
   return (
     <div className="flex items-center justify-between">

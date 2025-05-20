@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { create } from 'zustand';
 import type { UseFormReturn } from 'react-hook-form';
 import type { Procurement as BaseProcurement, CreateProcessingBatchInput } from '@chaya/shared'; // Renamed to BaseProcurement

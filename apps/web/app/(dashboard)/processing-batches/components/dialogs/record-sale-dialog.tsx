@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createSaleFormSchema,
@@ -30,6 +30,7 @@ import { format } from 'date-fns'; // Removed unused 'parse'
 import { toast } from 'sonner';
 import axios from 'axios';
 import { z } from 'zod';
+import { AxiosError } from 'axios';
 
 type SaleFormDialogValues = z.infer<typeof createSaleFormSchema>;
 
@@ -115,9 +116,15 @@ export function RecordSaleDialog({
       );
       onSuccess(); // This should trigger a refresh in the table
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error recording sale:', error);
-      toast.error(`Error: ${error.response?.data?.error || 'Failed to record sale'}`);
+      if (error instanceof AxiosError) {
+        toast.error(`Error: ${error.response?.data?.error || error.message || 'Failed to record sale'}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message || 'Failed to record sale'}`);
+      } else {
+        toast.error('Failed to record sale');
+      }
     } finally {
       setIsSubmitting(false);
     }

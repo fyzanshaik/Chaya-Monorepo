@@ -1,20 +1,23 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { prisma, Prisma, ProcessingStageStatus } from '@chaya/shared';
+import {
+  prisma,
+  ProcessingStageStatus,
+  createProcessingStageSchema,
+  finalizeProcessingStageSchema,
+  createDryingEntrySchema,
+} from '@chaya/shared';
 import { authenticate, type AuthenticatedRequest } from '../middlewares/auth';
-import { createProcessingStageSchema, finalizeProcessingStageSchema, createDryingEntrySchema } from '@chaya/shared';
-import Redis from 'ioredis';
-
-const redis = new Redis();
+import redisClient from '../lib/upstash-redis';
 
 async function invalidateStageRelatedCache(batchId?: number | string, stageId?: number | string) {
   const keysToDelete: string[] = [];
-  const listKeys = await redis.keys('processing-batches:list:*'); // Invalidate general list
+  const listKeys = await redisClient.keys('processing-batches:list:*'); // Invalidate general list
   if (listKeys.length) keysToDelete.push(...listKeys);
   if (batchId) {
     keysToDelete.push(`processing-batch:${batchId}`); // Invalidate specific batch detail
   }
   // No specific stage cache assumed, but if added, invalidate here.
-  if (keysToDelete.length) await redis.del(...keysToDelete);
+  if (keysToDelete.length) await redisClient.del(...keysToDelete);
 }
 
 async function processingStageRoutes(fastify: FastifyInstance) {

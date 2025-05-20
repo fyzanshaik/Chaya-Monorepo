@@ -20,6 +20,7 @@ import axios from 'axios';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { getDryingEntriesForStage } from '../../lib/actions';
+import { AxiosError } from 'axios';
 
 interface AddDryingDialogProps {
   processingStageId: number;
@@ -67,8 +68,14 @@ export function AddDryingDialog({
           form.setValue('day', nextDay);
           const lastEntry = entries.sort((a: { day: number }, b: { day: number }) => b.day - a.day)[0];
           form.setValue('currentQuantity', lastEntry ? lastEntry.currentQuantity : 0);
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to load existing drying entries.');
+        } catch (error) {
+          if (error instanceof AxiosError) {
+            toast.error(error.response?.data?.error || error.message || 'Failed to load existing drying entries.');
+          } else if (error instanceof Error) {
+            toast.error(error.message || 'Failed to load existing drying entries.');
+          } else {
+            toast.error('Failed to load existing drying entries.');
+          }
         } finally {
           setIsLoadingEntries(false);
         }
@@ -91,9 +98,15 @@ export function AddDryingDialog({
         processingStageId,
         currentQuantity: data.currentQuantity,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding drying data:', error);
-      toast.error(`Error: ${error.response?.data?.error || 'Failed to add drying data'}`);
+      if (error instanceof AxiosError) {
+        toast.error(`Error: ${error.response?.data?.error || error.message || 'Failed to add drying data'}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message || 'Failed to add drying data'}`);
+      } else {
+        toast.error('Failed to add drying data');
+      }
     } finally {
       setIsSubmitting(false);
     }

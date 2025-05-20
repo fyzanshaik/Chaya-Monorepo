@@ -109,9 +109,13 @@ export function FinalizeStageDialog({
       document.dispatchEvent(new CustomEvent('processingBatchDataChanged'));
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error finalizing stage:', error);
-      toast.error(`Error: ${error.message || 'Failed to finalize stage'}`);
+      if (error instanceof Error) {
+        toast.error(`Error: ${error.message || 'Failed to finalize stage'}`);
+      } else {
+        toast.error('Failed to finalize stage');
+      }
     } finally {
       setIsSubmitting(false);
     }

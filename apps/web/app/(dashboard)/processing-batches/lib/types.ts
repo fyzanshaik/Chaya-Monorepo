@@ -27,7 +27,7 @@ export interface ProcessingBatchWithSummary
   netAvailableQuantity: number;
 }
 
-export interface SaleSummaryForStage extends Pick<Sale, 'id' | 'quantitySold' | 'dateOfSale'> {}
+export type SaleSummaryForStage = Pick<Sale, 'id' | 'quantitySold' | 'dateOfSale'>;
 
 export interface ProcessingStageWithDetails extends ProcessingStage {
   dryingEntries: Drying[];

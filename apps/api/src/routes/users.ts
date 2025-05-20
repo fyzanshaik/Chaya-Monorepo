@@ -1,20 +1,16 @@
 import type { FastifyInstance } from 'fastify';
-import { prisma } from '@chaya/shared';
+import { prisma, updateUserSchema } from '@chaya/shared';
 import { verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
-import { updateUserSchema } from '@chaya/shared';
 import { hashPassword } from '../lib/password';
-import Redis from 'ioredis';
-
-const redis = new Redis();
+import redisClient from '../lib/upstash-redis';
 
 async function userRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: verifyAdmin }, async (request, reply) => {
-    const cacheKey = 'users:all';
     try {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return { users: JSON.parse(cached) };
-      }
+      // const cached = await redis.get(cacheKey);
+      // if (cached) {
+      //   return { users: JSON.parse(cached) };
+      // }
       const users = await prisma.user.findMany({
         select: {
           id: true,
@@ -28,7 +24,6 @@ async function userRoutes(fastify: FastifyInstance) {
         },
         orderBy: { createdAt: 'desc' },
       });
-      await redis.set(cacheKey, JSON.stringify(users), 'EX', 3600);
       return { users };
     } catch (error) {
       return reply.status(500).send({ error: 'Server error' });
@@ -39,7 +34,7 @@ async function userRoutes(fastify: FastifyInstance) {
     const { id } = request.params as { id: string };
     const cacheKey = `users:${id}`;
     try {
-      const cached = await redis.get(cacheKey);
+      const cached = await redisClient.get(cacheKey);
       if (cached) {
         return { user: JSON.parse(cached) };
       }
@@ -59,7 +54,7 @@ async function userRoutes(fastify: FastifyInstance) {
       if (!user) {
         return reply.status(404).send({ error: 'User not found' });
       }
-      await redis.set(cacheKey, JSON.stringify(user), 'EX', 3600);
+      await redisClient.set(cacheKey, JSON.stringify(user), 'EX', 3600);
       return { user };
     } catch (error) {
       return reply.status(500).send({ error: 'Server error' });
@@ -97,8 +92,8 @@ async function userRoutes(fastify: FastifyInstance) {
           updatedAt: true,
         },
       });
-      await redis.del(`users:${id}`);
-      await redis.del('users:all');
+      await redisClient.del(`users:${id}`);
+      await redisClient.del('users:all');
       return { user: updatedUser };
     } catch (error) {
       return reply.status(400).send({ error: 'Invalid request' });
@@ -126,8 +121,8 @@ async function userRoutes(fastify: FastifyInstance) {
           isEnabled: true,
         },
       });
-      await redis.del(`users:${id}`);
-      await redis.del('users:all');
+      await redisClient.del(`users:${id}`);
+      await redisClient.del('users:all');
       return { user: updatedUser };
     } catch (error) {
       return reply.status(500).send({ error: 'Server error' });
@@ -149,8 +144,8 @@ async function userRoutes(fastify: FastifyInstance) {
       await prisma.user.delete({
         where: { id: parseInt(id) },
       });
-      await redis.del(`users:${id}`);
-      await redis.del('users:all');
+      await redisClient.del(`users:${id}`);
+      await redisClient.del('users:all');
       return { success: true };
     } catch (error) {
       return reply.status(500).send({ error: 'Server error' });

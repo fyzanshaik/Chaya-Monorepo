@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Badge } from '@workspace/ui/components/badge';
 import { getUnbatchedProcurementsAction } from '@/app/(dashboard)/procurements/lib/actions';
+import { AxiosError } from 'axios';
 
 interface DisplayProcurement extends ProcurementWithFarmerForStore {
   isSelectableBasedOnLock: boolean;
@@ -44,9 +45,16 @@ export function SelectProcurementsStep() {
 
         const procurementsData = await getUnbatchedProcurementsAction(params);
         setAvailableProcurements(procurementsData);
-      } catch (error: any) {
-        console.error('Error fetching unbatched procurements:', error);
-        toast.error(error.message || 'Failed to load unbatched procurements.');
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          console.error('Error fetching unbatched procurements:', error);
+          toast.error('Failed to load unbatched Procurements', {
+            description: error.response?.data?.error || error.message,
+          });
+        } else {
+          console.error('Error fetching unbatched procurements:', error);
+          toast.error('Failed to load unbatched Procurements');
+        }
         setAvailableProcurements([]);
       } finally {
         setIsLoading(false);
@@ -96,17 +104,21 @@ export function SelectProcurementsStep() {
     toggleSelectedProcurement(procurement);
   };
 
+  const getDescription = () => {
+    if (filterCriteriaLocked) {
+      return `Select procurements for batch: Crop: ${lockedCrop}, Lot: ${lockedLotNo}, Form: ${lockedProcuredForm}.`;
+    }
+    if (initialCrop || initialLotNo) {
+      return `Showing initial procurements for: ${initialCrop || 'Any Crop'}, Lot: ${initialLotNo || 'Any Lot'}. First selection will lock full criteria.`;
+    }
+    return `Select your first procurement to set the Crop, Lot No, and Procured Form for this batch.`;
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Step 2: Select Procurements</CardTitle>
-        <CardDescription>
-          {filterCriteriaLocked
-            ? `Select procurements for batch: Crop: ${lockedCrop}, Lot: ${lockedLotNo}, Form: ${lockedProcuredForm}.`
-            : initialCrop || initialLotNo
-              ? `Showing initial procurements for: ${initialCrop || 'Any Crop'}, Lot: ${initialLotNo || 'Any Lot'}. First selection will lock full criteria.`
-              : `Select your first procurement to set the Crop, Lot No, and Procured Form for this batch.`}
-        </CardDescription>
+        <CardDescription>{getDescription()}</CardDescription>
         {filterCriteriaLocked && (
           <div className="mt-2 flex flex-wrap gap-2">
             <Badge variant="secondary">Crop: {lockedCrop}</Badge>

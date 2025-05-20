@@ -34,12 +34,16 @@ async function registerPlugins() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
 
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+
   await fastify.register(jwt, {
-    secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+    secret: process.env.JWT_SECRET,
   });
 
   await fastify.register(cookie, {
-    secret: process.env.COOKIE_SECRET || 'cookie-secret-change-in-production',
+    secret: process.env.COOKIE_SECRET,
     hook: 'onRequest',
   });
 }

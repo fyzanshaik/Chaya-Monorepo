@@ -20,7 +20,7 @@ export function ReviewSection() {
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <dt className="text-sm font-medium text-muted-foreground">Name</dt>
-              <dd className="text-sm">{farmer.name || 'N/A'}</dd>
+              <dd className="text-sm">{farmer.name ?? 'N/A'}</dd>
             </div>
             {/* <div>
 							<dt className="text-sm font-medium text-muted-foreground">Survey Number</dt>
@@ -150,6 +150,7 @@ export function ReviewSection() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {fields?.map((field: any, index: number) => (
               <Card key={index}>
                 <CardHeader>

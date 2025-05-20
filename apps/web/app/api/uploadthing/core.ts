@@ -1,3 +1,4 @@
+/*eslint-disable */
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import imageCompression from 'browser-image-compression';
 

@@ -11,8 +11,8 @@ import { FirstStageDetailsStep } from './components/first-stage-details-step';
 import { ReviewAndSubmitStep } from './components/review-submit-step';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import type { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form'; // Import types for error messages
+import axios, { AxiosError } from 'axios';
+import type { FieldErrorsImpl } from 'react-hook-form';
 
 export default function AddProcessingBatchPage() {
   const router = useRouter();
@@ -21,8 +21,8 @@ export default function AddProcessingBatchPage() {
     goToNextStep,
     goToPreviousTab,
     setInitialCriteria,
-    initialCrop, // Use initial for criteria step
-    initialLotNo, // Use initial for criteria step
+    // initialCrop, // Use initial for criteria step
+    // initialLotNo, // Use initial for criteria step
     selectedProcurementIds,
     firstStageDetails,
     isSubmitting,
@@ -49,6 +49,7 @@ export default function AddProcessingBatchPage() {
 
   const currentStepConfig = steps.find(s => s.id === activeStep);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getFirstErrorMessage = (errors: Partial<Readonly<FieldErrorsImpl<any>>>): string | undefined => {
     if (errors.crop && typeof errors.crop.message === 'string') return errors.crop.message;
     if (errors.lotNo && typeof errors.lotNo.message === 'string') return errors.lotNo.message;
@@ -110,9 +111,19 @@ export default function AddProcessingBatchPage() {
         p1DateString = p1Date.toISOString();
       } else if (typeof p1Date === 'string') {
         try {
-          p1DateString = new Date(p1Date).toISOString();
-        } catch (e) {
-          /* will be caught below */
+          const parsedDate = new Date(p1Date);
+          if (isNaN(parsedDate.getTime())) {
+            throw new Error('Invalid date');
+          }
+          p1DateString = parsedDate.toISOString();
+        } catch (error) {
+          if (error instanceof Error) {
+            toast.error(`Invalid date format: ${error.message}`);
+          } else {
+            toast.error('P1 Date of Processing is missing or invalid.');
+          }
+          setIsSubmitting(false);
+          return;
         }
       }
 
@@ -161,13 +172,14 @@ export default function AddProcessingBatchPage() {
       } else {
         throw new Error(response.data.error || 'Failed to create processing batch');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating processing batch:', error);
       const errorMsg =
-        error.response?.data?.details?.[0]?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        'Something went wrong';
+        error instanceof AxiosError
+          ? error.response?.data?.details?.[0]?.message || error.response?.data?.error || error.message
+          : error instanceof Error
+            ? error.message
+            : 'Something went wrong';
       toast.error(`Error: ${errorMsg}`);
     } finally {
       setIsSubmitting(false);

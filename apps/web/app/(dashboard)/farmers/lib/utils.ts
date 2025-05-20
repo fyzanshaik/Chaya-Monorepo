@@ -1,4 +1,4 @@
-import { Gender, Relationship } from '@prisma/client';
+import { Gender, Relationship } from '@chaya/shared';
 
 /**
  * Format a date object or string to a localized date string

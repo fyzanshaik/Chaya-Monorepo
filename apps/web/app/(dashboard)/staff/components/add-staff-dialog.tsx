@@ -1,4 +1,3 @@
-// app/staff/components/add-staff-dialog.tsx
 'use client';
 
 import { useState } from 'react';
@@ -13,7 +12,6 @@ import { Input } from '@workspace/ui/components/input';
 import { Button } from '@workspace/ui/components/button';
 import { toast } from 'sonner';
 
-// Form schema for validation
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -26,9 +24,10 @@ type FormValues = z.infer<typeof formSchema>;
 interface AddStaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onStaffAdded: () => void;
 }
 
-export function AddStaffDialog({ open, onOpenChange }: AddStaffDialogProps) {
+export function AddStaffDialog({ open, onOpenChange, onStaffAdded }: AddStaffDialogProps) {
   const axiosConfig = {
     withCredentials: true,
     headers: {
@@ -55,8 +54,10 @@ export function AddStaffDialog({ open, onOpenChange }: AddStaffDialogProps) {
       toast.success('Staff member added successfully');
       form.reset();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error('Failed to add staff member', error);
+      onStaffAdded();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add staff member';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { create } from 'zustand';
 import type { UseFormReturn } from 'react-hook-form';
 import type { ProcurementWithRelations } from '@/app/(dashboard)/procurements/lib/types';

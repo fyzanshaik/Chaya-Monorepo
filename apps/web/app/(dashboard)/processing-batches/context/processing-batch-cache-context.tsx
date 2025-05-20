@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { ProcessingBatchWithSummary, ProcessingBatchWithDetails } from '../lib/types';
 import { toast } from 'sonner';
 import { getProcessingBatchDetailsById, getProcessingBatchesList } from '../lib/actions';
@@ -47,8 +47,9 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         setProcessingBatchesSummary(prev => ({ ...prev, [key]: data.processingBatches }));
         setTotalPages(prev => ({ ...prev, [`${query}:${statusFilter}`]: data.pagination.totalPages }));
         return data.processingBatches;
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to fetch processing batches summary.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch processing batches summary.';
+        toast.error(errorMessage);
         throw error;
       }
     },
@@ -66,8 +67,9 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         const pages = data.pagination.totalPages;
         setTotalPages(prev => ({ ...prev, [key]: pages }));
         return pages;
-      } catch (error: any) {
-        toast.error(error.message || 'Failed to fetch pagination data.');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to fetch pagination data.';
+        toast.error(errorMessage);
         return 1;
       }
     },
@@ -83,8 +85,10 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         setProcessingBatchesSummary(prev => ({ ...prev, [key]: data.processingBatches }));
         setTotalPages(prev => ({ ...prev, [`${query}:${statusFilter}`]: data.pagination.totalPages }));
         return data.processingBatches;
-      } catch (error: any) {
-        toast.error(error.message || `Failed to refresh batches data for page ${page}.`);
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : `Failed to refresh batches data for page ${page}.`;
+        toast.error(errorMessage);
         throw error;
       }
     },
@@ -100,8 +104,10 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
         const batchData = await getProcessingBatchDetailsById(batchId);
         setBatchDetailsCache(prev => ({ ...prev, [batchId]: batchData }));
         return batchData;
-      } catch (error: any) {
-        toast.error(error.message || `Failed to fetch details for batch ID ${batchId}.`);
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : `Failed to fetch details for batch ID ${batchId}.`;
+        toast.error(errorMessage);
         return null;
       }
     },
@@ -126,22 +132,30 @@ export function ProcessingBatchCacheProvider({ children }: { children: React.Rea
     toast.info('Processing batches cache cleared.');
   }, [setProcessingBatchesSummary, setTotalPages, setBatchDetailsCache]);
 
-  return (
-    <ProcessingBatchCacheContext.Provider
-      value={{
-        processingBatchesSummary,
-        totalPages,
-        fetchProcessingBatchesSummary,
-        fetchTotalPages,
-        clearCache,
-        refreshCurrentPageSummary,
-        getBatchDetails,
-        clearBatchDetailCache,
-      }}
-    >
-      {children}
-    </ProcessingBatchCacheContext.Provider>
+  const value = useMemo(
+    () => ({
+      processingBatchesSummary,
+      totalPages,
+      fetchProcessingBatchesSummary,
+      fetchTotalPages,
+      clearCache,
+      refreshCurrentPageSummary,
+      getBatchDetails,
+      clearBatchDetailCache,
+    }),
+    [
+      processingBatchesSummary,
+      totalPages,
+      fetchProcessingBatchesSummary,
+      fetchTotalPages,
+      clearCache,
+      refreshCurrentPageSummary,
+      getBatchDetails,
+      clearBatchDetailCache,
+    ]
   );
+
+  return <ProcessingBatchCacheContext.Provider value={value}>{children}</ProcessingBatchCacheContext.Provider>;
 }
 
 export function useProcessingBatchCache() {

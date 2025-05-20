@@ -1,17 +1,12 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { hashPassword, verifyPassword } from '../lib/password';
-import { prisma } from '@chaya/shared';
-import { loginSchema, registerSchema } from '@chaya/shared';
-import { authenticate, verifyAdmin, type AuthenticatedRequest, type JWTPayload } from '../middlewares/auth'; // Use JWTPayload from here
-import type { FastifyRequest, FastifyReply } from 'fastify';
-
-// Interface JwtPayload (local) is removed, using JWTPayload from middlewares
-
+import { prisma, loginSchema, registerSchema } from '@chaya/shared';
+import { authenticate, verifyAdmin, type AuthenticatedRequest, type JWTPayload } from '../middlewares/auth';
+import redisClient from '../lib/upstash-redis';
 async function authRoutes(fastify: FastifyInstance) {
   fastify.post('/login', async (request, reply) => {
     try {
       const { email, password } = loginSchema.parse(request.body);
-
       const user = await prisma.user.findUnique({
         where: { email },
       });
@@ -35,7 +30,7 @@ async function authRoutes(fastify: FastifyInstance) {
         {
           id: user.id,
           role: user.role,
-        } as Omit<JWTPayload, 'iat' | 'exp'>, // Sign with core fields, iat/exp added by jwt.sign
+        } as Omit<JWTPayload, 'iat' | 'exp'>,
         {
           expiresIn: '7d',
         }
@@ -54,9 +49,10 @@ async function authRoutes(fastify: FastifyInstance) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // maxAge in milliseconds
+        maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-
+      const cacheKey = `users:all`;
+      await redisClient.del(cacheKey);
       return {
         user: {
           id: user.id,
@@ -82,7 +78,6 @@ async function authRoutes(fastify: FastifyInstance) {
             data: { isActive: false },
           });
         } catch (error) {
-          // Token might be invalid or expired, clear cookie anyway
           console.warn('Token verification error on logout:', error);
         }
       }
@@ -145,17 +140,15 @@ async function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.findUnique({
         where: { id: authRequest.user.id },
         select: {
-          // Select only necessary fields
           id: true,
           name: true,
           email: true,
           role: true,
-          isEnabled: true, // Good to check isEnabled on /me as well
+          isEnabled: true,
         },
       });
 
-      if (!user || !user.isEnabled) {
-        // If user somehow got disabled after token issuance but before expiry
+      if (!user?.isEnabled) {
         reply.clearCookie('token', {
           path: '/',
           httpOnly: true,

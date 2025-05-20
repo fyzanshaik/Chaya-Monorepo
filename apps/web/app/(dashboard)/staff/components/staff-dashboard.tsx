@@ -5,11 +5,15 @@ import { StaffTable } from './staff-table';
 import { AddStaffDialog } from './add-staff-dialog';
 import { Button } from '@workspace/ui/components/button';
 import { UserPlus } from 'lucide-react';
-// import { useAuth } from '@/app/providers/auth-provider';
 
 export function StaffDashboard() {
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
-  // const { user } = useAuth();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleStaffAdded = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-6 flex justify-between items-center border-b">
@@ -20,9 +24,9 @@ export function StaffDashboard() {
         </Button>
       </div>
 
-      <StaffTable />
+      <StaffTable key={refreshTrigger} />
 
-      <AddStaffDialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen} />
+      <AddStaffDialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen} onStaffAdded={handleStaffAdded} />
     </div>
   );
 }

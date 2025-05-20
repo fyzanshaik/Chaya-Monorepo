@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useProcessingBatchFormStore } from '@/app/stores/processing-batch-form';
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@work
 import { Label } from '@workspace/ui/components/label';
 import { Input } from '@workspace/ui/components/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@workspace/ui/components/select';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@workspace/ui/components/form'; // Assuming FormLabel is part of this
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@workspace/ui/components/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@workspace/ui/components/popover';
 import { Button } from '@workspace/ui/components/button';
 import { Calendar } from '@workspace/ui/components/calendar';
@@ -32,29 +32,29 @@ type FirstStageFormValues = z.infer<typeof firstStageFormStepSchema>;
 export function FirstStageDetailsStep() {
   const { firstStageDetails, setFirstStageDetails, form: zustandForm, setForm } = useProcessingBatchFormStore();
 
+  const getDateOfProcessing = (date: Date | string | null | undefined) => {
+    if (date instanceof Date) return date;
+    if (date) return new Date(date as string);
+    return new Date();
+  };
+
   const form = useForm<FirstStageFormValues>({
     resolver: zodResolver(firstStageFormStepSchema),
     defaultValues: {
       processMethod: firstStageDetails.processMethod || 'wet',
-      dateOfProcessing:
-        firstStageDetails.dateOfProcessing instanceof Date
-          ? firstStageDetails.dateOfProcessing
-          : firstStageDetails.dateOfProcessing
-            ? new Date(firstStageDetails.dateOfProcessing as string)
-            : new Date(),
+      dateOfProcessing: getDateOfProcessing(firstStageDetails.dateOfProcessing),
       doneBy: firstStageDetails.doneBy || '',
     },
   });
 
   useEffect(() => {
     if (zustandForm !== form) {
-      setForm(form as any);
+      setForm(form);
     }
     const zustandDate = firstStageDetails.dateOfProcessing;
     form.reset({
       processMethod: firstStageDetails.processMethod || 'wet',
-      dateOfProcessing:
-        zustandDate instanceof Date ? zustandDate : zustandDate ? new Date(zustandDate as string) : new Date(),
+      dateOfProcessing: getDateOfProcessing(zustandDate),
       doneBy: firstStageDetails.doneBy || '',
     });
   }, [firstStageDetails, form, zustandForm, setForm]);

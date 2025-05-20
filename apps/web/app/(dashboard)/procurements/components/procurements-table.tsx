@@ -78,8 +78,10 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       if (pagesToPrefetch.length > 0) {
         prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch procurements' data. Please try again.");
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch procurements' data. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -94,8 +96,9 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       setProcurements(freshData);
       toast.success('Data refreshed successfully');
       setRowSelection({});
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to refresh data. Please try again.');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh data. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setRefreshing(false);
     }
@@ -162,8 +165,10 @@ export default function ProcurementsTable({ query, currentPage }: ProcurementsTa
       }
 
       setShowBulkDeleteDialog(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete procurements. An unexpected error occurred.');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to delete procurements. An unexpected error occurred.';
+      toast.error(errorMessage);
     } finally {
       setIsDeleting(false);
     }

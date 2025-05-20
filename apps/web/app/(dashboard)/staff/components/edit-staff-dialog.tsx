@@ -67,8 +67,9 @@ export function EditStaffDialog({ user, open, onOpenChange, onUserUpdated }: Edi
       toast.success("Staff member's details updated successfully");
       onUserUpdated();
       onOpenChange(false);
-    } catch (error: any) {
-      toast.error("Failed to update staff member's details", error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to update staff member's details";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

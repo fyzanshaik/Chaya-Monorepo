@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import type { ProcessingBatchWithDetails, ProcessingBatchWithSummary } from './types';
-import type { Drying, CreateProcessingStageInput, FinalizeProcessingStageInput } from '@chaya/shared';
+import type { Drying, FinalizeProcessingStageInput } from '@chaya/shared';
 
 const BACKEND_API_URL = process.env.API_URL || 'http://localhost:5000';
 
@@ -35,9 +35,10 @@ export async function getProcessingBatchDetailsById(batchId: number): Promise<Pr
       );
     }
     return data as ProcessingBatchWithDetails;
-  } catch (error: any) {
-    console.error(`[Server Action Error] getProcessingBatchDetailsById(${batchId}):`, error.message);
-    throw new Error(error.message || 'Internal server error in server action.');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error in server action.';
+    console.error(`[Server Action Error] getProcessingBatchDetailsById(${batchId}):`, errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -61,9 +62,10 @@ export async function getDryingEntriesForStage(stageId: number): Promise<Drying[
       throw new Error(data.error || 'Failed to fetch drying entries');
     }
     return data.dryingEntries || [];
-  } catch (error: any) {
-    console.error(`[Server Action Error] getDryingEntriesForStage(${stageId}):`, error.message);
-    throw new Error(error.message || 'Internal server error fetching drying entries.');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error fetching drying entries.';
+    console.error(`[Server Action Error] getDryingEntriesForStage(${stageId}):`, errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -100,9 +102,11 @@ export async function getProcessingBatchesList(params: {
       throw new Error(data.error || 'Failed to fetch processing batches list from backend');
     }
     return data;
-  } catch (error: any) {
-    console.error('[Server Action Error] getProcessingBatchesList:', error.message);
-    throw new Error(error.message || 'Internal server error fetching processing batches list.');
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal server error fetching processing batches list.';
+    console.error('[Server Action Error] getProcessingBatchesList:', errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -134,8 +138,9 @@ export async function finalizeProcessingStageAction(
       throw new Error(data.error || `Failed to finalize stage ${stageId}`);
     }
     return data;
-  } catch (error: any) {
-    console.error(`[Server Action Error] finalizeProcessingStageAction(${stageId}):`, error.message);
-    throw new Error(error.message || 'Internal server error finalizing stage.');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error finalizing stage.';
+    console.error(`[Server Action Error] finalizeProcessingStageAction(${stageId}):`, errorMessage);
+    throw new Error(errorMessage);
   }
 }

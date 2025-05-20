@@ -22,6 +22,7 @@ import {
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { deleteFarmer } from '../lib/actions';
 import { toast } from 'sonner';
+import { AxiosError } from 'axios';
 
 interface FarmerContextMenuProps {
   children: React.ReactNode;
@@ -54,9 +55,15 @@ export function FarmerContextMenu({ children, farmer, onEdit, isAdmin }: FarmerC
 
       setShowDeleteDialog(false);
     } catch (error) {
-      toast.error('Error', {
-        description: 'An unexpected error occurred while deleting the farmer.',
-      });
+      if (error instanceof AxiosError) {
+        toast.error('Error deleting farmer', {
+          description: error.response?.data?.error || error.message,
+        });
+      } else {
+        toast.error('Error deleting farmer', {
+          description: 'An unexpected error occurred',
+        });
+      }
     } finally {
       setIsDeleting(false);
     }

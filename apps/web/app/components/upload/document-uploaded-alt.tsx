@@ -1,4 +1,3 @@
-// components/upload/document-uploader-alt.tsx
 'use client';
 
 import { useState } from 'react';
@@ -10,14 +9,14 @@ import { Button } from '@workspace/ui/components/button';
 type UploadEndpoint = 'profilePicture' | 'aadharDocument' | 'bankDocument' | 'landDocument';
 
 interface DocumentUploaderAltProps {
-  endpoint: UploadEndpoint;
-  value?: string;
-  onChange: (url: string) => void;
-  label: string;
-  accept?: string;
+  readonly endpoint: UploadEndpoint;
+  readonly value?: string;
+  readonly onChange: (url: string) => void;
+  readonly label: string;
+  //readonly accept?: string;
 }
 
-export function DocumentUploaderAlt({ endpoint, value, onChange, label, accept }: DocumentUploaderAltProps) {
+export function DocumentUploaderAlt({ endpoint, value, onChange, label }: DocumentUploaderAltProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

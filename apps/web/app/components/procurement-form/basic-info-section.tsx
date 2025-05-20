@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useFormContext, Controller, useWatch } from 'react-hook-form'; // Use useFormContext
-import { z } from 'zod';
+import { useFormContext, Controller } from 'react-hook-form'; // Use useFormContext
 import { Card, CardContent } from '@workspace/ui/components/card';
 import { Label } from '@workspace/ui/components/label';
 import { Input } from '@workspace/ui/components/input';
@@ -59,7 +58,7 @@ export function BasicInfoSection() {
     const fetchFarmers = async () => {
       setIsLoadingFarmers(true);
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000';
         const response = await axios.get(`${apiBaseUrl}/api/farmers`, {
           params: { limit: 1000, isActive: true },
           withCredentials: true,
@@ -109,7 +108,7 @@ export function BasicInfoSection() {
               render={({ field }) => (
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value || ''} // Ensure value is passed for controlled Select
+                  value={field.value ?? ''} // Ensure value is passed for controlled Select
                   // defaultValue={field.value} // Not needed if value is passed
                 >
                   <SelectTrigger>
@@ -135,7 +134,7 @@ export function BasicInfoSection() {
               render={({ field }) => (
                 <Select
                   onValueChange={field.onChange}
-                  value={field.value || ''} // Ensure value is passed
+                  value={field.value ?? ''} // Ensure value is passed
                   disabled={!watchedCrop || currentProcuredForms.length === 0}
                 >
                   <SelectTrigger>
@@ -159,7 +158,7 @@ export function BasicInfoSection() {
               control={control}
               name="speciality"
               render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value || ''}>
+                <Select onValueChange={field.onChange} value={field.value ?? ''}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select speciality" />
                   </SelectTrigger>

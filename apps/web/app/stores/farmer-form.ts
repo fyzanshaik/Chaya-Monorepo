@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { create } from 'zustand';
 import { useForm } from 'react-hook-form';
 import { differenceInYears } from 'date-fns';

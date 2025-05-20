@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { type CreateProcessingStageInput as BackendCreateProcessingStageInputType } from '@chaya/shared';
+import { AxiosError } from 'axios';
 
 import {
   Dialog,
@@ -94,9 +95,15 @@ export function StartNextStageDialog({
       toast.success(`Stage P${nextProcessingCount} for Batch ${batchCode} started successfully.`);
       onSuccess();
       onOpenChange(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error starting next stage:', error);
-      toast.error(`Error: ${error.response?.data?.error || 'Failed to start next stage'}`);
+      if (error instanceof AxiosError) {
+        toast.error(`Error: ${error.response?.data?.error || error.message || 'Failed to start next stage'}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message || 'Failed to start next stage'}`);
+      } else {
+        toast.error('Failed to start next stage');
+      }
     } finally {
       setIsSubmitting(false);
     }

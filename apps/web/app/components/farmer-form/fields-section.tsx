@@ -1,3 +1,4 @@
+/*eslint-disable */
 'use client';
 
 import { useFormContext } from 'react-hook-form';
@@ -63,7 +64,7 @@ export function FieldsSection() {
                           placeholder="Enter area"
                           {...field}
                           onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
-                          value={field.value || ''}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormMessage />

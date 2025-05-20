@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,7 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@workspace/ui/components/alert-dialog';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 // Import Dialogs
 import { BatchDetailsDialog } from './dialogs/batch-details-dialog'; // Ensure this is correctly imported
@@ -89,7 +89,12 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
         const data = await fetchProcessingBatchesSummary(page, q, status);
         setRecords(data);
       } catch (error) {
-        toast.error('Failed to load processing batches.');
+        if (error instanceof Error) {
+          console.error('Error loading batches:', error);
+          toast.error(`Failed to load processing batches: ${error.message}`);
+        } else {
+          toast.error('Failed to load processing batches.');
+        }
       } finally {
         setLoading(false);
       }
@@ -111,7 +116,12 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
         clearBatchDetailCache(selectedBatchForAction.id);
       }
     } catch (error) {
-      toast.error('Failed to refresh data.');
+      if (error instanceof Error) {
+        console.error('Error refreshing data:', error);
+        toast.error(`Failed to refresh data: ${error.message}`);
+      } else {
+        toast.error('Failed to refresh data.');
+      }
     } finally {
       setRefreshing(false);
     }
@@ -167,8 +177,14 @@ export default function ProcessingBatchesTable({ query, currentPage, statusFilte
       handleRefresh();
       // After deletion, the specific batch detail cache (if any) is no longer relevant.
       // It will naturally be gone if `handleRefresh` leads to its ID not being in the list.
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Failed to delete batch.');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.error || error.message || 'Failed to delete batch.');
+      } else if (error instanceof Error) {
+        toast.error(`Failed to delete batch: ${error.message}`);
+      } else {
+        toast.error('Failed to delete batch.');
+      }
     } finally {
       setIsDeleting(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { Button } from '@workspace/ui/components/button';
 import {
@@ -53,17 +53,34 @@ export function StaffTable() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { user } = useAuth();
-  const axiosConfig = {
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
+  useAuth();
+  const axiosConfig = useMemo(
+    () => ({
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }),
+    []
+  );
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get('http://localhost:5000/api/users', axiosConfig);
+      setUsers(response.data.users);
+      setFilteredUsers(response.data.users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Failed to fetch staff members');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [axiosConfig]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
@@ -80,19 +97,6 @@ export function StaffTable() {
       );
     }
   }, [searchQuery, users]);
-
-  const fetchUsers = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get('http://localhost:5000/api/users', axiosConfig);
-      setUsers(response.data.users);
-      setFilteredUsers(response.data.users);
-    } catch (error) {
-      toast.error('Failed to fetch staff members');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const refreshUsers = async () => {
     setIsRefreshing(true);
@@ -116,8 +120,9 @@ export function StaffTable() {
       await axios.delete(`http://localhost:5000/api/users/${userToDelete.id}`, axiosConfig);
       toast.success('Staff member deleted successfully');
       fetchUsers();
-    } catch (error: any) {
-      toast('Failed to delete staff member');
+    } catch (error: unknown) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete staff member');
     } finally {
       setIsDeleteDialogOpen(false);
       setUserToDelete(null);
@@ -130,7 +135,8 @@ export function StaffTable() {
     try {
       await axios.patch(`http://localhost:5000/api/users/${user.id}/toggle-status`, {}, axiosConfig);
       toast.success('Staff member status updated successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Error toggling user status:', error);
       setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u)));
       setFilteredUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: user.isEnabled } : u)));
       toast.error('Failed to update staff member status');

@@ -35,6 +35,7 @@ interface FarmerFormData {
   fields?: {
     areaHa: number;
     yieldEstimate: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     location: Record<string, any>;
     landDocumentUrl: string;
   }[];
@@ -102,6 +103,12 @@ export async function updateFarmer(userId: number, farmerId: number, formData: P
               create: documents,
               update: documents,
             },
+          },
+        }),
+        ...(fields && {
+          fields: {
+            deleteMany: {},
+            create: fields,
           },
         }),
       },

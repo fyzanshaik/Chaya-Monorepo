@@ -1,27 +1,22 @@
 import type { FastifyInstance } from 'fastify';
-import { prisma } from '@chaya/shared';
+import { prisma, Prisma, createFarmerSchema, updateFarmerSchema, farmerQuerySchema } from '@chaya/shared';
 import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
-import { createFarmerSchema, updateFarmerSchema, farmerQuerySchema } from '@chaya/shared';
-import { Prisma } from '@chaya/shared';
 import { generateSurveyNumber } from '../helper';
-import Redis from 'ioredis';
-
-const redis = new Redis();
-
+import redisClient from '../lib/upstash-redis';
 function getFarmersCacheKey(query: any) {
   return `farmers:list:${JSON.stringify(query)}`;
 }
 
 async function invalidateFarmersCache(id?: string) {
-  const keys = await redis.keys('farmers:list:*');
-  if (keys.length) await redis.del(...keys);
+  const keys = await redisClient.keys('farmers:list:*');
+  if (keys.length) await redisClient.del(...keys);
 }
 
 async function farmerRoutes(fastify: FastifyInstance) {
   fastify.get('/', { preHandler: authenticate }, async (request, reply) => {
     const query = farmerQuerySchema.parse(request.query);
     const cacheKey = getFarmersCacheKey(query);
-    const cached = await redis.get(cacheKey);
+    const cached = await redisClient.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
     const page = query.page || 1;
@@ -76,14 +71,14 @@ async function farmerRoutes(fastify: FastifyInstance) {
       },
     };
 
-    await redis.set(cacheKey, JSON.stringify(result), 'EX', 3600);
+    await redisClient.set(cacheKey, JSON.stringify(result), 'EX', 3600);
     return result;
   });
 
   fastify.get('/:id', { preHandler: authenticate }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const cacheKey = `farmers:${id}`;
-    const cached = await redis.get(cacheKey);
+    const cached = await redisClient.get(cacheKey);
     if (cached) return { farmer: JSON.parse(cached) };
 
     const farmer = await prisma.farmer.findUnique({
@@ -111,7 +106,7 @@ async function farmerRoutes(fastify: FastifyInstance) {
       return reply.status(404).send({ error: 'Farmer not found' });
     }
 
-    await redis.set(cacheKey, JSON.stringify(farmer), 'EX', 3600);
+    await redisClient.set(cacheKey, JSON.stringify(farmer), 'EX', 3600);
     return { farmer };
   });
 

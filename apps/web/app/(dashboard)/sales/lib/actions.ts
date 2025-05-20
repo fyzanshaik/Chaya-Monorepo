@@ -29,8 +29,9 @@ export async function getSalesList(searchParams?: URLSearchParams): Promise<Sale
       throw new Error(data.error || 'Failed to fetch sales list');
     }
     return data.sales || data || [];
-  } catch (error: any) {
-    console.error('[Server Action Error] getSalesList:', error.message);
-    throw new Error(error.message || 'Internal server error fetching sales list.');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error fetching sales list.';
+    console.error('[Server Action Error] getSalesList:', errorMessage);
+    throw new Error(errorMessage);
   }
 }

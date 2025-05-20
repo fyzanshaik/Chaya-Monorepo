@@ -36,9 +36,13 @@ export async function getProcurements({ page = 1, limit = 10, query = '' }: GetP
     });
 
     return response.data.procurements;
-  } catch (error: any) {
-    console.error('Error fetching procurements:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.error || error.message || 'Failed to fetch procurements');
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error fetching procurements:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || error.message || 'Failed to fetch procurements');
+    }
+    console.error('Error fetching procurements:', error);
+    throw new Error('Failed to fetch procurements');
   }
 }
 
@@ -66,9 +70,13 @@ export async function getProcurementPages(query = '') {
     const totalCount = response.data.pagination.totalCount;
     const totalPages = Math.ceil(totalCount / 10);
     return totalPages;
-  } catch (error: any) {
-    console.error('Error fetching procurement count:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.error || error.message || 'Failed to fetch procurement pages');
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error fetching procurement count:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || error.message || 'Failed to fetch procurement pages');
+    }
+    console.error('Error fetching procurement count:', error);
+    throw new Error('Failed to fetch procurement pages');
   }
 }
 
@@ -96,9 +104,10 @@ export async function bulkDeleteProcurements(ids: number[]) {
     }
 
     return { success: true };
-  } catch (error: any) {
-    console.error('Error bulk deleting procurements (server action):', error.message);
-    return { success: false, error: error.message || 'Unknown error during bulk delete' };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error during bulk delete';
+    console.error('Error bulk deleting procurements (server action):', errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -123,9 +132,10 @@ export async function deleteProcurementAction(id: number) {
       return { success: false, error: errorData.error || 'Failed to delete procurement' };
     }
     return { success: true };
-  } catch (error: any) {
-    console.error('Error deleting procurement (server action):', error.message);
-    return { success: false, error: error.message || 'Unknown error' };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error deleting procurement (server action):', errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -155,9 +165,11 @@ export async function getUnbatchedProcurementsAction(params?: {
       throw new Error(data.error || 'Failed to fetch unbatched procurements from backend');
     }
     return data.procurements || [];
-  } catch (error: any) {
-    console.error('[Server Action Error] getUnbatchedProcurementsAction:', error.message);
-    throw new Error(error.message || 'Internal server error fetching unbatched procurements.');
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal server error fetching unbatched procurements.';
+    console.error('[Server Action Error] getUnbatchedProcurementsAction:', errorMessage);
+    throw new Error(errorMessage);
   }
 }
 
@@ -189,8 +201,9 @@ export async function updateProcurementAction(
       throw new Error(data.error || `Failed to update procurement ${procurementId}`);
     }
     return data;
-  } catch (error: any) {
-    console.error(`[Server Action Error] updateProcurementAction(${procurementId}):`, error.message);
-    throw new Error(error.message || 'Internal server error updating procurement.');
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error updating procurement.';
+    console.error(`[Server Action Error] updateProcurementAction(${procurementId}):`, errorMessage);
+    throw new Error(errorMessage);
   }
 }

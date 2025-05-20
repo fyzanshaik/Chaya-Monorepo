@@ -1,18 +1,21 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { prisma, Prisma, ProcessingStageStatus as PrismaProcessingStageStatus } from '@chaya/shared';
+import {
+  prisma,
+  Prisma,
+  ProcessingStageStatus as PrismaProcessingStageStatus,
+  createProcessingBatchSchema,
+  processingBatchQuerySchema,
+} from '@chaya/shared';
 import { authenticate, verifyAdmin, type AuthenticatedRequest } from '../middlewares/auth';
-import { createProcessingBatchSchema, processingBatchQuerySchema } from '@chaya/shared';
 import { generateProcessingBatchCode } from '../helper';
-import Redis from 'ioredis';
-
-const redis = new Redis();
+import redisClient from '../lib/upstash-redis';
 
 async function invalidateProcessingCache(batchId?: number | string) {
   const keysToDelete: string[] = [];
-  const listKeys = await redis.keys('processing-batches:list:*');
+  const listKeys = await redisClient.keys('processing-batches:list:*');
   if (listKeys.length) keysToDelete.push(...listKeys);
   if (batchId) keysToDelete.push(`processing-batch:${batchId}`);
-  if (keysToDelete.length) await redis.del(...keysToDelete);
+  if (keysToDelete.length) await redisClient.del(...keysToDelete);
 }
 
 type ExtendedProcessingStageStatus = PrismaProcessingStageStatus | 'SOLD_OUT' | 'NO_STAGES';
@@ -113,11 +116,11 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
     const query = processingBatchQuerySchema.parse(request.query);
     const cacheKey = `processing-batches:list:${JSON.stringify(query)}`;
     try {
-      const cached = await redis.get(cacheKey);
+      const cached = await redisClient.get(cacheKey);
       if (cached) return JSON.parse(cached);
 
-      const page = query.page || 1;
-      const limit = query.limit || 10;
+      const page = query.page ?? 1;
+      const limit = query.limit ?? 10;
       const skip = (page - 1) * limit;
 
       let where: Prisma.ProcessingBatchWhereInput = {};
@@ -209,7 +212,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         processingBatches: paginatedBatches,
         pagination: { page, limit, totalCount: finalTotalCount, totalPages: Math.ceil(finalTotalCount / limit) },
       };
-      await redis.set(cacheKey, JSON.stringify(result), 'EX', 3600); // Cache for 1 hour
+      await redisClient.set(cacheKey, JSON.stringify(result), 'EX', 3600); // Cache for 1 hour
       return result;
     } catch (error: any) {
       if (error.issues) return reply.status(400).send({ error: 'Invalid query parameters', details: error.issues });
@@ -226,7 +229,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
 
     const cacheKey = `processing-batch:${id}`;
     try {
-      const cached = await redis.get(cacheKey);
+      const cached = await redisClient.get(cacheKey);
       if (cached) {
         try {
           const parsedCached = JSON.parse(cached);
@@ -352,7 +355,7 @@ async function processingBatchRoutes(fastify: FastifyInstance) {
         latestStageSummary: latestStageSummaryData,
       };
 
-      await redis.set(cacheKey, JSON.stringify(batchWithDetails), 'EX', 3600);
+      await redisClient.set(cacheKey, JSON.stringify(batchWithDetails), 'EX', 3600);
       return batchWithDetails;
     } catch (error) {
       console.error(`Error fetching batch ${id}:`, error);

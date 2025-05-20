@@ -1,9 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { prisma } from '@chaya/shared';
+import { prisma, fieldSchema } from '@chaya/shared';
 import { authenticate, verifyAdmin } from '../middlewares/auth';
 import type { AuthenticatedRequest } from '../middlewares/auth';
-
-import { fieldSchema } from '@chaya/shared';
 
 async function fieldRoutes(fastify: FastifyInstance) {
   fastify.get('/farmer/:farmerId', { preHandler: authenticate }, async (request, reply) => {

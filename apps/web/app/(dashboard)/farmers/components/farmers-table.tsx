@@ -12,7 +12,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
 import { columns, defaultVisibleColumns } from '../lib/columns';
 import { ColumnFilter } from './column-filter';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { useAuth } from '@/app/providers/auth-provider';
 import { FarmerContextMenu } from './farmer-context-menu';
@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner';
 import { useFarmersCache } from '../context/farmer-cache-context';
 import { FarmerWithRelations } from '../lib/types';
+import { AxiosError } from 'axios';
 
 interface FarmersTableProps {
   query: string;
@@ -66,7 +67,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
     return initialVisibility;
   });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchFarmers(currentPage, query);
@@ -79,13 +80,21 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
         prefetchPages(Math.min(...pagesToPrefetch), Math.max(...pagesToPrefetch), query);
       }
     } catch (error) {
-      toast.error("Failed to fetch farmers' data. Please try again.");
+      if (error instanceof AxiosError) {
+        toast.error("Failed to fetch farmers' data", {
+          description: error.response?.data?.error || error.message,
+        });
+      } else {
+        toast.error("Failed to fetch farmers' data", {
+          description: 'An unexpected error occurred',
+        });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchFarmers, prefetchPages, currentPage, query]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (refreshing) return;
 
     setRefreshing(true);
@@ -95,15 +104,23 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
       toast.success('Data refreshed successfully');
       setRowSelection({});
     } catch (error) {
-      toast.error('Failed to refresh data. Please try again.');
+      if (error instanceof AxiosError) {
+        toast.error('Failed to refresh data', {
+          description: error.response?.data?.error || error.message,
+        });
+      } else {
+        toast.error('Failed to refresh data', {
+          description: 'An unexpected error occurred',
+        });
+      }
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [refreshing, refreshCurrentPage, currentPage, query]);
 
   useEffect(() => {
     loadData();
-  }, [fetchFarmers, prefetchPages, currentPage, query]);
+  }, [fetchFarmers, prefetchPages, currentPage, query, loadData]);
 
   const table = useReactTable({
     data: farmers,
@@ -163,7 +180,15 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
 
       setShowBulkDeleteDialog(false);
     } catch (error) {
-      toast.error('Failed to delete farmers. An unexpected error occurred.');
+      if (error instanceof AxiosError) {
+        toast.error('Failed to delete farmers', {
+          description: error.response?.data?.error || error.message,
+        });
+      } else {
+        toast.error('Failed to delete farmers', {
+          description: 'An unexpected error occurred',
+        });
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -184,7 +209,7 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
       document.removeEventListener('viewFarmer', handleViewFarmerEvent as EventListener);
       document.removeEventListener('farmerDataChanged', handleDataChangeEvent as EventListener);
     };
-  }, [currentPage, query]);
+  }, [currentPage, query, handleRefresh]);
 
   const selectedCount = Object.keys(rowSelection).length;
 
@@ -197,14 +222,14 @@ export default function FarmersTable({ query, currentPage }: FarmersTableProps) 
         </div>
         <div className="rounded-md border">
           <div className="h-12 border-b bg-secondary px-4 flex items-center">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
+            {['name', 'phone', 'village', 'status', 'lastVisit', 'actions'].map(item => (
+              <div key={`header-${item}`} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
             ))}
           </div>
           {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="border-b px-4 py-4 flex items-center">
-              {Array.from({ length: 6 }).map((_, j) => (
-                <div key={j} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
+            <div key={`row-${i}`} className="border-b px-4 py-4 flex items-center">
+              {['name', 'phone', 'village', 'status', 'lastVisit', 'actions'].map(item => (
+                <div key={`cell-${i}-${item}`} className="h-4 bg-gray-200 rounded w-32 mx-4 animate-pulse"></div>
               ))}
             </div>
           ))}

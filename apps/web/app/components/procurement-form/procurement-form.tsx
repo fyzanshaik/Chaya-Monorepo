@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { updateProcurementAction } from '@/app/(dashboard)/procurements/lib/actions';
+import { AxiosError } from 'axios';
 
 interface ProcurementFormProps {
   mode: 'add' | 'edit';
@@ -136,16 +137,21 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
       onOpenChange(false);
       methods.reset();
       useProcurementFormStore.getState().initializeForm(null, 'add');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting form:', error);
-      const errorDetails = error.response?.data?.details;
-      let errorMessage = error.message || 'Something went wrong';
-      if (error.response?.data?.error) errorMessage = error.response.data.error;
+      if (error instanceof AxiosError) {
+        const errorDetails = error.response?.data?.details;
+        let errorMessage = error.response?.data?.error || error.message || 'Something went wrong';
 
-      if (errorDetails && Array.isArray(errorDetails)) {
-        errorMessage = errorDetails.map((detail: any) => `${detail.path.join('.')}: ${detail.message}`).join('; ');
+        if (errorDetails && Array.isArray(errorDetails)) {
+          errorMessage = errorDetails.map(detail => `${detail.path.join('.')}: ${detail.message}`).join('; ');
+        }
+        toast.error(`Error: ${errorMessage}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error('Something went wrong');
       }
-      toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
