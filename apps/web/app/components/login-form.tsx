@@ -13,7 +13,9 @@ import { cn } from '@workspace/ui/lib/utils';
 
 const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
 
-export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
+type LoginFormProps = Readonly<React.ComponentPropsWithoutRef<'form'>>;
+
+export function LoginForm({ className, ...props }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,7 +40,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Invalid credentials');
+        throw new Error(data.message ?? 'Invalid credentials');
       }
 
       const data = await response.json();
