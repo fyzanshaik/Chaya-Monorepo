@@ -11,8 +11,11 @@ import { Input } from '@workspace/ui/components/input';
 import { Button } from '@workspace/ui/components/button';
 import { cn } from '@workspace/ui/lib/utils';
 
-const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error('NEXT_PUBLIC_BACKEND_URL is not defined');
+}
 
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 type LoginFormProps = Readonly<React.ComponentPropsWithoutRef<'form'>>;
 
 export function LoginForm({ className, ...props }: LoginFormProps) {
