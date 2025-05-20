@@ -10,7 +10,7 @@ async function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.findUnique({
         where: { email },
       });
-
+      console.log(`Current NODE_ENV: ${process.env.NODE_ENV}`);
       if (!user) {
         return reply.status(401).send({ error: 'Invalid email or password' });
       }
@@ -60,6 +60,7 @@ async function authRoutes(fastify: FastifyInstance) {
           email: user.email,
           role: user.role,
         },
+        token: token,
       };
     } catch (error) {
       console.error('Login error:', error);
