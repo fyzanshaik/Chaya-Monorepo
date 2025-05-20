@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { clearSidebarCache } from '../(dashboard)/farmers/lib/sidebar-cache';
 
@@ -25,16 +25,20 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+interface AuthProviderProps {
+  readonly children: React.ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const API_BASE_URL = 'http://localhost:5000';
+  const BACKEND_API_URL = process.env.PROD_BACKEND_URL ?? 'http://localhost:5000';
 
   useEffect(() => {
     async function loadUserFromServer() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        const response = await fetch(`${BACKEND_API_URL}/api/auth/me`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
@@ -59,11 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadUserFromServer();
-  }, [router]);
+  }, [router, BACKEND_API_URL]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
-      await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      await fetch(`${BACKEND_API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -76,9 +80,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Failed to sign out:', error);
     }
-  };
+  }, [BACKEND_API_URL, router]);
 
-  return <AuthContext.Provider value={{ user, loading, setUser, signOut }}>{children}</AuthContext.Provider>;
+  const value = useMemo(() => ({ user, loading, setUser, signOut }), [user, loading, setUser, signOut]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

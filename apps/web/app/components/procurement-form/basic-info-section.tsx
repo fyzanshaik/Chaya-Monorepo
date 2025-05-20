@@ -35,6 +35,7 @@ export function BasicInfoSection() {
     setValue,
     watch,
   } = useFormContext<ProcurementFullFormValues>(); // Use context
+  const BACKEND_API_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
   const [farmers, setFarmers] = useState<Farmer[]>([]);
   const [isLoadingFarmers, setIsLoadingFarmers] = useState(false);
@@ -58,8 +59,7 @@ export function BasicInfoSection() {
     const fetchFarmers = async () => {
       setIsLoadingFarmers(true);
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000';
-        const response = await axios.get(`${apiBaseUrl}/api/farmers`, {
+        const response = await axios.get(`${BACKEND_API_URL}/api/farmers`, {
           params: { limit: 1000, isActive: true },
           withCredentials: true,
         });
@@ -72,7 +72,7 @@ export function BasicInfoSection() {
       }
     };
     fetchFarmers();
-  }, []);
+  }, [BACKEND_API_URL]);
 
   const currentProcuredForms = watchedCrop ? PROCURED_FORMS_BY_CROP[watchedCrop as CropType] || [] : [];
 

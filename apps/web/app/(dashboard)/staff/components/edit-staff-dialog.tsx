@@ -26,6 +26,7 @@ interface User {
   role: 'ADMIN' | 'STAFF';
   isEnabled: boolean;
 }
+const BACKEND_API_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -63,7 +64,7 @@ export function EditStaffDialog({ user, open, onOpenChange, onUserUpdated }: Edi
 
     setIsSubmitting(true);
     try {
-      await axios.put(`http://localhost:5000/api/users/${user.id}`, updateData);
+      await axios.put(`${BACKEND_API_URL}/api/users/${user.id}`, updateData);
       toast.success("Staff member's details updated successfully");
       onUserUpdated();
       onOpenChange(false);

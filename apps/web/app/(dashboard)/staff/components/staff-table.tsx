@@ -64,10 +64,12 @@ export function StaffTable() {
     []
   );
 
+  const BACKEND_API_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
+
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/users', axiosConfig);
+      const response = await axios.get(`${BACKEND_API_URL}/api/users`, axiosConfig);
       setUsers(response.data.users);
       setFilteredUsers(response.data.users);
     } catch (error) {
@@ -76,7 +78,7 @@ export function StaffTable() {
     } finally {
       setIsLoading(false);
     }
-  }, [axiosConfig]);
+  }, [axiosConfig, BACKEND_API_URL]);
 
   useEffect(() => {
     fetchUsers();
@@ -117,7 +119,7 @@ export function StaffTable() {
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     try {
-      await axios.delete(`http://localhost:5000/api/users/${userToDelete.id}`, axiosConfig);
+      await axios.delete(`${BACKEND_API_URL}/api/users/${userToDelete.id}`, axiosConfig);
       toast.success('Staff member deleted successfully');
       fetchUsers();
     } catch (error: unknown) {
@@ -133,7 +135,7 @@ export function StaffTable() {
     setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u)));
     setFilteredUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isEnabled: !u.isEnabled } : u)));
     try {
-      await axios.patch(`http://localhost:5000/api/users/${user.id}/toggle-status`, {}, axiosConfig);
+      await axios.patch(`${BACKEND_API_URL}/api/users/${user.id}/toggle-status`, {}, axiosConfig);
       toast.success('Staff member status updated successfully');
     } catch (error: unknown) {
       console.error('Error toggling user status:', error);
