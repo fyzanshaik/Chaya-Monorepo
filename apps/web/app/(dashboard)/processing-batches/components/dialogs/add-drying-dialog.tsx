@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createDryingEntrySchema, type CreateDryingEntryInput, type Drying } from '@chaya/shared';
 import {
@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { ScrollArea } from '@workspace/ui/components/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@workspace/ui/components/table';
+import { getDryingEntriesForStage } from '../../lib/actions';
 
 interface AddDryingDialogProps {
   processingStageId: number;
@@ -60,18 +61,14 @@ export function AddDryingDialog({
       const fetchExistingEntries = async () => {
         setIsLoadingEntries(true);
         try {
-          const response = await axios.get<{ dryingEntries: Drying[] }>(
-            `/api/processing-stages/${processingStageId}/drying`,
-            { withCredentials: true }
-          );
-          setExistingDryingEntries(response.data.dryingEntries);
-          const nextDay =
-            response.data.dryingEntries.length > 0 ? Math.max(...response.data.dryingEntries.map(d => d.day)) + 1 : 1;
+          const entries = await getDryingEntriesForStage(processingStageId);
+          setExistingDryingEntries(entries);
+          const nextDay = entries.length > 0 ? Math.max(...entries.map(d => d.day)) + 1 : 1;
           form.setValue('day', nextDay);
-          const lastEntry = response.data.dryingEntries.sort((a, b) => b.day - a.day)[0];
+          const lastEntry = entries.sort((a: { day: number }, b: { day: number }) => b.day - a.day)[0];
           form.setValue('currentQuantity', lastEntry ? lastEntry.currentQuantity : 0);
-        } catch (error) {
-          toast.error('Failed to load existing drying entries.');
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to load existing drying entries.');
         } finally {
           setIsLoadingEntries(false);
         }

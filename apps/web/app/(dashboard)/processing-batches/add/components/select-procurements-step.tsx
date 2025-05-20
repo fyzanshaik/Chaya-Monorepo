@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
-import { useProcessingBatchFormStore, type ProcurementWithFarmerForStore } from '@/app/stores/processing-batch-form'; // Import the type
+import { useProcessingBatchFormStore, type ProcurementWithFarmerForStore } from '@/app/stores/processing-batch-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@workspace/ui/components/card';
 import { Checkbox } from '@workspace/ui/components/checkbox';
 import { Input } from '@workspace/ui/components/input';
@@ -11,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Badge } from '@workspace/ui/components/badge';
+import { getUnbatchedProcurementsAction } from '@/app/(dashboard)/procurements/lib/actions';
 
 interface DisplayProcurement extends ProcurementWithFarmerForStore {
   isSelectableBasedOnLock: boolean;
@@ -21,7 +21,7 @@ export function SelectProcurementsStep() {
   const {
     initialCrop,
     initialLotNo,
-    availableProcurements, // Now ProcurementWithFarmerForStore[] from Zustand
+    availableProcurements,
     selectedProcurementIds,
     setAvailableProcurements,
     toggleSelectedProcurement,
@@ -38,19 +38,15 @@ export function SelectProcurementsStep() {
     const fetchProcurements = async () => {
       setIsLoading(true);
       try {
-        const params: any = {};
+        const params: { crop?: string; lotNo?: string } = {};
         if (initialCrop) params.crop = initialCrop;
-        if (initialLotNo) params.lotNo = initialLotNo;
+        if (initialLotNo) params.lotNo = initialLotNo.toString();
 
-        // The backend response should match ProcurementWithFarmerForStore structure for the farmer field
-        const response = await axios.get<{ procurements: ProcurementWithFarmerForStore[] }>(
-          `/api/procurements/unbatched`,
-          { params, withCredentials: true }
-        );
-        setAvailableProcurements(response.data.procurements);
-      } catch (error) {
+        const procurementsData = await getUnbatchedProcurementsAction(params);
+        setAvailableProcurements(procurementsData);
+      } catch (error: any) {
         console.error('Error fetching unbatched procurements:', error);
-        toast.error('Failed to load unbatched procurements.');
+        toast.error(error.message || 'Failed to load unbatched procurements.');
         setAvailableProcurements([]);
       } finally {
         setIsLoading(false);
@@ -64,7 +60,6 @@ export function SelectProcurementsStep() {
     const lowerSearchTerm = searchTerm.trim().toLowerCase();
 
     return availableProcurements.map((p: ProcurementWithFarmerForStore) => {
-      // Explicitly type 'p'
       let isSelectableBasedOnLock = true;
       if (filterCriteriaLocked) {
         if (lockedCrop && p.crop !== lockedCrop) isSelectableBasedOnLock = false;
@@ -75,14 +70,12 @@ export function SelectProcurementsStep() {
       let matchesSearchTerm = true;
       if (lowerSearchTerm) {
         matchesSearchTerm =
-          p.farmer.name.toLowerCase().includes(lowerSearchTerm) || // Safe now
+          p.farmer.name.toLowerCase().includes(lowerSearchTerm) ||
           p.procurementNumber.toLowerCase().includes(lowerSearchTerm) ||
           p.id.toString().includes(lowerSearchTerm) ||
           p.crop.toLowerCase().includes(lowerSearchTerm) ||
           p.procuredForm.toLowerCase().includes(lowerSearchTerm);
       }
-
-      // p already includes the farmer object, so the spread is fine.
       return { ...p, isSelectableBasedOnLock, matchesSearchTerm };
     });
   }, [availableProcurements, searchTerm, filterCriteriaLocked, lockedCrop, lockedLotNo, lockedProcuredForm]);
@@ -100,7 +93,6 @@ export function SelectProcurementsStep() {
   }, [availableProcurements, selectedProcurementIds]);
 
   const handleToggleSelection = (procurement: ProcurementWithFarmerForStore) => {
-    // Expect the correct type
     toggleSelectedProcurement(procurement);
   };
 
@@ -157,7 +149,6 @@ export function SelectProcurementsStep() {
               </TableHeader>
               <TableBody>
                 {itemsToRender.map(proc => {
-                  // proc is now DisplayProcurement, which includes farmer
                   const isChecked = selectedProcurementIds.includes(proc.id);
                   const isDisabledForSelection = filterCriteriaLocked && !proc.isSelectableBasedOnLock && !isChecked;
 
@@ -176,7 +167,7 @@ export function SelectProcurementsStep() {
                         />
                       </TableCell>
                       <TableCell className="font-medium">{proc.procurementNumber}</TableCell>
-                      <TableCell>{proc.farmer.name}</TableCell> {/* Safe now */}
+                      <TableCell>{proc.farmer.name}</TableCell>
                       <TableCell>{proc.crop}</TableCell>
                       <TableCell>{proc.procuredForm}</TableCell>
                       <TableCell>{proc.lotNo}</TableCell>

@@ -21,7 +21,7 @@ import {
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { ProcurementWithRelations } from '../lib/types';
-import { deleteProcurement } from '../lib/actions';
+import { deleteProcurementAction } from '../lib/actions';
 
 interface ProcurementContextMenuProps {
   children: React.ReactNode;
@@ -44,7 +44,7 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const result = await deleteProcurement(procurement.id);
+      const result = await deleteProcurementAction(procurement.id);
 
       if (result.success) {
         toast.success('Procurement deleted', {
@@ -60,9 +60,9 @@ export function ProcurementContextMenu({ children, procurement, onEdit, isAdmin 
       }
 
       setShowDeleteDialog(false);
-    } catch (error) {
+    } catch (error: any) {
       toast.error('Error', {
-        description: 'An unexpected error occurred while deleting the procurement.',
+        description: error.message || 'An unexpected error occurred while deleting the procurement.',
       });
     } finally {
       setIsDeleting(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm, FormProvider, type FieldValues } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@workspace/ui/components/tabs';
 import { Button } from '@workspace/ui/components/button';
@@ -9,7 +9,6 @@ import { BasicInfoSection } from './basic-info-section';
 import { DetailsSection } from './details-section';
 import { ReviewSection } from './review-section';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@workspace/ui/components/dialog';
-import axios from 'axios';
 import {
   useProcurementFormStore,
   procurementFullFormSchema,
@@ -18,6 +17,7 @@ import {
 } from '@/app/stores/procurement-form';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { updateProcurementAction } from '@/app/(dashboard)/procurements/lib/actions';
 
 interface ProcurementFormProps {
   mode: 'add' | 'edit';
@@ -99,32 +99,36 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
         vehicleNo: '',
       });
     }
-  }, [setZustandForm, mode, initialData]);
+  }, [setZustandForm, methods, mode, initialData]);
 
   const processAndSubmitData = async (data: ProcurementFullFormValues) => {
     setIsSubmitting(true);
 
     const payload = {
       ...data,
-      date: data.date instanceof Date ? data.date.toISOString().split('T')[0] : data.date,
+      date: data.date instanceof Date ? data.date : new Date(data.date),
     };
 
     console.log('Submitting data to backend:', JSON.stringify(payload, null, 2));
 
     try {
-      const axiosConfig = {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-
       if (mode === 'add') {
-        await axios.post(`${apiBaseUrl}/api/procurements`, payload, axiosConfig);
+        await fetch(`/api/procurements`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }).then(async res => {
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to add procurement');
+          }
+          return res.json();
+        });
         toast.success('Procurement added successfully');
-      } else {
-        await axios.put(`${apiBaseUrl}/api/procurements/${procurementId}`, payload, axiosConfig);
+      } else if (procurementId) {
+        await updateProcurementAction(procurementId, payload);
         toast.success('Procurement updated successfully');
       }
 
@@ -133,9 +137,11 @@ export function ProcurementForm({ mode, open, onOpenChange, procurementId }: Pro
       methods.reset();
       useProcurementFormStore.getState().initializeForm(null, 'add');
     } catch (error: any) {
-      console.error('Error submitting form:', error.response?.data || error.message);
+      console.error('Error submitting form:', error);
       const errorDetails = error.response?.data?.details;
-      let errorMessage = error.response?.data?.error || error.message || 'Something went wrong';
+      let errorMessage = error.message || 'Something went wrong';
+      if (error.response?.data?.error) errorMessage = error.response.data.error;
+
       if (errorDetails && Array.isArray(errorDetails)) {
         errorMessage = errorDetails.map((detail: any) => `${detail.path.join('.')}: ${detail.message}`).join('; ');
       }
