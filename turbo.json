@@ -12,6 +12,7 @@
         "UPLOADTHING_TOKEN",
         "FRONTEND_URL",
         "PROD_BACKEND_URL",
+        "NEXT_PUBLIC_BACKEND_URL",
         "PORT",
         "HOST",
         "NODE_ENV"

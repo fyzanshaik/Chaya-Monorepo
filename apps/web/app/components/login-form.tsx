@@ -11,7 +11,7 @@ import { Input } from '@workspace/ui/components/input';
 import { Button } from '@workspace/ui/components/button';
 import { cn } from '@workspace/ui/lib/utils';
 
-const BACKEND_API_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
+const BACKEND_API_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:5000';
 
 export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'form'>) {
   const [email, setEmail] = useState('');
