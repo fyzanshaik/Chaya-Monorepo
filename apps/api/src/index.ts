@@ -29,7 +29,7 @@ const fastify = Fastify({
 
 async function registerPlugins() {
   await fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
@@ -67,10 +67,10 @@ async function start() {
     await registerRoutes();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-    // const host = process.env.HOST ?? '0.0.0.0';
+    const host = '0.0.0.0';
 
-    await fastify.listen({ port });
-    console.log(`Server is running on ${port}`);
+    await fastify.listen({ port, host });
+    console.log(`Server is running on ${host}:${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
