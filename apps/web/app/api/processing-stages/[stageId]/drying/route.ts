@@ -1,7 +1,8 @@
+/*eslint-disable */
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.API_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
 export async function POST(request: NextRequest, context: any) {
   const { stageId } = context.params;
@@ -29,8 +30,9 @@ export async function POST(request: NextRequest, context: any) {
 
     const data = await response.json();
     return new NextResponse(JSON.stringify(data), { status: response.status });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error in Next.js POST /api/processing-stages/${stageId}/drying:`, error);
-    return new NextResponse(JSON.stringify({ error: error.message || 'Internal server error' }), { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return new NextResponse(JSON.stringify({ error: errorMessage }), { status: 500 });
   }
 }

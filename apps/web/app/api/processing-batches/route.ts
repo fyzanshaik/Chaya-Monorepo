@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.API_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       return new NextResponse(
-        JSON.stringify({ error: data.error || 'Failed to create processing batch on backend', details: data.details }),
+        JSON.stringify({ error: data.error ?? 'Failed to create processing batch on backend', details: data.details }),
         { status: response.status }
       );
     }

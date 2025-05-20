@@ -67,10 +67,10 @@ async function start() {
     await registerRoutes();
 
     const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-    const host = process.env.HOST || '0.0.0.0';
+    // const host = process.env.HOST ?? '0.0.0.0';
 
-    await fastify.listen({ port, host });
-    console.log(`Server is running on ${host}:${port}`);
+    await fastify.listen({ port });
+    console.log(`Server is running on ${port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

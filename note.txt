@@ -1,0 +1,2 @@
+backend deployment : pnpm install --frozen-lockfile && pnpm --filter @chaya/shared db:generate && pnpm run build:backend
+backend url : https://chaya-backend-y6ne.onrender.com/

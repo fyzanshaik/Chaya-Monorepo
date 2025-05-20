@@ -8,7 +8,7 @@
     "build": "tsc --build && pnpm db:generate",
     "dev": "tsc --watch",
     "lint": "eslint . --ext .ts,.tsx",
-"db:generate": "echo 'Running prisma generate' && prisma generate",
+    "db:generate": "echo 'Running prisma generate' && prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "bun ./prisma/seed.ts"

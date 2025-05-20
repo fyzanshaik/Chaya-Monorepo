@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 
-const BACKEND_URL = process.env.API_URL || 'http://localhost:5000';
+const BACKEND_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
 interface SaleData {
   id: number;

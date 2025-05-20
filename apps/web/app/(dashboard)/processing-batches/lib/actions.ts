@@ -1,10 +1,11 @@
+/*eslint-disable */
 'use server';
 
 import { cookies } from 'next/headers';
 import type { ProcessingBatchWithDetails, ProcessingBatchWithSummary } from './types';
 import type { Drying, FinalizeProcessingStageInput } from '@chaya/shared';
 
-const BACKEND_API_URL = process.env.API_URL || 'http://localhost:5000';
+const BACKEND_API_URL = process.env.PROD_BACKEND_URL || 'http://localhost:5000';
 
 export async function getProcessingBatchDetailsById(batchId: number): Promise<ProcessingBatchWithDetails> {
   if (isNaN(batchId)) {
