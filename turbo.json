@@ -3,10 +3,18 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "db:generate"], 
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": ["DATABASE_URL", "JWT_SECRET", "UPLOADTHING_TOKEN", "FRONTEND_URL", "PORT", "HOST", "NODE_ENV"]
+      "env": [
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "UPLOADTHING_TOKEN",
+        "FRONTEND_URL",
+        "PORT",
+        "HOST",
+        "NODE_ENV"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -17,11 +25,20 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "env": ["DATABASE_URL", "JWT_SECRET", "UPLOADTHING_TOKEN", "FRONTEND_URL", "PORT", "HOST", "NODE_ENV"]
+      "env": [
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "UPLOADTHING_TOKEN",
+        "FRONTEND_URL",
+        "PORT",
+        "HOST",
+        "NODE_ENV"
+      ]
     },
     "db:generate": {
-      "cache": false,
-      "outputs": ["node_modules/.prisma/**", "packages/shared/src/generated/**"]
+      "cache": false, 
+      "outputs": ["node_modules/.prisma/**", "packages/shared/src/generated/**"], 
+      "env": ["DATABASE_URL"] 
     }
   },
   "globalDependencies": [".env"]
