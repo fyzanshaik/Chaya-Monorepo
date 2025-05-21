@@ -8,17 +8,18 @@ export interface JWTPayload {
   exp: number;
 }
 
-// In your Fastify auth.ts (authenticate function)
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
     let token = request.cookies.token;
 
     if (!token) {
-      // If no cookie, try Authorization header (Bearer token)
       const authHeader = request.headers.authorization;
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.substring(7); // Get token part
-        request.log.info('Token found in Authorization header for /api/auth/me');
+      //request.log.info('Authorization header:', request.headers.authorization);
+      if (authHeader) {
+        if(authHeader.startsWith('Bearer ')){
+          token = authHeader.substring(7); 
+          request.log.info('Token found in Authorization header for /api/auth/me');
+        }
       }
     }
 

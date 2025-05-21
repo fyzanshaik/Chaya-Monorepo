@@ -11,7 +11,7 @@ import procurementRoutes from './routes/procurement';
 import processingBatchRoutes from './routes/processingBatch';
 import processingStageRoutes from './routes/processingStage';
 import salesRoutes from './routes/sales';
-import helloWorldRoutes from './routes/helloWorld';
+import healthRoute from './routes/health';
 
 console.log('---- Backend Server Starting ----');
 console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
@@ -104,7 +104,7 @@ async function registerRoutes() {
     prefix: '/api/processing-stages',
   });
   fastify.register(salesRoutes, { prefix: '/api/sales' });
-  fastify.register(helloWorldRoutes, { prefix: '/api' });
+  fastify.register(healthRoute, { prefix: '/api/health' });
   fastify.log.info('All application routes registered.');
 }
 
