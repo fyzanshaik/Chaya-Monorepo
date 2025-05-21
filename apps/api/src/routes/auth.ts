@@ -10,7 +10,6 @@ async function authRoutes(fastify: FastifyInstance) {
       const user = await prisma.user.findUnique({
         where: { email },
       });
-      console.log(`Current NODE_ENV: ${process.env.NODE_ENV}`);
       if (!user) {
         return reply.status(401).send({ error: 'Invalid email or password' });
       }
@@ -43,7 +42,7 @@ async function authRoutes(fastify: FastifyInstance) {
           isActive: true,
         },
       });
-
+      console.log(`Current NODE_ENV during /login: ${process.env.NODE_ENV}`); 
       reply.setCookie('token', token, {
         path: '/',
         httpOnly: true,
@@ -82,7 +81,7 @@ async function authRoutes(fastify: FastifyInstance) {
           console.warn('Token verification error on logout:', error);
         }
       }
-
+      
       reply.clearCookie('token', {
         path: '/',
         httpOnly: true,
