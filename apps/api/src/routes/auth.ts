@@ -42,7 +42,7 @@ async function authRoutes(fastify: FastifyInstance) {
           isActive: true,
         },
       });
-      console.log(`Current NODE_ENV during /login: ${process.env.NODE_ENV}`); 
+      console.log(`Current NODE_ENV during /login: ${process.env.NODE_ENV}`);
       reply.setCookie('token', token, {
         path: '/',
         httpOnly: true,
@@ -69,30 +69,42 @@ async function authRoutes(fastify: FastifyInstance) {
 
   fastify.post('/logout', async (request, reply) => {
     try {
-      if (request.cookies.token) {
-        try {
-          const decoded = fastify.jwt.verify<JWTPayload>(request.cookies.token);
+      let tokenToInvalidate = request.cookies.token;
 
+      if (!tokenToInvalidate) {
+        const authHeader = request.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          tokenToInvalidate = authHeader.substring(7);
+          request.log.info('Logout: Using token from Authorization header.');
+        }
+      }
+
+      if (tokenToInvalidate) {
+        try {
+          const decoded = request.server.jwt.verify<JWTPayload>(tokenToInvalidate);
           await prisma.user.update({
             where: { id: decoded.id },
             data: { isActive: false },
           });
+          request.log.info(`Logout: User ${decoded.id} marked as inactive.`);
         } catch (error) {
-          console.warn('Token verification error on logout:', error);
+          request.log.warn({ err: error }, 'Logout: Token verification error or user update failed.');
         }
+      } else {
+        request.log.info('Logout: No token provided in cookie or Authorization header.');
       }
-      
+
       reply.clearCookie('token', {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       });
 
-      return { success: true };
+      return reply.send({ success: true });
     } catch (error) {
-      console.error('Logout error:', error);
-      return reply.status(500).send({ error: 'Server error' });
+      request.log.error({ err: error }, 'Logout error');
+      return reply.status(500).send({ error: 'Server error during logout' });
     }
   });
 
@@ -136,6 +148,7 @@ async function authRoutes(fastify: FastifyInstance) {
 
   fastify.get('/me', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const authRequest = request as AuthenticatedRequest;
+    console.log(authRequest);
     try {
       const user = await prisma.user.findUnique({
         where: { id: authRequest.user.id },

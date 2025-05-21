@@ -8,29 +8,38 @@ export interface JWTPayload {
   exp: number;
 }
 
+// In your Fastify auth.ts (authenticate function)
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   try {
-    const token = request.cookies.token;
+    let token = request.cookies.token;
+
     if (!token) {
-      console.log('No token found in cookies');
-      reply.status(401).send({ error: 'Authentication required' });
-      return false;
+      // If no cookie, try Authorization header (Bearer token)
+      const authHeader = request.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7); // Get token part
+        request.log.info('Token found in Authorization header for /api/auth/me');
+      }
     }
+
+    if (!token) {
+      request.log.warn('No token found in cookies or Authorization header for /api/auth/me');
+      return reply.status(401).send({ error: 'Authentication required' });
+    }
+
     const decoded = request.server.jwt.verify<JWTPayload>(token);
     const user = await prisma.user.findUnique({
       where: { id: decoded.id, isEnabled: true },
     });
+
     if (!user) {
-      console.log('User not found or disabled');
-      reply.status(401).send({ error: 'User not found or disabled' });
-      return false;
+      request.log.warn(`User ID ${decoded.id} not found or disabled for /api/auth/me (token verified)`);
+      return reply.status(401).send({ error: 'User not found or disabled' });
     }
     (request as any).user = decoded;
-    return true;
   } catch (error) {
-    console.error('Authentication error:', error);
-    reply.status(401).send({ error: 'Invalid or expired token' });
-    return false;
+    request.log.error({ err: error }, 'Authentication error in /api/auth/me');
+    return reply.status(401).send({ error: 'Invalid or expired token' });
   }
 }
 
